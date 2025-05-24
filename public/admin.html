@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Package Tracking</title>
+    <link rel="icon" type="image/png" href="/Logos/favicon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --primary-hover: #1d4ed8;
+            --secondary-color: #64748b;
+            --success-color: #22c55e;
+            --danger-color: #ef4444;
+            --background-color: #f8fafc;
+            --card-background: #ffffff;
+            --text-color: #1e293b;
+            --border-color: #e2e8f0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        .header {
+            background-color: var(--card-background);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            padding: 1rem 2rem;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+        }
+
+        .nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            color: var(--text-color);
+        }
+
+        .nav-brand img {
+            height: 32px;
+            width: 32px;
+        }
+
+        .nav-menu {
+            display: flex;
+            gap: 1.5rem;
+            list-style: none;
+        }
+
+        .nav-link {
+            text-decoration: none;
+            color: var(--text-color);
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            transition: all 0.2s;
+        }
+
+        .nav-link:hover {
+            background-color: var(--background-color);
+        }
+
+        .nav-link.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 6rem auto 2rem;
+            padding: 0 2rem;
+        }
+
+        .card {
+            background-color: var(--card-background);
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.375rem;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.375rem;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-danger {
+            background-color: var(--danger-color);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #dc2626;
+        }
+
+        .tracking-list {
+            list-style: none;
+        }
+
+        .tracking-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .tracking-item:last-child {
+            border-bottom: none;
+        }
+
+        .tracking-info {
+            flex: 1;
+        }
+
+        .tracking-id {
+            font-weight: 500;
+            color: var(--primary-color);
+        }
+
+        .tracking-status {
+            font-size: 0.875rem;
+            color: var(--secondary-color);
+        }
+
+        .tracking-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .message {
+            padding: 1rem;
+            border-radius: 0.375rem;
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        .message.success {
+            background-color: #dcfce7;
+            color: #166534;
+            border: 1px solid #86efac;
+        }
+
+        .message.error {
+            background-color: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+
+        @media (max-width: 768px) {
+            .nav-menu {
+                display: none;
+                flex-direction: column;
+                position: absolute;
+                top: 60px;
+                left: 0;
+                right: 0;
+                background-color: var(--card-background);
+                box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+                z-index: 2000;
+                padding: 1rem 0;
+            }
+            .nav-menu.active {
+                display: flex;
+            }
+            .nav-toggle {
+                display: block;
+                background: none;
+                border: none;
+                cursor: pointer;
+                margin-left: 1rem;
+            }
+            .nav {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .container {
+                padding: 0 0.5rem;
+            }
+            .card {
+                padding: 1rem;
+            }
+            .tracking-item {
+                flex-direction: column;
+                gap: 0.5rem;
+                text-align: center;
+            }
+            .tracking-actions {
+                justify-content: center;
+            }
+            .nav-brand img {
+                height: 28px;
+                width: 28px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <nav class="nav">
+            <a href="/admin" class="nav-brand">
+                <img src="/Logos/mainlogo.png" alt="Main Logo" style="height:32px;width:32px;vertical-align:middle;margin-right:8px;">
+                <span>Package Tracking</span>
+            </a>
+            <ul class="nav-menu">
+                <li><a href="/admin" class="nav-link active">Dashboard</a></li>
+                <li><a href="/map-tracking" class="nav-link">Map Tracking</a></li>
+                <li><a href="/config" class="nav-link">Configuration</a></li>
+                <li><a href="#" class="nav-link" onclick="handleLogout()">Logout</a></li>
+            </ul>
+            <button class="nav-toggle" onclick="toggleMenu()" aria-label="Toggle navigation">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="28" height="28">
+                    <path d="M4 6h16M4 12h16M4 18h16"/>
+                </svg>
+            </button>
+        </nav>
+    </header>
+
+    <div class="container">
+        <div class="message" id="message"></div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Generate Tracking ID</h2>
+            </div>
+            <form id="trackingForm" onsubmit="generateTrackingId(event)">
+                <div class="form-group">
+                    <label class="form-label" for="originalTrackingId">Original Tracking ID</label>
+                    <input type="text" id="originalTrackingId" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="provider">Provider</label>
+                    <select id="provider" class="form-input" required>
+                        <option value="">Select Provider</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Generate</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Recent Tracking IDs</h2>
+            </div>
+            <ul class="tracking-list" id="trackingList"></ul>
+        </div>
+    </div>
+
+    <script>
+        // Check authentication
+        async function checkAuth() {
+            try {
+                const response = await fetch('/api/login/check', {
+                    credentials: 'include'
+                });
+                if (!response.ok) {
+                    window.location.href = '/login';
+                }
+            } catch (error) {
+                console.error('Auth check failed:', error);
+                window.location.href = '/login';
+            }
+        }
+
+        // Load providers
+        async function loadProviders() {
+            try {
+                const response = await fetch('/api/providers', {
+                    credentials: 'include'
+                });
+                const providers = await response.json();
+                const select = document.getElementById('provider');
+                select.innerHTML = '<option value="">Select Provider</option>';
+                providers.forEach(provider => {
+                    const option = document.createElement('option');
+                    option.value = provider.name;
+                    option.textContent = provider.name;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error loading providers:', error);
+                showMessage('Error loading providers', 'error');
+            }
+        }
+
+        // Generate tracking ID
+        async function generateTrackingId(event) {
+            event.preventDefault();
+            const originalTrackingId = document.getElementById('originalTrackingId').value;
+            const provider = document.getElementById('provider').value;
+
+            try {
+                const response = await fetch('/api/tracking/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({ originalTrackingId, provider })
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    showMessage(`Tracking ID generated: ${data.trackingId}`, 'success');
+                    document.getElementById('trackingForm').reset();
+                    loadTrackingList();
+                } else {
+                    showMessage(data.error || 'Error generating tracking ID', 'error');
+                }
+            } catch (error) {
+                console.error('Error generating tracking ID:', error);
+                showMessage('Error generating tracking ID', 'error');
+            }
+        }
+
+        // Load tracking list
+        async function loadTrackingList() {
+            try {
+                const response = await fetch('/api/tracking/list', {
+                    credentials: 'include'
+                });
+                const data = await response.json();
+                const list = document.getElementById('trackingList');
+                list.innerHTML = '';
+
+                data.forEach(item => {
+                    const li = document.createElement('li');
+                    li.className = 'tracking-item';
+                    // Format provider logo path
+                    const logoName = item.provider ? item.provider.toLowerCase().replace(/\s+/g, '') : 'default';
+                    const logoPath = `/Logos/${logoName}.png`;
+                    li.innerHTML = `
+                        <div class="tracking-info">
+                            <div class="tracking-id">${item.trackingId}</div>
+                            <div class="tracking-status">
+                                Original ID: ${item.originalTrackingId}<br>
+                                <img src="${logoPath}" alt="${item.provider} logo" onerror="this.onerror=null;this.src='/Logos/default.png';" style="height:20px;width:20px;vertical-align:middle;margin-right:6px;">${item.provider}<br>
+                                Last Updated: ${new Date(item.lastUpdated).toLocaleString()}
+                            </div>
+                        </div>
+                        <div class="tracking-actions">
+                            <button class="btn btn-primary" onclick="viewTracking('${item.trackingId}')">View</button>
+                            <button class="btn btn-danger" onclick="deleteTracking('${item.trackingId}')">Delete</button>
+                        </div>
+                    `;
+                    list.appendChild(li);
+                });
+            } catch (error) {
+                console.error('Error loading tracking list:', error);
+                showMessage('Error loading tracking list', 'error');
+            }
+        }
+
+        // View tracking details
+        function viewTracking(trackingId) {
+            window.location.href = `/tracking.html?id=${trackingId}`;
+        }
+
+        // Delete tracking ID
+        async function deleteTracking(trackingId) {
+            if (!confirm('Are you sure you want to delete this tracking ID?')) {
+                return;
+            }
+
+            try {
+                console.log('🗑️ Deleting tracking ID:', trackingId);
+                const response = await fetch(`/api/tracking/${trackingId}`, {
+                    method: 'DELETE',
+                    credentials: 'include'
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Failed to delete tracking ID');
+                }
+
+                showMessage('Tracking ID deleted successfully', 'success');
+                loadTrackingList();
+            } catch (error) {
+                console.error('Error deleting tracking ID:', error);
+                showMessage(error.message || 'Failed to delete tracking ID', 'error');
+            }
+        }
+
+        // Show message
+        function showMessage(text, type) {
+            const message = document.getElementById('message');
+            message.textContent = text;
+            message.className = `message ${type}`;
+            message.style.display = 'block';
+            setTimeout(() => {
+                message.style.display = 'none';
+            }, 5000);
+        }
+
+        // Handle logout
+        async function handleLogout() {
+            try {
+                const response = await fetch('/api/logout', {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+                if (response.ok) {
+                    window.location.href = '/';
+                }
+            } catch (error) {
+                console.error('Logout failed:', error);
+                showMessage('Error logging out', 'error');
+            }
+        }
+
+        // Toggle mobile menu
+        function toggleMenu() {
+            const menu = document.querySelector('.nav-menu');
+            menu.classList.toggle('active');
+        }
+
+        // Close mobile menu when clicking outside
+        document.addEventListener('click', function(event) {
+            const nav = document.querySelector('.nav-menu');
+            const btn = document.querySelector('.nav-toggle');
+            if (!nav.contains(event.target) && !btn.contains(event.target)) {
+                nav.classList.remove('active');
+            }
+        });
+
+        // Initialize
+        checkAuth();
+        loadProviders();
+        loadTrackingList();
+    </script>
+</body>
+</html> 
