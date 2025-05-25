@@ -43,7 +43,7 @@
             z-index: 1000;
         }
 
-        .nav {
+        .nav-container {
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -51,7 +51,7 @@
             margin: 0 auto;
         }
 
-        .nav-brand {
+        .logo-container {
             display: flex;
             align-items: center;
             gap: 0.5rem;
@@ -59,7 +59,7 @@
             color: var(--text-color);
         }
 
-        .nav-brand img {
+        .logo-small {
             height: 32px;
             width: 32px;
         }
@@ -180,11 +180,10 @@
             justify-content: space-between;
             align-items: center;
             padding: 1rem;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .tracking-item:last-child {
-            border-bottom: none;
+            background-color: var(--card-background);
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            margin-bottom: 1rem;
         }
 
         .tracking-info {
@@ -241,14 +240,14 @@
             .nav-menu.active {
                 display: flex;
             }
-            .nav-toggle {
+            .mobile-menu-btn {
                 display: block;
                 background: none;
                 border: none;
                 cursor: pointer;
                 margin-left: 1rem;
             }
-            .nav {
+            .nav-container {
                 flex-direction: column;
                 align-items: flex-start;
             }
@@ -266,7 +265,7 @@
             .tracking-actions {
                 justify-content: center;
             }
-            .nav-brand img {
+            .logo-small {
                 height: 28px;
                 width: 28px;
             }
@@ -275,22 +274,16 @@
 </head>
 <body>
     <header class="header">
-        <nav class="nav">
-            <a href="/admin" class="nav-brand">
-                <img src="/Logos/mainlogo.png" alt="Package Tracking Logo" style="height:32px;width:32px;vertical-align:middle;margin-right:8px;">
+        <nav class="nav-container">
+            <div class="logo-container">
+                <img src="/Logos/mainlogo.png" alt="Package Tracking Logo" class="logo-small">
                 <span>Package Tracking</span>
-            </a>
+            </div>
             <ul class="nav-menu">
                 <li><a href="/admin" class="nav-link active">Dashboard</a></li>
-                <li><a href="/map-tracking" class="nav-link">Map Tracking</a></li>
                 <li><a href="/config" class="nav-link">Configuration</a></li>
                 <li><a href="#" class="nav-link" onclick="handleLogout()">Logout</a></li>
             </ul>
-            <button class="nav-toggle" onclick="toggleMenu()" aria-label="Toggle navigation">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="28" height="28">
-                    <path d="M4 6h16M4 12h16M4 18h16"/>
-                </svg>
-            </button>
         </nav>
     </header>
 
@@ -320,11 +313,49 @@
             <div class="card-header">
                 <h2 class="card-title">Recent Tracking IDs</h2>
             </div>
+            <!-- Filter and Pagination Controls -->
+            <div class="filter-pagination-controls">
+                <div class="filter-controls">
+                    <input type="text" id="filterTrackingId" class="form-input" placeholder="Filter by Tracking ID">
+                    <select id="filterProvider" class="form-input">
+                        <option value="">All Providers</option>
+                        <!-- Provider options will be loaded here -->
+                    </select>
+                    <select id="filterStatus" class="form-input">
+                        <option value="">All Statuses</option>
+                        <option value="pending">Pending</option>
+                        <option value="in-transit">In Transit</option>
+                        <option value="delivered">Delivered</option>
+                        <option value="exception">Exception</option>
+                    </select>
+                    <!-- Page Size Dropdown -->
+                    <select id="pageSize" class="form-input">
+                        <option value="5">5 per page</option>
+                        <option value="10" selected>10 per page</option>
+                        <option value="25">25 per page</option>
+                        <option value="50">50 per page</option>
+                        <option value="100">100 per page</option>
+                    </select>
+                </div>
+                <div class="pagination-controls">
+                    <button id="prevPage" class="btn btn-secondary">Previous</button>
+                    <span id="pageInfo">Page 1 of 1</span>
+                    <button id="nextPage" class="btn btn-secondary">Next</button>
+                </div>
+            </div>
+
             <ul class="tracking-list" id="trackingList"></ul>
         </div>
     </div>
 
     <script>
+        // State variables for pagination and filtering
+        let currentPage = 1;
+        let itemsPerPage = 10; // You can adjust this number
+        let filterTrackingId = '';
+        let filterProvider = '';
+        let filterStatus = '';
+
         // Check authentication
         async function checkAuth() {
             try {
@@ -347,14 +378,27 @@
                     credentials: 'include'
                 });
                 const providers = await response.json();
-                const select = document.getElementById('provider');
-                select.innerHTML = '<option value="">Select Provider</option>';
+
+                // Populate "Generate Tracking ID" provider dropdown
+                const generateProviderSelect = document.getElementById('provider');
+                generateProviderSelect.innerHTML = '<option value="">Select Provider</option>';
                 providers.forEach(provider => {
                     const option = document.createElement('option');
                     option.value = provider.name;
                     option.textContent = provider.name;
-                    select.appendChild(option);
+                    generateProviderSelect.appendChild(option);
                 });
+
+                // Populate "Recent Tracking IDs" filter provider dropdown
+                const filterProviderSelect = document.getElementById('filterProvider');
+                filterProviderSelect.innerHTML = '<option value="">All Providers</option>'; // Add "All Providers" option
+                providers.forEach(provider => {
+                    const option = document.createElement('option');
+                    option.value = provider.name;
+                    option.textContent = provider.name;
+                    filterProviderSelect.appendChild(option);
+                });
+
             } catch (error) {
                 console.error('Error loading providers:', error);
                 showMessage('Error loading providers', 'error');
@@ -391,28 +435,63 @@
             }
         }
 
-        // Load tracking list
+        // Load tracking list with pagination and filters
         async function loadTrackingList() {
+            console.log('Attempting to load tracking list...');
             try {
-                const response = await fetch('/api/tracking/list', {
+                const queryParams = new URLSearchParams({
+                    page: currentPage,
+                    limit: itemsPerPage,
+                    trackingId: filterTrackingId,
+                    provider: filterProvider,
+                    status: filterStatus
+                });
+                console.log('Fetching tracking list with params:', queryParams.toString());
+                const response = await fetch(`/api/tracking/list?${queryParams.toString()}`, {
                     credentials: 'include'
                 });
+                console.log('Received response status for tracking list:', response.status);
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `API error: ${response.status}`);
+                }
+
                 const data = await response.json();
+                console.log('Received tracking data:', data);
+
+                if (!data || !Array.isArray(data.entries)) {
+                    console.error('Received data does not contain an entries array:', data);
+                    throw new Error('Invalid data format received from server.');
+                }
+
                 const list = document.getElementById('trackingList');
                 list.innerHTML = '';
 
-                data.forEach(item => {
+                if (data.entries.length === 0 && currentPage > 1) {
+                     // If current page is empty, go back to the previous page
+                    currentPage--;
+                    loadTrackingList();
+                    return;
+                }
+
+                if (data.entries.length === 0) {
+                    list.innerHTML = '<li>No tracking entries found.</li>';
+                    document.getElementById('pageInfo').textContent = 'Page 0 of 0';
+                    document.getElementById('prevPage').disabled = true;
+                    document.getElementById('nextPage').disabled = true;
+                    return;
+                }
+
+                data.entries.forEach(item => {
                     const li = document.createElement('li');
                     li.className = 'tracking-item';
-                    // Format provider logo path
-                    const logoName = item.provider ? item.provider.toLowerCase().replace(/\s+/g, '') : 'default';
-                    const logoPath = `/Logos/${logoName}.png`;
                     li.innerHTML = `
                         <div class="tracking-info">
                             <div class="tracking-id">${item.trackingId}</div>
                             <div class="tracking-status">
                                 Original ID: ${item.originalTrackingId}<br>
-                                <img src="${logoPath}" alt="${item.provider} logo" onerror="this.onerror=null;this.src='/Logos/default.png';" style="height:20px;width:20px;vertical-align:middle;margin-right:6px;">${item.provider}<br>
+                                ${item.provider}<br>
                                 Last Updated: ${new Date(item.lastUpdated).toLocaleString()}
                             </div>
                         </div>
@@ -423,9 +502,20 @@
                     `;
                     list.appendChild(li);
                 });
+
+                // Update pagination info
+                const totalPages = Math.ceil(data.total / itemsPerPage);
+                document.getElementById('pageInfo').textContent = `Page ${currentPage} of ${totalPages}`;
+                document.getElementById('prevPage').disabled = currentPage === 1;
+                document.getElementById('nextPage').disabled = currentPage === totalPages || data.entries.length === 0;
+
             } catch (error) {
                 console.error('Error loading tracking list:', error);
-                showMessage('Error loading tracking list', 'error');
+                showMessage('Error loading tracking list: ' + error.message, 'error');
+                 document.getElementById('trackingList').innerHTML = '<li>Error loading tracking entries.</li>';
+                 document.getElementById('pageInfo').textContent = 'Page 0 of 0';
+                 document.getElementById('prevPage').disabled = true;
+                 document.getElementById('nextPage').disabled = true;
             }
         }
 
@@ -487,25 +577,48 @@
             }
         }
 
-        // Toggle mobile menu
-        function toggleMenu() {
-            const menu = document.querySelector('.nav-menu');
-            menu.classList.toggle('active');
-        }
-
-        // Close mobile menu when clicking outside
-        document.addEventListener('click', function(event) {
-            const nav = document.querySelector('.nav-menu');
-            const btn = document.querySelector('.nav-toggle');
-            if (!nav.contains(event.target) && !btn.contains(event.target)) {
-                nav.classList.remove('active');
-            }
-        });
-
-        // Initialize
+        // Initial load
         checkAuth();
         loadProviders();
         loadTrackingList();
+
+        // Event listeners for filters and pagination
+        document.getElementById('filterTrackingId').addEventListener('input', (event) => {
+            filterTrackingId = event.target.value;
+            currentPage = 1; // Reset to first page on filter change
+            loadTrackingList();
+        });
+
+        document.getElementById('filterProvider').addEventListener('change', (event) => {
+            filterProvider = event.target.value;
+            currentPage = 1; // Reset to first page on filter change
+            loadTrackingList();
+        });
+
+        document.getElementById('filterStatus').addEventListener('change', (event) => {
+            filterStatus = event.target.value;
+            currentPage = 1; // Reset to first page on filter change
+            loadTrackingList();
+        });
+
+        document.getElementById('prevPage').addEventListener('click', () => {
+            if (currentPage > 1) {
+                currentPage--;
+                loadTrackingList();
+            }
+        });
+
+        document.getElementById('nextPage').addEventListener('click', () => {
+            currentPage++;
+            loadTrackingList();
+        });
+
+        // Event listener for page size dropdown
+        document.getElementById('pageSize').addEventListener('change', (event) => {
+            itemsPerPage = parseInt(event.target.value); // Update itemsPerPage
+            currentPage = 1; // Reset to first page when page size changes
+            loadTrackingList(); // Reload list with new page size
+        });
     </script>
 </body>
 </html> 

@@ -78,12 +78,31 @@ app.get('/api/login/check', (req, res) => {
 app.get('/api/tracking/list', requireAuth, async (req, res) => {
     try {
         console.log('📋 Fetching tracking list');
-        const trackingList = await TrackingData.find()
-            .sort({ createdAt: -1 })
-            .limit(50); // Limit to last 50 entries for performance
         
-        console.log(`✅ Found ${trackingList.length} tracking entries`);
-        res.json(trackingList);
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const skip = (page - 1) * limit;
+
+        const filter = {};
+        if (req.query.trackingId) {
+            filter.trackingId = { $regex: req.query.trackingId, $options: 'i' }; // Case-insensitive partial match
+        }
+        if (req.query.provider) {
+            filter.provider = req.query.provider;
+        }
+        if (req.query.status) {
+            filter.status = req.query.status;
+        }
+
+        const trackingList = await TrackingData.find(filter)
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit);
+
+        const totalCount = await TrackingData.countDocuments(filter);
+
+        console.log(`✅ Found ${trackingList.length} tracking entries (Total: ${totalCount})`);
+        res.json({ entries: trackingList, total: totalCount });
     } catch (error) {
         console.error('❌ Error fetching tracking list:', error);
         res.status(500).json({ error: 'Internal server error' });
