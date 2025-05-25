@@ -119,6 +119,11 @@
         .provider-url {
             color: var(--text-secondary);
             font-size: 0.875rem;
+            white-space: nowrap; /* Prevent text wrapping */
+            overflow: hidden; /* Hide overflow text */
+            text-overflow: ellipsis; /* Add ellipsis to truncated text */
+            max-width: 100%; /* Ensure it respects container width */
+            display: block; /* Ensure overflow properties work */
         }
 
         .provider-actions {
@@ -224,6 +229,104 @@
             display: inline-block; /* Ensure it doesn't take full width if it's a block element */
             vertical-align: middle; /* Align with text if needed */
         }
+
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        /* Mobile Responsive Styles */
+        @media (max-width: 768px) {
+            .header {
+                padding: 1rem;
+            }
+
+            .nav-menu {
+                display: none;
+                position: fixed;
+                top: 72px;
+                left: 0;
+                right: 0;
+                background-color: var(--card-background);
+                padding: 1rem;
+                flex-direction: column;
+                gap: 0.5rem;
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+                z-index: 1000;
+            }
+
+            .nav-menu.active {
+                display: flex;
+            }
+
+            .mobile-menu-btn {
+                display: block;
+            }
+
+            .nav-menu li {
+                width: 100%;
+            }
+
+            .nav-menu a {
+                display: block;
+                padding: 0.75rem;
+                width: 100%;
+                text-align: center;
+                border-radius: 0.375rem;
+            }
+
+            .nav-menu a:hover {
+                background-color: var(--background-color);
+            }
+
+            .container {
+                padding: 1rem;
+            }
+
+            .config-section {
+                padding: 1.5rem;
+            }
+
+            .provider-item {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: flex-start; /* Align items to the start in column layout */
+            }
+
+            .provider-info {
+                width: 100%; /* Allow provider info to take full width */
+                margin-bottom: 0.5rem; /* Add space between info and actions */
+            }
+
+            .provider-actions {
+                width: 100%;
+                justify-content: flex-end;
+                gap: 0.5rem;
+            }
+
+            .provider-actions button {
+                 flex: 1; /* Allow buttons to grow and shrink */
+                 padding: 0.5rem; /* Adjust padding */
+                 font-size: 0.875rem; /* Adjust font size */
+                 text-align: center; /* Center text in buttons */
+            }
+
+            /* Optional: Stack buttons on very small screens if needed */
+             @media (max-width: 480px) {
+                 .provider-actions {
+                     flex-direction: column; /* Stack buttons vertically */
+                     gap: 0.5rem; /* Space between stacked buttons */
+                 }
+
+                 .provider-actions button {
+                     width: 100%; /* Make buttons take full width when stacked */
+                 }
+             }
+        }
     </style>
 </head>
 <body>
@@ -231,12 +334,18 @@
         <nav class="nav-container">
             <div class="logo-container">
                 <img src="/Logos/mainlogo.png" alt="Package Tracking Logo" class="logo-small">
+                <span>Package Tracking</span>
             </div>
             <ul class="nav-menu">
-                <li><a href="/admin">Dashboard</a></li>
-                <li><a href="/config">Configuration</a></li>
-                <li><a href="#" onclick="logout()">Logout</a></li>
+                <li><a href="/admin" class="nav-link">Dashboard</a></li>
+                <li><a href="/config" class="nav-link active">Configuration</a></li>
+                <li><a href="#" class="nav-link" onclick="handleLogout()">Logout</a></li>
             </ul>
+            <button class="mobile-menu-btn" aria-label="Toggle menu">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 12h18M3 6h18M3 18h18"></path>
+                </svg>
+            </button>
         </nav>
     </header>
 
@@ -292,7 +401,7 @@
                 <div class="provider-item">
                     <div class="provider-info">
                         <div class="provider-name">${provider.name}</div>
-                        <div class="provider-url">${provider.trackingUrl}</div>
+                        <div class="provider-url" title="${provider.trackingUrl}">${provider.trackingUrl}</div>
                     </div>
                     <div class="provider-actions">
                         <button class="secondary" onclick="editProvider('${provider._id}')">Edit</button>
@@ -409,7 +518,7 @@
         }
 
         // Logout function
-        async function logout() {
+        async function handleLogout() {
             try {
                 const response = await fetch('/api/logout', {
                     method: 'POST',
@@ -422,6 +531,33 @@
                 console.error('Logout error:', error);
             }
         }
+
+        // Mobile menu functionality
+        const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+        const navMenu = document.querySelector('.nav-menu');
+
+        mobileMenuBtn.addEventListener('click', () => {
+            navMenu.classList.toggle('active');
+            // Toggle aria-expanded attribute
+            const isExpanded = navMenu.classList.contains('active');
+            mobileMenuBtn.setAttribute('aria-expanded', isExpanded);
+        });
+
+        // Close mobile menu when clicking outside
+        document.addEventListener('click', (event) => {
+            if (!navMenu.contains(event.target) && !mobileMenuBtn.contains(event.target)) {
+                navMenu.classList.remove('active');
+                mobileMenuBtn.setAttribute('aria-expanded', 'false');
+            }
+        });
+
+        // Close mobile menu when clicking on a link
+        navMenu.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', () => {
+                navMenu.classList.remove('active');
+                mobileMenuBtn.setAttribute('aria-expanded', 'false');
+            });
+        });
     </script>
 </body>
 </html> 

@@ -22,6 +22,7 @@
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             width: 100%;
             max-width: 400px;
+            margin: 20px;
         }
         h1 {
             text-align: center;
@@ -87,6 +88,51 @@
             white-space: pre-wrap;
             display: none;
         }
+
+        /* Mobile Responsive Styles */
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+
+            .login-container {
+                padding: 20px;
+                margin: 10px;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+                margin-bottom: 20px;
+            }
+
+            .form-group {
+                margin-bottom: 15px;
+            }
+
+            input {
+                padding: 8px;
+                font-size: 14px;
+            }
+
+            button {
+                padding: 10px;
+                font-size: 14px;
+            }
+
+            .message {
+                margin-top: 15px;
+                padding: 8px;
+                font-size: 14px;
+            }
+        }
+
+        /* Tablet Responsive Styles */
+        @media (min-width: 481px) and (max-width: 768px) {
+            .login-container {
+                max-width: 90%;
+                margin: 15px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -104,7 +150,6 @@
             <button type="submit" id="loginButton">Login</button>
         </form>
         <div id="message" class="message" style="display: none;"></div>
-        <div id="debug"></div>
     </div>
 
     <script>
@@ -124,18 +169,15 @@
 
         // Handle login form submission
         document.getElementById('loginForm').addEventListener('submit', async function(event) {
-            event.preventDefault(); // Prevent the default form submission
+            event.preventDefault();
 
             const usernameInput = document.getElementById('username');
             const passwordInput = document.getElementById('password');
             const messageDiv = document.getElementById('message');
-            const debugDiv = document.getElementById('debug');
             const loginButton = document.getElementById('loginButton');
 
             messageDiv.style.display = 'none';
             messageDiv.className = 'message';
-            debugDiv.style.display = 'none';
-            debugDiv.textContent = '';
             loginButton.disabled = true;
 
             const username = usernameInput.value;
@@ -151,28 +193,18 @@
                 });
 
                 const data = await response.json();
-                debugDiv.textContent = JSON.stringify(data, null, 2);
 
                 if (response.ok) {
-                    // Login successful
                     window.location.href = '/admin';
                 } else {
-                    // Login failed
                     messageDiv.textContent = data.error || 'Login failed';
                     messageDiv.className = 'message error';
                     messageDiv.style.display = 'block';
-                    if (data.debug) {
-                        debugDiv.textContent += '\\n' + data.debug;
-                        debugDiv.style.display = 'block';
-                    }
                 }
             } catch (error) {
-                console.error('Login error:', error);
                 messageDiv.textContent = 'An error occurred during login.';
                 messageDiv.className = 'message error';
                 messageDiv.style.display = 'block';
-                debugDiv.textContent = 'Fetch error: ' + error.message;
-                debugDiv.style.display = 'block';
             } finally {
                 loginButton.disabled = false;
             }
