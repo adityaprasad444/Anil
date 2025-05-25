@@ -92,7 +92,7 @@
 <body>
     <div class="login-container">
         <h1>Login</h1>
-        <form id="loginForm" onsubmit="return false;">
+        <form id="loginForm">
             <div class="form-group">
                 <label for="username">Username</label>
                 <input type="text" id="username" name="username" required>
@@ -101,7 +101,7 @@
                 <label for="password">Password</label>
                 <input type="password" id="password" name="password" required>
             </div>
-            <button type="button" onclick="handleLogin()" id="loginButton">Login</button>
+            <button type="submit" id="loginButton">Login</button>
         </form>
         <div id="message" class="message" style="display: none;"></div>
         <div id="debug"></div>
@@ -122,62 +122,61 @@
             }
         };
 
-        function showMessage(text, type) {
+        // Handle login form submission
+        document.getElementById('loginForm').addEventListener('submit', async function(event) {
+            event.preventDefault(); // Prevent the default form submission
+
+            const usernameInput = document.getElementById('username');
+            const passwordInput = document.getElementById('password');
             const messageDiv = document.getElementById('message');
-            messageDiv.textContent = text;
-            messageDiv.className = `message ${type}`;
-            messageDiv.style.display = 'block';
-        }
-
-        function log(message) {
-            const debug = document.getElementById('debug');
-            debug.style.display = 'block';
-            debug.textContent += `${new Date().toISOString()}: ${message}\n`;
-        }
-
-        async function handleLogin() {
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
+            const debugDiv = document.getElementById('debug');
             const loginButton = document.getElementById('loginButton');
 
-            if (!username || !password) {
-                showMessage('Please enter both username and password', 'error');
-                return;
-            }
-
+            messageDiv.style.display = 'none';
+            messageDiv.className = 'message';
+            debugDiv.style.display = 'none';
+            debugDiv.textContent = '';
             loginButton.disabled = true;
-            showMessage('Logging in...', 'success');
+
+            const username = usernameInput.value;
+            const password = passwordInput.value;
 
             try {
-                log('Attempting login...');
                 const response = await fetch('/api/login', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
                     },
-                    credentials: 'include',
-                    body: JSON.stringify({ username, password })
+                    body: JSON.stringify({ username, password }),
                 });
 
                 const data = await response.json();
-                log(`Response status: ${response.status}`);
-                log(`Response data: ${JSON.stringify(data, null, 2)}`);
+                debugDiv.textContent = JSON.stringify(data, null, 2);
 
                 if (response.ok) {
-                    showMessage('Login successful! Redirecting...', 'success');
-                    setTimeout(() => {
-                        window.location.href = '/admin';
-                    }, 1000);
+                    // Login successful
+                    window.location.href = '/admin';
                 } else {
-                    showMessage(data.error || 'Login failed', 'error');
+                    // Login failed
+                    messageDiv.textContent = data.error || 'Login failed';
+                    messageDiv.className = 'message error';
+                    messageDiv.style.display = 'block';
+                    if (data.debug) {
+                        debugDiv.textContent += '\\n' + data.debug;
+                        debugDiv.style.display = 'block';
+                    }
                 }
             } catch (error) {
-                log(`Error: ${error.message}`);
-                showMessage('An error occurred during login', 'error');
+                console.error('Login error:', error);
+                messageDiv.textContent = 'An error occurred during login.';
+                messageDiv.className = 'message error';
+                messageDiv.style.display = 'block';
+                debugDiv.textContent = 'Fetch error: ' + error.message;
+                debugDiv.style.display = 'block';
             } finally {
                 loginButton.disabled = false;
             }
-        }
+        });
     </script>
 </body>
 </html> 
