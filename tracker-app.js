@@ -129,19 +129,15 @@ app.get('/api/tracking/:trackingId', async (req, res) => {
         trackingData.lastUpdated = new Date();
         await trackingData.save();
 
-        // Handle URL formats dynamically
-        let trackingUrl = provider.trackingUrl;
+        // Handle URL formats consistently
         const encodedTrackingId = encodeURIComponent(trackingData.originalTrackingId);
+        let trackingUrl = provider.trackingUrl;
 
-        // Check if URL already has query parameters
-        if (trackingUrl.includes('?')) {
-            // URL has query parameters, append tracking ID as a new parameter
-            trackingUrl = `${trackingUrl}&trackNo=${encodedTrackingId}`;
-        } else if (trackingUrl.includes('{trackingId}')) {
-            // URL has a placeholder, replace it
+        // If URL contains a placeholder, replace it
+        if (trackingUrl.includes('{trackingId}')) {
             trackingUrl = trackingUrl.replace('{trackingId}', encodedTrackingId);
         } else {
-            // No query parameters or placeholder, append tracking ID
+            // If no placeholder, append tracking ID to base URL
             trackingUrl = `${trackingUrl}${encodedTrackingId}`;
         }
 
