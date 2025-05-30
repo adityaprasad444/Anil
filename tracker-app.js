@@ -112,13 +112,9 @@ app.get('/api/tracking/list', requireAuth, async (req, res) => {
 app.get('/api/tracking/:trackingId', async (req, res) => {
     try {
         const { trackingId } = req.params;
-        console.log('🔍 Tracking request received for ID:', trackingId);
-
         const trackingData = await TrackingData.findOne({ trackingId });
-        console.log('🔍 Database query result:', trackingData ? 'Found' : 'Not found');
         
         if (!trackingData) {
-            console.log('❌ Tracking data not found in database:', { trackingId });
             return res.status(404).json({ error: 'Tracking ID not found' });
         }
 
@@ -126,77 +122,40 @@ app.get('/api/tracking/:trackingId', async (req, res) => {
         const provider = await Provider.findOne({ name: trackingData.provider });
         
         if (!provider) {
-            console.log('❌ Provider not found:', trackingData.provider);
             return res.status(404).json({ error: 'Provider not found' });
         }
 
         // Update lastUpdated timestamp
         trackingData.lastUpdated = new Date();
         await trackingData.save();
-        console.log('✅ Last updated timestamp updated');
 
-        // Construct tracking URL with original tracking ID
-        const trackingUrl = provider.trackingUrl + trackingData.originalTrackingId;
-        console.log('🔗 Formed tracking URL:', trackingUrl);
+        // Handle URL formats dynamically
+        let trackingUrl = provider.trackingUrl;
+        const encodedTrackingId = encodeURIComponent(trackingData.originalTrackingId);
 
-        // Fetch tracking data from provider's URL
-        try {
-            const response = await fetch(trackingUrl);
-            const contentType = response.headers.get('content-type');
-            
-            if (!response.ok) {
-                throw new Error(`Provider API returned ${response.status}: ${response.statusText}`);
-            }
-
-            let providerData;
-            if (contentType && contentType.includes('application/json')) {
-                providerData = await response.json();
-            } else {
-                console.log('⚠️ Provider returned non-JSON response, using fallback data');
-                providerData = {
-                    status: 'In Transit',
-                    location: 'Unknown',
-                    estimatedDelivery: 'Not available',
-                    history: []
-                };
-            }
-            
-            console.log('✅ Tracking data processed:', { 
-                trackingId: trackingData.trackingId,
-                provider: trackingData.provider,
-                originalTrackingId: trackingData.originalTrackingId,
-                status: providerData.status || 'In Transit',
-                lastUpdated: trackingData.lastUpdated 
-            });
-
-            res.json({
-                trackingId: trackingData.trackingId,
-                originalTrackingId: trackingData.originalTrackingId,
-                provider: trackingData.provider,
-                status: providerData.status || 'In Transit',
-                location: providerData.location || 'Unknown',
-                estimatedDelivery: providerData.estimatedDelivery || 'Not available',
-                lastUpdated: trackingData.lastUpdated,
-                trackingHistory: providerData.history || [],
-                trackingUrl: provider.trackingUrl
-            });
-        } catch (error) {
-            console.error('❌ Error fetching provider data:', error);
-            // Return basic tracking info if provider data fetch fails
-            res.json({
-                trackingId: trackingData.trackingId,
-                originalTrackingId: trackingData.originalTrackingId,
-                provider: trackingData.provider,
-                status: 'In Transit',
-                location: 'Unknown',
-                estimatedDelivery: 'Not available',
-                lastUpdated: trackingData.lastUpdated,
-                trackingHistory: [],
-                trackingUrl: provider.trackingUrl
-            });
+        // Check if URL already has query parameters
+        if (trackingUrl.includes('?')) {
+            // URL has query parameters, append tracking ID as a new parameter
+            trackingUrl = `${trackingUrl}&trackNo=${encodedTrackingId}`;
+        } else if (trackingUrl.includes('{trackingId}')) {
+            // URL has a placeholder, replace it
+            trackingUrl = trackingUrl.replace('{trackingId}', encodedTrackingId);
+        } else {
+            // No query parameters or placeholder, append tracking ID
+            trackingUrl = `${trackingUrl}${encodedTrackingId}`;
         }
+
+        // Return tracking data and provider URL
+        res.json({
+            trackingId: trackingData.trackingId,
+            originalTrackingId: trackingData.originalTrackingId,
+            provider: trackingData.provider,
+            status: trackingData.status,
+            lastUpdated: trackingData.lastUpdated,
+            trackingUrl: trackingUrl
+        });
     } catch (error) {
-        console.error('❌ Tracking lookup error:', error);
+        console.error('Error fetching tracking data:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
@@ -218,6 +177,35 @@ app.delete('/api/tracking/:trackingId', requireAuth, async (req, res) => {
         res.json({ message: 'Tracking ID deleted successfully' });
     } catch (error) {
         console.error('❌ Error deleting tracking ID:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Add update status endpoint for tracking IDs
+app.put('/api/tracking/:trackingId/status', requireAuth, async (req, res) => {
+    try {
+        const { trackingId } = req.params;
+        const { status } = req.body;
+        console.log('📝 Updating tracking status:', { trackingId, status });
+
+        const trackingData = await TrackingData.findOneAndUpdate(
+            { trackingId },
+            { 
+                status,
+                lastUpdated: new Date()
+            },
+            { new: true }
+        );
+        
+        if (!trackingData) {
+            console.log('❌ Tracking ID not found:', trackingId);
+            return res.status(404).json({ error: 'Tracking ID not found' });
+        }
+
+        console.log('✅ Tracking status updated successfully:', { trackingId, status });
+        res.json({ message: 'Tracking status updated successfully', trackingData });
+    } catch (error) {
+        console.error('❌ Error updating tracking status:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });

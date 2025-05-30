@@ -171,6 +171,15 @@
             background-color: #dc2626;
         }
 
+        .btn-success {
+            background-color: #10b981;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background-color: #059669;
+        }
+
         .tracking-list {
             list-style: none;
         }
@@ -361,13 +370,42 @@
                 padding: 1.25rem;
             }
         }
+
+        /* Add status badge styles */
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .status-delivered {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+
+        .status-in-transit {
+            background-color: #dbeafe;
+            color: #1e40af;
+        }
+
+        .status-pending {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-exception {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
     </style>
 </head>
 <body>
     <header class="header">
         <nav class="nav-container">
             <div class="logo-container">
-                <img src="/Logos/mainlogo.png" alt="Package Tracking Logo" class="logo-small">
+                <img src="/Logos/mainlogo.jpeg" alt="Package Tracking Logo" class="logo-small">
                 <span>Package Tracking</span>
             </div>
             <ul class="nav-menu">
@@ -614,12 +652,14 @@
                             <div class="tracking-id">${item.trackingId}</div>
                             <div class="tracking-status">
                                 Original ID: ${item.originalTrackingId}<br>
-                                ${item.provider}<br>
+                                Provider: ${item.provider}<br>
+                                Status: <span class="status-badge status-${getStatusClass(item.status)}">${item.status}</span><br>
                                 Last Updated: ${new Date(item.lastUpdated).toLocaleString()}
                             </div>
                         </div>
                         <div class="tracking-actions">
-                            <button class="btn btn-primary" onclick="viewTracking('${item.trackingId}')">View</button>
+                            <button class="btn btn-primary" onclick="viewOnProviderWebsite('${item.trackingId}')">View</button>
+                            ${item.status !== 'Delivered' ? `<button class="btn btn-success" onclick="confirmUpdateStatus('${item.trackingId}')">Mark as Delivered</button>` : ''}
                             <button class="btn btn-danger" onclick="deleteTracking('${item.trackingId}')">Delete</button>
                         </div>
                     `;
@@ -640,11 +680,6 @@
                  document.getElementById('prevPage').disabled = true;
                  document.getElementById('nextPage').disabled = true;
             }
-        }
-
-        // View tracking details
-        function viewTracking(trackingId) {
-            window.location.href = `/tracking.html?id=${trackingId}`;
         }
 
         // Delete tracking ID
@@ -670,6 +705,31 @@
             } catch (error) {
                 console.error('Error deleting tracking ID:', error);
                 showMessage(error.message || 'Failed to delete tracking ID', 'error');
+            }
+        }
+
+        // Update tracking status
+        async function updateStatus(trackingId, status) {
+            try {
+                const response = await fetch(`/api/tracking/${trackingId}/status`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({ status })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Failed to update tracking status');
+                }
+
+                showMessage('Tracking status updated successfully', 'success');
+                loadTrackingList();
+            } catch (error) {
+                console.error('Error updating tracking status:', error);
+                showMessage(error.message || 'Failed to update tracking status', 'error');
             }
         }
 
@@ -742,6 +802,45 @@
             currentPage = 1; // Reset to first page when page size changes
             loadTrackingList(); // Reload list with new page size
         });
+
+        // Add confirmation dialog for status update
+        function confirmUpdateStatus(trackingId) {
+            if (confirm('Are you sure you want to mark this package as delivered?')) {
+                updateStatus(trackingId, 'Delivered');
+            }
+        }
+
+        // Add helper function for status class
+        function getStatusClass(status) {
+            status = status.toLowerCase();
+            if (status.includes('delivered')) return 'delivered';
+            if (status.includes('in transit')) return 'in-transit';
+            if (status.includes('pending')) return 'pending';
+            if (status.includes('exception')) return 'exception';
+            return 'pending';
+        }
+
+        // Add new function to view on provider's website
+        async function viewOnProviderWebsite(trackingId) {
+            try {
+                const response = await fetch(`/api/tracking/${trackingId}`, {
+                    credentials: 'include'
+                });
+                if (!response.ok) {
+                    throw new Error('Failed to fetch tracking data');
+                }
+                const data = await response.json();
+                if (data.trackingUrl && data.originalTrackingId) {
+                    const trackingUrl = data.trackingUrl.replace('{trackingId}', encodeURIComponent(data.originalTrackingId));
+                    window.open(trackingUrl, '_blank');
+                } else {
+                    showMessage('Provider tracking URL not available', 'error');
+                }
+            } catch (error) {
+                console.error('Error opening provider website:', error);
+                showMessage('Failed to open provider website', 'error');
+            }
+        }
     </script>
 </body>
 </html> 

@@ -5,151 +5,160 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Package Tracking</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            background-color: #f5f5f5;
+        :root {
+            --primary-color: #2563eb;
+            --primary-hover: #1d4ed8;
+            --background-color: #f8fafc;
+            --card-background: #ffffff;
+            --text-color: #1e293b;
+            --border-color: #e2e8f0;
         }
-        .login-container {
-            background: white;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
             width: 100%;
             max-width: 400px;
-            margin: 20px;
+            padding: 1rem;
         }
-        h1 {
+
+        .login-card {
+            background-color: var(--card-background);
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+        }
+
+        .logo-container {
             text-align: center;
-            color: #333;
-            margin-bottom: 30px;
+            margin-bottom: 2rem;
         }
+
+        .logo-container img {
+            width: 120px;
+            height: 120px;
+            object-fit: contain;
+        }
+
+        .logo-container h1 {
+            margin-top: 1rem;
+            color: var(--text-color);
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 1.5rem;
         }
-        label {
+
+        .form-group label {
             display: block;
-            margin-bottom: 5px;
-            color: #666;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
         }
-        input {
+
+        .form-group input {
             width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 16px;
-            box-sizing: border-box;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            transition: border-color 0.2s;
         }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
         button {
             width: 100%;
-            padding: 12px;
-            background-color: #007bff;
+            padding: 0.75rem;
+            background-color: var(--primary-color);
             color: white;
             border: none;
-            border-radius: 4px;
-            font-size: 16px;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-weight: 500;
             cursor: pointer;
             transition: background-color 0.2s;
         }
+
         button:hover {
-            background-color: #0056b3;
+            background-color: var(--primary-hover);
         }
-        button:disabled {
-            background-color: #ccc;
-            cursor: not-allowed;
-        }
+
         .message {
-            margin-top: 20px;
-            padding: 10px;
-            border-radius: 4px;
-            text-align: center;
-        }
-        .error {
-            background-color: #ffebee;
-            color: #c62828;
-        }
-        .success {
-            background-color: #e8f5e9;
-            color: #2e7d32;
-        }
-        #debug {
-            margin-top: 20px;
-            padding: 10px;
-            background-color: #f8f9fa;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-family: monospace;
-            font-size: 12px;
-            white-space: pre-wrap;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
             display: none;
         }
 
-        /* Mobile Responsive Styles */
-        @media (max-width: 480px) {
-            body {
-                padding: 10px;
-            }
-
-            .login-container {
-                padding: 20px;
-                margin: 10px;
-            }
-
-            h1 {
-                font-size: 1.5rem;
-                margin-bottom: 20px;
-            }
-
-            .form-group {
-                margin-bottom: 15px;
-            }
-
-            input {
-                padding: 8px;
-                font-size: 14px;
-            }
-
-            button {
-                padding: 10px;
-                font-size: 14px;
-            }
-
-            .message {
-                margin-top: 15px;
-                padding: 8px;
-                font-size: 14px;
-            }
+        .message.success {
+            background-color: #dcfce7;
+            color: #166534;
+            border: 1px solid #86efac;
         }
 
-        /* Tablet Responsive Styles */
-        @media (min-width: 481px) and (max-width: 768px) {
-            .login-container {
-                max-width: 90%;
-                margin: 15px;
+        .message.error {
+            background-color: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 0.5rem;
+            }
+
+            .login-card {
+                padding: 1.5rem;
+            }
+
+            .logo-container img {
+                width: 100px;
+                height: 100px;
             }
         }
     </style>
 </head>
 <body>
-    <div class="login-container">
-        <h1>Login</h1>
-        <form id="loginForm">
-            <div class="form-group">
-                <label for="username">Username</label>
-                <input type="text" id="username" name="username" required>
+    <div class="container">
+        <div class="login-card">
+            <div class="logo-container" style="text-align: center; margin-bottom: 2rem;">
+                <img src="/Logos/mainlogo.jpeg" alt="Package Tracking Logo" style="width: 120px; height: 120px;">
+                <h1 style="margin-top: 1rem; color: var(--text-color);">Package Tracking</h1>
             </div>
-            <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" name="password" required>
-            </div>
-            <button type="submit" id="loginButton">Login</button>
-        </form>
-        <div id="message" class="message" style="display: none;"></div>
+            <div id="message" class="message"></div>
+            <form id="loginForm" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <button type="submit" id="loginButton">Login</button>
+            </form>
+        </div>
     </div>
 
     <script>

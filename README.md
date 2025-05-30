@@ -29,13 +29,17 @@ cd tracking-app
 npm install
 ```
 
-3. Create a `.env` file in the root directory with the following content:
-```
-MONGODB_URI=mongodb://localhost:27017/tracking
-PORT=3001
-SESSION_SECRET=your-super-secret-key-change-this-in-production
-NODE_ENV=development
-```
+3. Environment Setup:
+   - Copy `.env.example` to `.env`
+   - Update the values in `.env` with your configuration:
+     ```
+     MONGODB_URI=your_mongodb_connection_string
+     PORT=3001
+     SESSION_SECRET=your_secret_key
+     NODE_ENV=development
+     CORS_ORIGIN=http://localhost:3001
+     ```
+   - For production deployment, set these environment variables in your hosting platform
 
 4. Create the admin user:
 ```bash
@@ -60,6 +64,23 @@ npm run dev
 ```
 
 The application will be available at `http://localhost:3001`
+
+## Deployment
+
+When deploying to production:
+
+1. Set up environment variables in your hosting platform:
+   - MONGODB_URI: Your production MongoDB connection string
+   - SESSION_SECRET: A strong, unique secret key
+   - NODE_ENV: Set to 'production'
+   - CORS_ORIGIN: Your production domain
+   - PORT: Your desired port (if not using platform default)
+
+2. Common hosting platforms:
+   - Heroku: Use `heroku config:set` command
+   - AWS: Use Elastic Beanstalk environment variables
+   - DigitalOcean: Use App Platform environment variables
+   - VPS: Set in system environment or process manager
 
 ## Usage
 
