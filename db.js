@@ -25,6 +25,39 @@ const trackingSchema = new mongoose.Schema({
     type: String,
     default: 'In transit'
   },
+  location: {
+    type: String,
+    default: ''
+  },
+  estimatedDelivery: {
+    type: Date,
+    default: null
+  },
+  origin: {
+    type: String,
+    default: ''
+  },
+  destination: {
+    type: String,
+    default: ''
+  },
+  weight: {
+    type: String,
+    default: ''
+  },
+  dimensions: {
+    type: String,
+    default: ''
+  },
+  history: [{
+    status: String,
+    location: String,
+    timestamp: {
+      type: Date,
+      default: Date.now
+    },
+    description: String
+  }],
   createdAt: {
     type: Date,
     default: Date.now
@@ -32,7 +65,17 @@ const trackingSchema = new mongoose.Schema({
   lastUpdated: {
     type: Date,
     default: Date.now
+  },
+  lastFetched: {
+    type: Date,
+    default: null
+  },
+  nextFetchAfter: {
+    type: Date,
+    default: () => new Date(Date.now() + 2 * 60 * 60 * 1000) // Default 2 hours
   }
+}, {
+  timestamps: true
 });
 
 // Create the model

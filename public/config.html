@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -119,11 +120,16 @@
         .provider-url {
             color: var(--text-secondary);
             font-size: 0.875rem;
-            white-space: nowrap; /* Prevent text wrapping */
-            overflow: hidden; /* Hide overflow text */
-            text-overflow: ellipsis; /* Add ellipsis to truncated text */
-            max-width: 100%; /* Ensure it respects container width */
-            display: block; /* Ensure overflow properties work */
+            white-space: nowrap;
+            /* Prevent text wrapping */
+            overflow: hidden;
+            /* Hide overflow text */
+            text-overflow: ellipsis;
+            /* Add ellipsis to truncated text */
+            max-width: 100%;
+            /* Ensure it respects container width */
+            display: block;
+            /* Ensure overflow properties work */
         }
 
         .provider-actions {
@@ -226,8 +232,10 @@
             width: 40px;
             height: 40px;
             /* Add or adjust styles to prevent it from occupying full page width */
-            display: inline-block; /* Ensure it doesn't take full width if it's a block element */
-            vertical-align: middle; /* Align with text if needed */
+            display: inline-block;
+            /* Ensure it doesn't take full width if it's a block element */
+            vertical-align: middle;
+            /* Align with text if needed */
         }
 
         .mobile-menu-btn {
@@ -237,6 +245,98 @@
             cursor: pointer;
             padding: 0.5rem;
             color: var(--text-primary);
+        }
+
+        /* API Configuration Styles */
+        .api-config-section {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 2px solid #e5e7eb;
+        }
+
+        .collapsible-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            padding: 1rem;
+            background-color: #f9fafb;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            transition: background-color 0.2s;
+        }
+
+        .collapsible-header:hover {
+            background-color: #f3f4f6;
+        }
+
+        .collapsible-header h3 {
+            margin: 0;
+            font-size: 1.125rem;
+            font-weight: 600;
+        }
+
+        .collapse-icon {
+            transition: transform 0.3s;
+        }
+
+        .collapse-icon.expanded {
+            transform: rotate(180deg);
+        }
+
+        .collapsible-content {
+            display: none;
+            padding: 1rem 0;
+        }
+
+        .collapsible-content.show {
+            display: block;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-family: 'Courier New', monospace;
+            transition: border-color 0.2s;
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        select {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: border-color 0.2s;
+            background-color: white;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .help-text {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+
+        .json-error {
+            color: var(--error-color);
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+            display: none;
         }
 
         /* Mobile Responsive Styles */
@@ -294,12 +394,15 @@
             .provider-item {
                 flex-direction: column;
                 gap: 1rem;
-                align-items: flex-start; /* Align items to the start in column layout */
+                align-items: flex-start;
+                /* Align items to the start in column layout */
             }
 
             .provider-info {
-                width: 100%; /* Allow provider info to take full width */
-                margin-bottom: 0.5rem; /* Add space between info and actions */
+                width: 100%;
+                /* Allow provider info to take full width */
+                margin-bottom: 0.5rem;
+                /* Add space between info and actions */
             }
 
             .provider-actions {
@@ -309,31 +412,39 @@
             }
 
             .provider-actions button {
-                 flex: 1; /* Allow buttons to grow and shrink */
-                 padding: 0.5rem; /* Adjust padding */
-                 font-size: 0.875rem; /* Adjust font size */
-                 text-align: center; /* Center text in buttons */
+                flex: 1;
+                /* Allow buttons to grow and shrink */
+                padding: 0.5rem;
+                /* Adjust padding */
+                font-size: 0.875rem;
+                /* Adjust font size */
+                text-align: center;
+                /* Center text in buttons */
             }
 
             /* Optional: Stack buttons on very small screens if needed */
-             @media (max-width: 480px) {
-                 .provider-actions {
-                     flex-direction: column; /* Stack buttons vertically */
-                     gap: 0.5rem; /* Space between stacked buttons */
-                 }
+            @media (max-width: 480px) {
+                .provider-actions {
+                    flex-direction: column;
+                    /* Stack buttons vertically */
+                    gap: 0.5rem;
+                    /* Space between stacked buttons */
+                }
 
-                 .provider-actions button {
-                     width: 100%; /* Make buttons take full width when stacked */
-                 }
-             }
+                .provider-actions button {
+                    width: 100%;
+                    /* Make buttons take full width when stacked */
+                }
+            }
         }
     </style>
 </head>
+
 <body>
     <header class="header">
         <nav class="nav-container">
             <div class="logo-container">
-                <img src="/Logos/mainlogo.jpeg" alt="Package Tracking Logo" class="logo-small">
+                <img src="/Logos/logo.jpeg" alt="Package Tracking Logo" class="logo-small">
                 <span>Package Tracking</span>
             </div>
             <ul class="nav-menu">
@@ -354,7 +465,7 @@
             <div class="config-section">
                 <h2 class="section-title">Tracking Providers</h2>
                 <div id="message"></div>
-                
+
                 <div class="provider-list" id="providerList">
                     <!-- Provider items will be added here dynamically -->
                 </div>
@@ -370,8 +481,48 @@
                     </div>
                     <div class="form-group">
                         <label for="trackingUrl">Tracking URL Template</label>
-                        <input type="text" id="trackingUrl" required placeholder="Enter tracking URL template (use {trackingId} as placeholder)" />
+                        <input type="text" id="trackingUrl" required
+                            placeholder="Enter tracking URL template (use {trackingId} as placeholder)" />
                     </div>
+
+                    <!-- API Configuration Section -->
+                    <div class="api-config-section">
+                        <div class="collapsible-header" onclick="toggleApiConfig()">
+                            <h3>API Configuration (Optional)</h3>
+                            <span class="collapse-icon" id="collapseIcon">▼</span>
+                        </div>
+                        <div class="collapsible-content" id="apiConfigContent">
+                            <div class="form-group">
+                                <label for="apiEndpoint">API Endpoint</label>
+                                <input type="text" id="apiEndpoint" placeholder="https://api.provider.com/track" />
+                                <div class="help-text">The API endpoint URL for tracking requests</div>
+                            </div>
+                            <div class="form-group">
+                                <label for="apiMethod">HTTP Method</label>
+                                <select id="apiMethod">
+                                    <option value="POST">POST</option>
+                                    <option value="GET">GET</option>
+                                    <option value="PUT">PUT</option>
+                                    <option value="PATCH">PATCH</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="apiHeaders">Request Headers (JSON)</label>
+                                <textarea id="apiHeaders"
+                                    placeholder='{"Content-Type": "application/json", "Accept": "*/*"}'></textarea>
+                                <div class="help-text">Enter headers as a JSON object</div>
+                                <div class="json-error" id="headersError">Invalid JSON format</div>
+                            </div>
+                            <div class="form-group">
+                                <label for="apiRequestBody">Request Body Template (JSON)</label>
+                                <textarea id="apiRequestBody"
+                                    placeholder='{"trackType": "cnno", "trackNumber": "{trackingId}"}'></textarea>
+                                <div class="help-text">Use {trackingId} as placeholder for the tracking number</div>
+                                <div class="json-error" id="bodyError">Invalid JSON format</div>
+                            </div>
+                        </div>
+                    </div>
+
                     <button type="submit">Add Provider</button>
                 </form>
             </div>
@@ -411,6 +562,49 @@
             `).join('');
         }
 
+        // Toggle API Configuration section
+        function toggleApiConfig() {
+            const content = document.getElementById('apiConfigContent');
+            const icon = document.getElementById('collapseIcon');
+            content.classList.toggle('show');
+            icon.classList.toggle('expanded');
+        }
+
+        // Validate JSON input
+        function validateJSON(text, errorElementId) {
+            const errorElement = document.getElementById(errorElementId);
+            if (!text.trim()) {
+                errorElement.style.display = 'none';
+                return true;
+            }
+            try {
+                JSON.parse(text);
+                errorElement.style.display = 'none';
+                return true;
+            } catch (e) {
+                errorElement.style.display = 'block';
+                return false;
+            }
+        }
+
+        // Add event listeners for JSON validation
+        document.addEventListener('DOMContentLoaded', () => {
+            const headersTextarea = document.getElementById('apiHeaders');
+            const bodyTextarea = document.getElementById('apiRequestBody');
+
+            if (headersTextarea) {
+                headersTextarea.addEventListener('blur', () => {
+                    validateJSON(headersTextarea.value, 'headersError');
+                });
+            }
+
+            if (bodyTextarea) {
+                bodyTextarea.addEventListener('blur', () => {
+                    validateJSON(bodyTextarea.value, 'bodyError');
+                });
+            }
+        });
+
         // Edit provider
         async function editProvider(id) {
             try {
@@ -420,63 +614,122 @@
                     throw new Error('Failed to fetch provider details');
                 }
                 const provider = await response.json();
-                
+
                 // Populate the form
                 document.getElementById('providerId').value = provider._id;
                 document.getElementById('providerName').value = provider.name;
                 document.getElementById('trackingUrl').value = provider.trackingUrl;
-                
+
+                // Populate API configuration if available
+                if (provider.apiConfig) {
+                    document.getElementById('apiEndpoint').value = provider.apiConfig.endpoint || '';
+                    document.getElementById('apiMethod').value = provider.apiConfig.method || 'POST';
+
+                    // Convert Map to JSON for headers
+                    if (provider.apiConfig.headers) {
+                        const headers = typeof provider.apiConfig.headers === 'object'
+                            ? provider.apiConfig.headers
+                            : Object.fromEntries(provider.apiConfig.headers);
+                        document.getElementById('apiHeaders').value = JSON.stringify(headers, null, 2);
+                    }
+
+                    document.getElementById('apiRequestBody').value = provider.apiConfig.requestBodyTemplate || '';
+
+                    // Expand API config section if there's data
+                    if (provider.apiConfig.endpoint) {
+                        const content = document.getElementById('apiConfigContent');
+                        const icon = document.getElementById('collapseIcon');
+                        content.classList.add('show');
+                        icon.classList.add('expanded');
+                    }
+                }
+
                 // Update form button text
                 document.getElementById('providerForm').querySelector('button[type="submit"]').textContent = 'Update Provider';
-                
+
                 // Scroll to form
                 document.getElementById('providerForm').scrollIntoView({ behavior: 'smooth' });
             } catch (error) {
                 console.error('Error fetching provider details:', error);
-                showError('Failed to load provider details');
+                showMessage('Failed to load provider details', 'error');
             }
         }
 
         async function handleFormSubmit(e) {
             e.preventDefault();
-            
+
             const providerId = document.getElementById('providerId').value;
             const name = document.getElementById('providerName').value.trim();
             const trackingUrl = document.getElementById('trackingUrl').value.trim();
-            
+
             if (!name || !trackingUrl) {
-                showError('Please fill in all fields');
+                showMessage('Please fill in all required fields', 'error');
                 return;
             }
-            
+
+            // Get API configuration
+            const apiEndpoint = document.getElementById('apiEndpoint').value.trim();
+            const apiMethod = document.getElementById('apiMethod').value;
+            const apiHeadersText = document.getElementById('apiHeaders').value.trim();
+            const apiRequestBodyText = document.getElementById('apiRequestBody').value.trim();
+
+            // Validate JSON fields
+            if (apiHeadersText && !validateJSON(apiHeadersText, 'headersError')) {
+                showMessage('Invalid JSON format in headers', 'error');
+                return;
+            }
+
+            if (apiRequestBodyText && !validateJSON(apiRequestBodyText, 'bodyError')) {
+                showMessage('Invalid JSON format in request body', 'error');
+                return;
+            }
+
             try {
                 const url = providerId ? `/api/providers/${providerId}` : '/api/providers';
                 const method = providerId ? 'PUT' : 'POST';
-                
+
+                const payload = { name, trackingUrl };
+
+                // Add API configuration if provided
+                if (apiEndpoint) {
+                    payload.apiConfig = {
+                        endpoint: apiEndpoint,
+                        method: apiMethod,
+                        headers: apiHeadersText ? JSON.parse(apiHeadersText) : {},
+                        requestBodyTemplate: apiRequestBodyText
+                    };
+                }
+
                 const response = await fetch(url, {
                     method,
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ name, trackingUrl })
+                    body: JSON.stringify(payload)
                 });
-                
+
                 if (!response.ok) {
                     const error = await response.json();
                     throw new Error(error.error || 'Failed to save provider');
                 }
-                
+
                 // Reset form
                 document.getElementById('providerForm').reset();
                 document.getElementById('providerId').value = '';
                 document.getElementById('providerForm').querySelector('button[type="submit"]').textContent = 'Add Provider';
-                
+
+                // Collapse API config section
+                const content = document.getElementById('apiConfigContent');
+                const icon = document.getElementById('collapseIcon');
+                content.classList.remove('show');
+                icon.classList.remove('expanded');
+
                 // Reload providers
                 await loadProviders();
-                showSuccess(providerId ? 'Provider updated successfully' : 'Provider added successfully');
+                showMessage(providerId ? 'Provider updated successfully' : 'Provider added successfully', 'success');
             } catch (error) {
                 console.error('Error saving provider:', error);
-                showError(error.message);
+                showMessage(error.message, 'error');
             }
         }
 
@@ -509,7 +762,7 @@
             const messageDiv = document.getElementById('message');
             messageDiv.className = `message ${type}`;
             messageDiv.textContent = message;
-            
+
             // Clear message after 5 seconds
             setTimeout(() => {
                 messageDiv.textContent = '';
@@ -560,4 +813,5 @@
         });
     </script>
 </body>
-</html> 
+
+</html>

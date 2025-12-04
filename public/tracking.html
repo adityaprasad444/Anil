@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width,ruz, initialtera-scale=-reduced=1Update=1 voluntary=1">
     <title>Track Package - Package Tracking</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
@@ -200,6 +201,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <div class="tracking-card">
@@ -218,22 +220,30 @@
                             <span id="status" class="status-badge"></span>
                         </div>
                     </div>
-                    <div class="info-group">
+                    <!-- <div class="info-group">
                         <div class="info-label">Current Location</div>
                         <div class="info-value" id="location"></div>
                     </div>
                     <div class="info-group">
                         <div class="info-label">Estimated Delivery</div>
                         <div class="info-value" id="estimatedDelivery"></div>
-                    </div>
+                    </div> -->
                     <div class="info-group">
                         <div class="info-label">Last Updated</div>
                         <div class="info-value" id="lastUpdated"></div>
                     </div>
                 </div>
 
+                <!-- History Section -->
+                <div id="history-section" class="tracking-history" style="display: none;">
+                    <h2 class="history-title">Tracking History</h2>
+                    <ul id="history-list" class="history-list">
+                        <!-- History items will be populated here -->
+                    </ul>
+                </div>
+
                 <!-- Add tracking link section -->
-                <div class="tracking-link" style="margin-top: 1.5rem; text-align: center;">
+                <!-- <div class="tracking-link" style="margin-top: 1.5rem; text-align: center;">
                     <a id="providerTrackingLink" href="#" target="_blank" style="
                         display: inline-block;
                         padding: 0.75rem 1.5rem;
@@ -244,11 +254,12 @@
                         font-weight: 500;
                         transition: background-color 0.2s;
                     ">View on Provider's Website</a>
-                </div>
+                </div> -->
 
                 <div id="provider-iframe-container" style="display:none; margin-top:2rem;">
                     <div id="iframe-fallback" style="display:none; margin-top:1rem; text-align:center;">
-                        <div style="color:#64748b; font-size:0.9rem; margin-top:0.5rem;">(If the tracking page does not load above, click the link.)</div>
+                        <div style="color:#64748b; font-size:0.9rem; margin-top:0.5rem;">(If the tracking page does not
+                            load above, click the link.)</div>
                     </div>
                 </div>
             </div>
@@ -260,10 +271,102 @@
         const urlParams = new URLSearchParams(window.location.search);
         const trackingId = urlParams.get('id');
 
+        // Function to format date
+        function formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            const options = {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+            };
+            return new Date(dateString).toLocaleDateString('en-US', options);
+        }
+
+        // Function to update the UI with tracking data
+        function updateTrackingUI(data) {
+            document.getElementById('loading').style.display = 'none';
+            const content = document.getElementById('tracking-content');
+
+            // Update basic tracking info
+            document.getElementById('trackingId').textContent = data.trackingId;
+
+            // Update status with appropriate styling
+            const statusElement = document.getElementById('status');
+            statusElement.textContent = data.status || 'In Transit';
+            statusElement.className = 'status-badge ' + getStatusClass(data.status);
+
+            // Update other info
+            // document.getElementById('location').textContent = data.location || 'N/A';
+            // document.getElementById('estimatedDelivery').textContent = formatDate(data.estimatedDelivery);
+            document.getElementById('lastUpdated').textContent = formatDate(data.lastUpdated);
+
+            // Update provider link
+            if (data.trackingUrl) {
+                const trackingUrl = data.trackingUrl.replace('{trackingId}', encodeURIComponent(data.originalTrackingId || trackingId));
+                const link = document.getElementById('providerTrackingLink');
+                if (link) {
+                    link.href = trackingUrl;
+                    link.textContent = `Track on ${data.provider || 'Provider'}'s Website`;
+                    document.querySelector('.tracking-link').style.display = 'block';
+                }
+            } else {
+                const linkDiv = document.querySelector('.tracking-link');
+                if (linkDiv) {
+                    linkDiv.style.display = 'none';
+                }
+            }
+
+            // Render History
+            const historyContainer = document.getElementById('history-list');
+            if (data.history && data.history.length > 0) {
+                // Sort history by timestamp descending (newest first)
+                const sortedHistory = [...data.history].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+                historyContainer.innerHTML = sortedHistory.map(item => `
+                    <li class="history-item">
+                        <div class="history-content">
+                            <div class="history-status">${item.status}</div>
+                            <div class="history-location">${item.location || ''}</div>
+                            <div class="history-time">${formatDate(item.timestamp)}</div>
+                            ${item.description ? `<div class="history-description" style="font-size: 0.85rem; color: #64748b; margin-top: 0.25rem;">${item.description}</div>` : ''}
+                        </div>
+                    </li>
+                `).join('');
+                document.getElementById('history-section').style.display = 'block';
+            } else {
+                document.getElementById('history-section').style.display = 'none';
+            }
+
+            // Show the content
+            content.style.display = 'block';
+        }
+
+        // Helper function to get status class
+        function getStatusClass(status) {
+            if (!status) return 'status-in-transit';
+
+            const statusLower = status.toLowerCase();
+            if (statusLower.includes('deliver')) return 'status-delivered';
+            if (statusLower.includes('delay') || statusLower.includes('exception')) return 'status-delayed';
+            return 'status-in-transit';
+        }
+
+        // Function to show error message
+        function showError(message) {
+            document.getElementById('loading').style.display = 'none';
+            const errorElement = document.getElementById('error');
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+        }
+
+        // Initialize the page
         if (!trackingId) {
             showError('No tracking ID provided');
         } else {
-            // Fetch tracking data and redirect to provider's website
+            // Fetch tracking data
             fetch(`/api/tracking/${trackingId}`)
                 .then(response => {
                     if (!response.ok) {
@@ -272,25 +375,17 @@
                     return response.json();
                 })
                 .then(data => {
-                    if (data.trackingUrl && data.originalTrackingId) {
-                        const trackingUrl = data.trackingUrl.replace('{trackingId}', encodeURIComponent(data.originalTrackingId));
-                        window.location.href = trackingUrl;
-                    } else {
-                        showError('Provider tracking URL not available');
+                    if (data.error) {
+                        throw new Error(data.error);
                     }
+                    updateTrackingUI(data);
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    showError('Failed to fetch tracking data');
+                    showError(error.message || 'Failed to fetch tracking data');
                 });
-        }
-
-        function showError(message) {
-            document.getElementById('loading').style.display = 'none';
-            const errorElement = document.getElementById('error');
-            errorElement.textContent = message;
-            errorElement.style.display = 'block';
         }
     </script>
 </body>
-</html> 
+
+</html>
