@@ -38,6 +38,15 @@ app.use(session({
 
 // Serve static files
 app.use(express.static('public'));
+// Add this after your static file serving middleware
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// If you're using login.html as the entry point:
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'login.html'));
+});
 
 // Authentication middleware
 const requireAuth = (req, res, next) => {
