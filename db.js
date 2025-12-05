@@ -1,10 +1,20 @@
 const mongoose = require('mongoose');
 const config = require('./config');
 
-// Connect to MongoDB using config
-mongoose.connect(config.mongo.uri, config.mongo.options)
-  .then(() => console.log('Connected to MongoDB'))
-  .catch(err => console.error('MongoDB connection error:', err));
+// MongoDB connection with updated options
+const connectDB = async () => {
+  try {
+    const conn = await mongoose.connect(config.mongo.uri, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true
+    });
+    console.log(` MongoDB: Connected to ${conn.connection.host}/${conn.connection.name}`);
+    return conn;
+  } catch (error) {
+    console.error(' MongoDB connection error:', error.message);
+    process.exit(1);
+  }
+};
 
 // Define the tracking data schema
 const trackingSchema = new mongoose.Schema({
@@ -25,30 +35,12 @@ const trackingSchema = new mongoose.Schema({
     type: String,
     default: 'In transit'
   },
-  location: {
-    type: String,
-    default: ''
-  },
-  estimatedDelivery: {
-    type: Date,
-    default: null
-  },
-  origin: {
-    type: String,
-    default: ''
-  },
-  destination: {
-    type: String,
-    default: ''
-  },
-  weight: {
-    type: String,
-    default: ''
-  },
-  dimensions: {
-    type: String,
-    default: ''
-  },
+  location: String,
+  estimatedDelivery: Date,
+  origin: String,
+  destination: String,
+  weight: String,
+  dimensions: String,
   history: [{
     status: String,
     location: String,
@@ -58,14 +50,6 @@ const trackingSchema = new mongoose.Schema({
     },
     description: String
   }],
-  createdAt: {
-    type: Date,
-    default: Date.now
-  },
-  lastUpdated: {
-    type: Date,
-    default: Date.now
-  },
   lastFetched: {
     type: Date,
     default: null
@@ -82,6 +66,7 @@ const trackingSchema = new mongoose.Schema({
 const TrackingData = mongoose.model('TrackingData', trackingSchema);
 
 module.exports = {
-  TrackingData,
-  mongoose
-}; 
+  connectDB,
+  mongoose,
+  TrackingData
+};

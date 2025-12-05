@@ -3,12 +3,10 @@ require('dotenv').config();
 module.exports = {
   // MongoDB configuration
   mongo: {
-    uri: process.env.MONGODB_URI,
+    uri: process.env.MONGODB_URI || 'mongodb://localhost:27017/tracking',
     options: {
       useNewUrlParser: true,
-      useUnifiedTopology: true,
-      useCreateIndex: true,
-      useFindAndModify: false
+      useUnifiedTopology: true
     }
   },
 

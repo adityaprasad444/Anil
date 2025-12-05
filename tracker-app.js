@@ -6,7 +6,7 @@ const helmet = require('helmet');
 const cookieParser = require('cookie-parser');
 const path = require('path');
 const config = require('./config');
-const { TrackingData } = require('./db');
+const { connectDB, TrackingData } = require('./db');
 const User = require('./models/User');
 const Provider = require('./models/Provider');
 const trackingService = require('./services/trackingService');
@@ -523,15 +523,25 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Internal server error' });
 });
 
-// Start server
-const PORT = config.server.port;
-app.listen(PORT, () => {
-  console.log(`
-🚀 Server started successfully!
-📝 Environment: ${process.env.NODE_ENV || 'development'}
-🔌 Port: ${PORT}
-🌐 URL: http://localhost:${PORT}
-📦 MongoDB: Connected
-⏰ Started at: ${new Date().toISOString()}
-  `);
-});
+// Start the server
+const startServer = async () => {
+  try {
+    // Connect to MongoDB
+    await connectDB();
+    
+    const PORT = config.server.port || 3001;
+    app.listen(PORT, () => {
+      console.log(`\n🚀 Server started successfully!`);
+      console.log(`📝 Environment: ${config.server.environment}`);
+      console.log(`🔌 Port: ${PORT}`);
+      console.log(`🌐 URL: http://localhost:${PORT}`);
+      console.log(`⏰ Started at: ${new Date().toISOString()}\n`);
+    });
+  } catch (error) {
+    console.error('❌ Failed to start server:', error);
+    process.exit(1);
+  }
+};
+
+// Start the application
+startServer();
