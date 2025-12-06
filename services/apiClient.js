@@ -109,7 +109,49 @@ class ApiClient {
             return this.parseICLResponse(apiResponse, trackingData);
         }
 
+        if (provider.name.toLowerCase().includes("delhivery")) {
+            return this.parseDelhiveryResponse(apiResponse, trackingData);
+        }
+
         return this.parseGenericResponse(apiResponse, trackingData);
+    }
+
+    /**
+     * Delhivery-specific parser
+     */
+    parseDelhiveryResponse(apiResponse, trackingData) {
+        try {
+            // Check if response has data array
+            if (!apiResponse.data || !Array.isArray(apiResponse.data) || apiResponse.data.length === 0) {
+                trackingData.status = "No data found";
+                return trackingData;
+            }
+
+            const shipment = apiResponse.data[0];
+            const statusObj = shipment.status || {};
+            const scans = shipment.scans || [];
+
+            trackingData.status = statusObj.status || "In Transit";
+            trackingData.location = statusObj.statusLocation || "Unknown";
+            trackingData.origin = shipment.origin || "";
+            trackingData.destination = shipment.destination || "";
+            // Use deliveryDate_v1 or expectedDeliveryDate if available
+            trackingData.estimatedDelivery = shipment.deliveryDate_v1 || shipment.expectedDeliveryDate || null;
+
+            // Map history
+            trackingData.history = scans.map(scan => ({
+                timestamp: scan.scanDateTime ? new Date(scan.scanDateTime) : new Date(),
+                status: scan.scan || scan.scanType,
+                location: scan.scannedLocation || scan.scanLocation || "",
+                description: scan.instructions || scan.message || ""
+            }));
+
+            return trackingData;
+        } catch (err) {
+            console.error("❌ Error parsing Delhivery:", err);
+            trackingData.status = "Error parsing Delhivery response";
+            return trackingData;
+        }
     }
 
     /**
