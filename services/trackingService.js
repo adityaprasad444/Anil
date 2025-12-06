@@ -82,6 +82,11 @@ class TrackingService {
       // Parse API response
       const parsedData = apiClient.parseResponse(apiResponse, provider, originalTrackingId);
 
+      // Default 'Unknown' status to 'In Transit'
+      if (parsedData.status && parsedData.status.toLowerCase() === 'unknown') {
+        parsedData.status = 'In Transit';
+      }
+
       // Update tracking data in database
       const updateData = {
         status: parsedData.status || trackingEntry.status,
@@ -133,56 +138,56 @@ class TrackingService {
    * Called by cron job
    * @returns {Promise<Object>} - Update statistics
    */
- // In services/trackingService.js, update the updateAllTrackingData method:
+  // In services/trackingService.js, update the updateAllTrackingData method:
 
-async updateAllTrackingData() {
-  try {
-    console.log('🔄 Starting bulk update of all tracking data...');
+  async updateAllTrackingData() {
+    try {
+      console.log('🔄 Starting bulk update of all tracking data...');
 
-    // Get all tracking entries that are not delivered
-    const activeEntries = await TrackingData.find({
-      status: { 
-        $not: { 
-          $in: [
-            /delivered/i, 
-            /delivery.*complete/i, 
-            /delivered.*successfully/i,
-            /completed/i
-          ] 
-        } 
+      // Get all tracking entries that are not delivered
+      const activeEntries = await TrackingData.find({
+        status: {
+          $not: {
+            $in: [
+              /delivered/i,
+              /delivery.*complete/i,
+              /delivered.*successfully/i,
+              /completed/i
+            ]
+          }
+        }
+      });
+
+      console.log(`📦 Found ${activeEntries.length} active tracking entries to update`);
+
+      const results = {
+        total: activeEntries.length,
+        updated: 0,
+        failed: 0,
+        skipped: 0
+      };
+
+      // Update each entry
+      for (const entry of activeEntries) {
+        try {
+          await this.fetchAndStoreTrackingData(entry.trackingId);
+          results.updated++;
+        } catch (error) {
+          console.error(`Failed to update ${entry.trackingId}:`, error.message);
+          results.failed++;
+        }
+        // Small delay to avoid overwhelming the API
+        await new Promise(resolve => setTimeout(resolve, 500));
       }
-    });
 
-    console.log(`📦 Found ${activeEntries.length} active tracking entries to update`);
+      console.log(`✅ Bulk update completed:`, results);
+      return results;
 
-    const results = {
-      total: activeEntries.length,
-      updated: 0,
-      failed: 0,
-      skipped: 0
-    };
-
-    // Update each entry
-    for (const entry of activeEntries) {
-      try {
-        await this.fetchAndStoreTrackingData(entry.trackingId);
-        results.updated++;
-      } catch (error) {
-        console.error(`Failed to update ${entry.trackingId}:`, error.message);
-        results.failed++;
-      }
-      // Small delay to avoid overwhelming the API
-      await new Promise(resolve => setTimeout(resolve, 500));
+    } catch (error) {
+      console.error('❌ Error in updateAllTrackingData:', error);
+      throw error;
     }
-
-    console.log(`✅ Bulk update completed:`, results);
-    return results;
-
-  } catch (error) {
-    console.error('❌ Error in updateAllTrackingData:', error);
-    throw error;
   }
-}
 
   /**
    * Check if tracking data needs refresh
