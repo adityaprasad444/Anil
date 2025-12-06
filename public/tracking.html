@@ -358,6 +358,10 @@
         // Function to format date
         function formatDate(dateString) {
             if (!dateString) return 'N/A';
+            const date = new Date(dateString);
+            // Check if date is valid
+            if (isNaN(date.getTime())) return 'N/A';
+
             const options = {
                 year: 'numeric',
                 month: 'short',
@@ -366,7 +370,7 @@
                 minute: '2-digit',
                 hour12: true
             };
-            return new Date(dateString).toLocaleDateString('en-US', options);
+            return date.toLocaleDateString('en-US', options);
         }
 
         // Function to update the UI with tracking data
@@ -382,14 +386,19 @@
             statusElement.textContent = data.status || 'In Transit';
             statusElement.className = 'status-badge ' + getStatusClass(data.status);
 
-            // Update other info
-            document.getElementById('lastUpdated').textContent = formatDate(data.lastUpdated);
+            // Calculate Last Updated
+            let lastUpdatedDate = data.lastUpdated;
 
-            // Render History
+            // Render History & Determine latest date if needed
             const historyContainer = document.getElementById('history-list');
             if (data.history && data.history.length > 0) {
                 // Sort history by timestamp descending (newest first)
                 const sortedHistory = [...data.history].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+                // If lastUpdated is missing/invalid, use the latest history timestamp
+                if (!lastUpdatedDate || lastUpdatedDate === 'Invalid Date') {
+                    lastUpdatedDate = sortedHistory[0].timestamp;
+                }
 
                 historyContainer.innerHTML = sortedHistory.map((item, index) => `
                     <li class="history-item">
@@ -408,6 +417,9 @@
             } else {
                 document.getElementById('history-section').style.display = 'none';
             }
+
+            // Update Last Updated field
+            document.getElementById('lastUpdated').textContent = formatDate(lastUpdatedDate);
 
             // Show the content
             content.style.display = 'block';
