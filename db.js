@@ -13,17 +13,23 @@ const connectDB = async () => {
     throw new Error('MONGODB_URI is not defined in environment variables');
   }
 
-  if (cached.conn) {
-    console.log('📦 Using cached MongoDB connection');
+  // If cached connection exists and is ready (1 = connected)
+  if (cached.conn && mongoose.connection.readyState === 1) {
+    // console.log('📦 Using cached MongoDB connection');
     return cached.conn;
+  }
+
+  // If not ready, kill the promise/conn to force reconnection
+  if (mongoose.connection.readyState !== 1) {
+    cached.promise = null;
+    cached.conn = null;
   }
 
   if (!cached.promise) {
     const opts = {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-      bufferCommands: false, // Disable Mongoose buffering
-      serverSelectionTimeoutMS: 5000 // Timeout after 5s
+      bufferCommands: false, // Disable buffering to fail fast
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
     };
 
     console.log('🔌 Establishing new MongoDB connection...');
@@ -35,8 +41,16 @@ const connectDB = async () => {
 
   try {
     cached.conn = await cached.promise;
+
+    // Double check connection state
+    if (mongoose.connection.readyState !== 1) {
+      throw new Error('MongoDB connection not ready after await');
+    }
+
   } catch (e) {
     cached.promise = null;
+    cached.conn = null;
+    console.error('❌ MongoDB Connection Error:', e);
     throw e;
   }
 

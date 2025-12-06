@@ -72,6 +72,17 @@ cron.schedule('* 1 * * *', async () => {
   }
 });
 
+// Health Check
+app.get('/api/health', async (req, res) => {
+  const dbStatus = mongoose.connection.readyState;
+  res.status(200).json({
+    status: 'ok',
+    environment: config.server.environment,
+    dbState: dbStatus, // 0: disconnected, 1: connected, 2: connecting, 3: disconnecting
+    dbName: mongoose.connection.name
+  });
+});
+
 // Routes
 app.get('/', (req, res) => {
   res.sendFile(path.join(publicPath, 'index.html'));
