@@ -97,11 +97,16 @@
         .hero {
             padding-top: 140px;
             padding-bottom: 80px;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.7)), url('/images/hero-bg.png');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
             display: flex;
             align-items: center;
             justify-content: center;
             text-align: center;
+            color: white;
+            /* Ensure base text color is white in hero */
         }
 
         .hero-container {
@@ -114,14 +119,16 @@
             font-size: 2.5rem;
             font-weight: 800;
             margin-bottom: 1rem;
-            color: var(--text-primary);
+            color: #ffffff;
             letter-spacing: -0.02em;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
         }
 
         .hero p {
             font-size: 1.1rem;
-            color: var(--text-secondary);
+            color: #e5e7eb;
             margin-bottom: 2.5rem;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
         }
 
         .tracking-card {
@@ -348,6 +355,36 @@
             </div>
 
             <div class="services-grid">
+                <!-- Domestic Shipping -->
+                <div class="service-card">
+                    <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="1" y="3" width="15" height="13"></rect>
+                        <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+                        <circle cx="5.5" cy="18.5" r="2.5"></circle>
+                        <circle cx="18.5" cy="18.5" r="2.5"></circle>
+                    </svg>
+                    <h3 class="service-title">Domestic Shipping</h3>
+                    <p class="service-description">Fast and reliable delivery services across the country. connects
+                        every corner with efficiency.</p>
+                </div>
+
+                <!-- International Shipping -->
+                <div class="service-card">
+                    <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="2" y1="12" x2="22" y2="12"></line>
+                        <path
+                            d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z">
+                        </path>
+                    </svg>
+                    <h3 class="service-title">International Shipping</h3>
+                    <p class="service-description">Seamless global logistics solutions. We handle customs and forwarding
+                        to over 200 countries.</p>
+                </div>
+
+                <!-- Real-time Tracking -->
                 <div class="service-card">
                     <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                         stroke-linecap="round" stroke-linejoin="round">
@@ -356,9 +393,11 @@
                         <path d="M16 21V5C16 3.89543 15.1046 3 14 3H10C8.89543 3 8 3.89543 8 5V21" />
                     </svg>
                     <h3 class="service-title">Real-time Tracking</h3>
-                    <p class="service-description">Get instant updates on your package location and status changes as
-                        they happen.</p>
+                    <p class="service-description">Advanced tracking technology providing instant visibility of your
+                        shipment's journey.</p>
                 </div>
+
+                <!-- 24/7 Support -->
                 <div class="service-card">
                     <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                         stroke-linecap="round" stroke-linejoin="round">
@@ -366,21 +405,9 @@
                             d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" />
                         <path d="M12 6V12L16 14" />
                     </svg>
-                    <h3 class="service-title">24 X 7 Availability</h3>
-                    <p class="service-description">Our tracking system is available round the clock so you never lose
-                        sight of your shipment.</p>
-                </div>
-                <div class="service-card">
-                    <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <path
-                            d="M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V15" />
-                        <path d="M7 10L12 15L17 10" />
-                        <path d="M12 15V3" />
-                    </svg>
-                    <h3 class="service-title">Multi-Carrier Support</h3>
-                    <p class="service-description">We seamlessly integrate with multiple logistics providers for a
-                        unified tracking experience.</p>
+                    <h3 class="service-title">24/7 Support</h3>
+                    <p class="service-description">Dedicated customer support team available round the clock to assist
+                        you.</p>
                 </div>
             </div>
         </div>
