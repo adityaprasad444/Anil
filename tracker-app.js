@@ -13,6 +13,7 @@ const trackingService = require('./services/trackingService');
 const cron = require('node-cron');
 
 const app = express();
+app.set('trust proxy', 1); // Trust first proxy (Vercel)
 
 // Database connection middleware - MUST be the first thing
 const ensureDbConnection = async (req, res, next) => {
