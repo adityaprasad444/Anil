@@ -1,4 +1,5 @@
 const axios = require('axios');
+const https = require('https');
 
 /**
  * API Client Service
@@ -10,51 +11,55 @@ class ApiClient {
      * Fetch tracking data from provider API
      */
     async fetchTrackingData(provider, trackingId) {
-    if (!provider?.apiConfig?.endpoint) {
-        throw new Error('Provider API configuration not found');
-    }
-
-    const { endpoint, method, headers, requestBodyTemplate } = provider.apiConfig;
-
-    try {
-        console.log(`📡 Fetching tracking data from ${provider.name} API for ${trackingId}`);
-
-        // Build final URL (replaces {trackingId} if present)
-        const finalUrl = endpoint.includes("{trackingId}")
-            ? endpoint.replace("{trackingId}", trackingId)
-            : endpoint;
-
-        const config = {
-            method: method || 'POST',
-            url: finalUrl,
-            headers: this.buildHeaders(headers),
-            timeout: 30000
-        };
-
-        // 🔍 Print the request URL before calling axios
-        console.log("🔍 Request URL:", config.url);
-
-        if (requestBodyTemplate) {
-            config.data = this.buildRequestBody(requestBodyTemplate, trackingId);
+        if (!provider?.apiConfig?.endpoint) {
+            throw new Error('Provider API configuration not found');
         }
 
-        const response = await axios(config);
+        const { endpoint, method, headers, requestBodyTemplate } = provider.apiConfig;
 
-        console.log(`✅ Successfully fetched data from ${provider.name} API`);
-        return response.data;
+        try {
+            console.log(`📡 Fetching tracking data from ${provider.name} API for ${trackingId}`);
 
-    } catch (error) {
-        console.error(`❌ Error fetching from ${provider.name} API:`, error.message);
+            // Build final URL (replaces {trackingId} if present)
+            const finalUrl = endpoint.includes("{trackingId}")
+                ? endpoint.replace("{trackingId}", trackingId)
+                : endpoint;
 
-        if (error.response) {
-            throw new Error(`API Error: ${error.response.status} - ${error.response.statusText}`);
-        } else if (error.request) {
-            throw new Error('No response from API - network error or timeout');
-        } else {
-            throw new Error(`Request setup error: ${error.message}`);
+            const config = {
+                method: method || 'POST',
+                url: finalUrl,
+                headers: this.buildHeaders(headers),
+                timeout: 30000,
+                httpsAgent: new https.Agent({
+                    rejectUnauthorized: false,
+                    secureOptions: require('constants').SSL_OP_LEGACY_SERVER_CONNECT
+                })
+            };
+
+            // 🔍 Print the request URL before calling axios
+            console.log("🔍 Request URL:", config.url);
+
+            if (requestBodyTemplate) {
+                config.data = this.buildRequestBody(requestBodyTemplate, trackingId);
+            }
+
+            const response = await axios(config);
+
+            console.log(`✅ Successfully fetched data from ${provider.name} API`);
+            return response.data;
+
+        } catch (error) {
+            console.error(`❌ Error fetching from ${provider.name} API:`, error.message);
+
+            if (error.response) {
+                throw new Error(`API Error: ${error.response.status} - ${error.response.statusText}`);
+            } else if (error.request) {
+                throw new Error('No response from API - network error or timeout');
+            } else {
+                throw new Error(`Request setup error: ${error.message}`);
+            }
         }
     }
-}
 
 
     /**
@@ -100,7 +105,7 @@ class ApiClient {
             return this.parseDTDCResponse(apiResponse, trackingData);
         }
 
-        if (provider.name === "ICL") {
+        if (provider.name.includes("ICL")) {
             return this.parseICLResponse(apiResponse, trackingData);
         }
 
@@ -139,10 +144,21 @@ class ApiClient {
     }
 
     /**
-     * ICL-specific parser (fixed & clean)
+     * ICL-specific parser (handles both Domestic and International)
      */
     parseICLResponse(apiResponse, trackingData) {
         try {
+            // Check if this is ICL International format
+            if (apiResponse.Response && apiResponse.Response.Tracking) {
+                return this.parseICLInternationalResponse(apiResponse, trackingData);
+            }
+
+            // Check if this is ICL Domestic format
+            if (!apiResponse.ConsignmentDetails_Traking) {
+                console.log("⚠️ Unknown ICL format. Using generic parser.");
+                return this.parseGenericResponse(apiResponse, trackingData);
+            }
+
             const consignment = apiResponse.ConsignmentDetails_Traking || {};
             const history = apiResponse.Sheet_History || [];
 
@@ -174,6 +190,75 @@ class ApiClient {
             console.error("❌ Error parsing ICL:", err);
             trackingData.status = "Error parsing ICL response";
             return trackingData;
+        }
+    }
+
+    /**
+     * ICL International-specific parser
+     */
+    parseICLInternationalResponse(apiResponse, trackingData) {
+        try {
+            const response = apiResponse.Response;
+            const tracking = response.Tracking && response.Tracking[0];
+            const events = response.Events || [];
+            const additionalData = response.AdditionalData && response.AdditionalData[0];
+
+            if (!tracking) {
+                trackingData.status = "No tracking data found";
+                return trackingData;
+            }
+
+            trackingData.status = tracking.Status || "In Transit";
+            trackingData.location = events.length > 0 ? events[0].Location : "Unknown";
+            trackingData.estimatedDelivery = tracking.ExpectedDeliveryDate || null;
+            trackingData.origin = tracking.Origin || "";
+            trackingData.destination = tracking.Destination || "";
+
+            // Parse events into history
+            trackingData.history = events.map(event => ({
+                timestamp: this.parseICLDate(event.EventDate, event.EventTime),
+                status: event.Status || "Update",
+                location: event.Location || "",
+                description: event.Status || ""
+            }));
+
+            // Additional info
+            trackingData.additionalInfo = {
+                awbNo: tracking.AWBNo,
+                bookingDate: tracking.BookingDate1,
+                deliveryDate: tracking.DeliveryDate1,
+                deliveryTime: tracking.DeliveryTime1,
+                receiverName: tracking.ReceiverName,
+                vendorName: tracking.VendorName,
+                vendorAWBNo: tracking.VendorAWBNo1,
+                serviceName: tracking.ServiceName,
+                weight: tracking.Weight,
+                pieces: additionalData?.Pieces,
+                shipper: additionalData?.ShipperContact,
+                consignee: additionalData?.ConsigneeContact
+            };
+
+            return trackingData;
+
+        } catch (err) {
+            console.error("❌ Error parsing ICL International:", err);
+            trackingData.status = "Error parsing ICL International response";
+            return trackingData;
+        }
+    }
+
+    /**
+     * Parse ICL date format (DD/MM/YYYY) and time (HHMM)
+     */
+    parseICLDate(dateStr, timeStr) {
+        try {
+            if (!dateStr) return new Date();
+            const [day, month, year] = dateStr.split('/');
+            const hour = timeStr ? timeStr.substring(0, 2) : '00';
+            const minute = timeStr ? timeStr.substring(2, 4) : '00';
+            return new Date(`${year}-${month}-${day}T${hour}:${minute}:00`);
+        } catch (e) {
+            return new Date();
         }
     }
 

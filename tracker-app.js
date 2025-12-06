@@ -59,7 +59,7 @@ const requireAuth = (req, res, next) => {
 
 // Setup Cron Job for automatic tracking data updates
 // Runs every hour at minute 0
-cron.schedule('* 0 * * *', async () => {
+cron.schedule('* 1 * * *', async () => {
   console.log('\n⏰ Cron job started: Updating all tracking data...');
   try {
     const results = await trackingService.updateAllTrackingData();
@@ -537,7 +537,7 @@ const startServer = async () => {
   try {
     // Connect to MongoDB
     await connectDB();
-    
+
     const PORT = config.server.port || 3001;
     app.listen(PORT, () => {
       console.log(`\n🚀 Server started successfully!`);

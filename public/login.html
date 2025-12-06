@@ -1,17 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Package Tracking</title>
+    <link rel="icon" type="image/jpeg" href="/Logos/logo.jpeg">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
     <style>
         :root {
-            --primary-color: #2563eb;
-            --primary-hover: #1d4ed8;
-            --background-color: #f8fafc;
-            --card-background: #ffffff;
-            --text-color: #1e293b;
-            --border-color: #e2e8f0;
+            --primary-color: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg-body: #f3f4f6;
+            --bg-card: #ffffff;
+            --text-primary: #1f2937;
+            --text-secondary: #6b7280;
+            --border-color: #e5e7eb;
+            --danger-color: #ef4444;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            --radius: 1rem;
         }
 
         * {
@@ -22,72 +31,89 @@
         }
 
         body {
-            background-color: var(--background-color);
-            color: var(--text-color);
-            line-height: 1.6;
+            background-color: var(--bg-body);
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: var(--text-primary);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
+            padding: 1rem;
         }
 
         .container {
             width: 100%;
-            max-width: 400px;
-            padding: 1rem;
+            max-width: 420px;
         }
 
         .login-card {
-            background-color: var(--card-background);
-            border-radius: 1rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            padding: 2rem;
+            background-color: var(--bg-card);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            padding: 2.5rem;
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .logo-container {
             text-align: center;
-            margin-bottom: 2rem;
+            margin-bottom: 2.5rem;
         }
 
         .logo-container img {
-            width: 120px;
-            height: 120px;
+            width: 100px;
+            height: 100px;
             object-fit: contain;
+            margin-bottom: 1rem;
         }
 
         .logo-container h1 {
-            margin-top: 1rem;
-            color: var(--text-color);
+            color: var(--text-primary);
             font-size: 1.5rem;
-            font-weight: 600;
+            font-weight: 700;
         }
 
         .form-group {
             margin-bottom: 1.5rem;
         }
 
-        .form-group label {
+        .form-label {
             display: block;
             margin-bottom: 0.5rem;
             font-weight: 500;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
         }
 
-        .form-group input {
+        .form-input {
             width: 100%;
-            padding: 0.75rem;
+            padding: 0.75rem 1rem;
             border: 1px solid var(--border-color);
             border-radius: 0.5rem;
             font-size: 1rem;
-            transition: border-color 0.2s;
+            transition: all 0.2s;
+            background-color: #f9fafb;
         }
 
-        .form-group input:focus {
+        .form-input:focus {
             outline: none;
             border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+            background-color: #fff;
         }
 
-        button {
+        .btn {
             width: 100%;
             padding: 0.75rem;
             background-color: var(--primary-color);
@@ -95,75 +121,71 @@
             border: none;
             border-radius: 0.5rem;
             font-size: 1rem;
-            font-weight: 500;
+            font-weight: 600;
             cursor: pointer;
-            transition: background-color 0.2s;
+            transition: all 0.2s;
         }
 
-        button:hover {
+        .btn:hover {
             background-color: var(--primary-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2);
+        }
+
+        .btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
         }
 
         .message {
-            padding: 1rem;
+            padding: 0.75rem;
             border-radius: 0.5rem;
-            margin-bottom: 1rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
             display: none;
-        }
-
-        .message.success {
-            background-color: #dcfce7;
-            color: #166534;
-            border: 1px solid #86efac;
+            text-align: center;
         }
 
         .message.error {
-            background-color: #fee2e2;
-            color: #991b1b;
-            border: 1px solid #fca5a5;
-        }
-
-        @media (max-width: 480px) {
-            .container {
-                padding: 0.5rem;
-            }
-
-            .login-card {
-                padding: 1.5rem;
-            }
-
-            .logo-container img {
-                width: 100px;
-                height: 100px;
-            }
+            background-color: #fef2f2;
+            color: var(--danger-color);
+            border: 1px solid #fecaca;
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <div class="login-card">
-            <div class="logo-container" style="text-align: center; margin-bottom: 2rem;">
-                <img src="/Logos/logo.jpeg" alt="Package Tracking Logo" style="width: 120px; height: 120px;">
-                <h1 style="margin-top: 1rem; color: var(--text-color);">Package Tracking</h1>
+            <div class="logo-container">
+                <img src="/Logos/logo.jpeg" alt="Logo">
+                <h1>Welcome Back</h1>
+                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.5rem;">Please sign in to your
+                    account</p>
             </div>
+
             <div id="message" class="message"></div>
+
             <form id="loginForm" onsubmit="handleLogin(event)">
                 <div class="form-group">
-                    <label for="username">Username</label>
-                    <input type="text" id="username" name="username" required>
+                    <label class="form-label" for="username">Username</label>
+                    <input type="text" id="username" class="form-input" name="username" required
+                        placeholder="Enter your username">
                 </div>
                 <div class="form-group">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" name="password" required>
+                    <label class="form-label" for="password">Password</label>
+                    <input type="password" id="password" class="form-input" name="password" required
+                        placeholder="Enter your password">
                 </div>
-                <button type="submit" id="loginButton">Login</button>
+                <button type="submit" id="loginButton" class="btn">Sign In</button>
             </form>
         </div>
     </div>
 
     <script>
         // Check if already logged in
-        window.onload = async function() {
+        window.onload = async function () {
             try {
                 const response = await fetch('/api/login/check', {
                     credentials: 'include'
@@ -177,7 +199,7 @@
         };
 
         // Handle login form submission
-        document.getElementById('loginForm').addEventListener('submit', async function(event) {
+        async function handleLogin(event) {
             event.preventDefault();
 
             const usernameInput = document.getElementById('username');
@@ -186,8 +208,8 @@
             const loginButton = document.getElementById('loginButton');
 
             messageDiv.style.display = 'none';
-            messageDiv.className = 'message';
             loginButton.disabled = true;
+            loginButton.textContent = 'Signing in...';
 
             const username = usernameInput.value;
             const password = passwordInput.value;
@@ -206,18 +228,21 @@
                 if (response.ok) {
                     window.location.href = '/admin';
                 } else {
-                    messageDiv.textContent = data.error || 'Login failed';
+                    messageDiv.textContent = data.error || 'Invalid username or password';
                     messageDiv.className = 'message error';
                     messageDiv.style.display = 'block';
+                    loginButton.disabled = false;
+                    loginButton.textContent = 'Sign In';
                 }
             } catch (error) {
                 messageDiv.textContent = 'An error occurred during login.';
                 messageDiv.className = 'message error';
                 messageDiv.style.display = 'block';
-            } finally {
                 loginButton.disabled = false;
+                loginButton.textContent = 'Sign In';
             }
-        });
+        }
     </script>
 </body>
-</html> 
+
+</html>

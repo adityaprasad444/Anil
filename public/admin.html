@@ -1,22 +1,31 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - Package Tracking</title>
-    <link rel="icon" type="image/png" href="/Logos/favicon.png">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/jpeg" href="/Logos/logo.jpeg">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
     <style>
         :root {
-            --primary-color: #2563eb;
-            --primary-hover: #1d4ed8;
+            --primary-color: #4f46e5;
+            --primary-hover: #4338ca;
+            --primary-light: #e0e7ff;
             --secondary-color: #64748b;
-            --success-color: #22c55e;
+            --success-color: #10b981;
             --danger-color: #ef4444;
-            --background-color: #f8fafc;
-            --card-background: #ffffff;
-            --text-color: #1e293b;
-            --border-color: #e2e8f0;
+            --warning-color: #f59e0b;
+            --bg-body: #f3f4f6;
+            --bg-card: #ffffff;
+            --text-primary: #1f2937;
+            --text-secondary: #6b7280;
+            --border-color: #e5e7eb;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --radius: 0.75rem;
         }
 
         * {
@@ -27,26 +36,31 @@
         }
 
         body {
-            background-color: var(--background-color);
-            color: var(--text-color);
+            background-color: var(--bg-body);
+            color: var(--text-primary);
             line-height: 1.6;
+            min-height: 100vh;
         }
 
         .header {
-            background-color: var(--card-background);
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            padding: 1rem 2rem;
+            background-color: var(--bg-card);
+            box-shadow: var(--shadow-sm);
+            padding: 0 2rem;
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
             z-index: 1000;
+            height: 70px;
+            display: flex;
+            align-items: center;
         }
 
         .nav-container {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            width: 100%;
             max-width: 1200px;
             margin: 0 auto;
         }
@@ -54,33 +68,38 @@
         .logo-container {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 0.75rem;
             text-decoration: none;
-            color: var(--text-color);
+            color: var(--text-primary);
+            font-weight: 600;
+            font-size: 1.1rem;
         }
 
         .logo-small {
             height: 32px;
             width: 32px;
+            border-radius: 6px;
         }
 
         .nav-menu {
             display: flex;
-            gap: 1.5rem;
+            gap: 1rem;
             list-style: none;
         }
 
         .nav-link {
             text-decoration: none;
-            color: var(--text-color);
+            color: var(--text-secondary);
             font-weight: 500;
             padding: 0.5rem 1rem;
-            border-radius: 0.375rem;
+            border-radius: 0.5rem;
             transition: all 0.2s;
+            font-size: 0.95rem;
         }
 
         .nav-link:hover {
-            background-color: var(--background-color);
+            color: var(--primary-color);
+            background-color: var(--primary-light);
         }
 
         .nav-link.active {
@@ -91,108 +110,184 @@
         .container {
             max-width: 1200px;
             margin: 6rem auto 2rem;
-            padding: 0 2rem;
+            padding: 0 1.5rem;
         }
 
         .card {
-            background-color: var(--card-background);
-            border-radius: 0.5rem;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
+            background-color: var(--bg-card);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+            border: 1px solid var(--border-color);
         }
 
         .card-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1rem;
         }
 
         .card-title {
-            font-size: 1.25rem;
+            font-size: 1.1rem;
             font-weight: 600;
-            color: var(--text-color);
+            color: var(--text-primary);
         }
 
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        /* Form Styles */
         .form-group {
-            margin-bottom: 1rem;
+            margin-bottom: 1.25rem;
         }
 
         .form-label {
             display: block;
             margin-bottom: 0.5rem;
             font-weight: 500;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
         }
 
         .form-input {
             width: 100%;
-            padding: 0.75rem;
+            padding: 0.625rem 1rem;
             border: 1px solid var(--border-color);
-            border-radius: 0.375rem;
-            font-size: 1rem;
-            transition: border-color 0.2s;
+            border-radius: 0.5rem;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+            background-color: #f9fafb;
         }
 
         .form-input:focus {
             outline: none;
             border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+            background-color: #fff;
         }
 
         .btn {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            padding: 0.75rem 1.5rem;
+            padding: 0.625rem 1.25rem;
             border: none;
-            border-radius: 0.375rem;
-            font-size: 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.95rem;
             font-weight: 500;
             cursor: pointer;
             transition: all 0.2s;
+            gap: 0.5rem;
         }
 
         .btn-primary {
             background-color: var(--primary-color);
             color: white;
+            box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2);
         }
 
         .btn-primary:hover {
             background-color: var(--primary-hover);
+            transform: translateY(-1px);
         }
 
         .btn-danger {
-            background-color: var(--danger-color);
-            color: white;
+            background-color: white;
+            color: var(--danger-color);
+            border: 1px solid var(--danger-color);
         }
 
         .btn-danger:hover {
-            background-color: #dc2626;
+            background-color: #fef2f2;
         }
 
         .btn-success {
-            background-color: #10b981;
-            color: white;
+            background-color: white;
+            color: var(--success-color);
+            border: 1px solid var(--success-color);
         }
 
         .btn-success:hover {
-            background-color: #059669;
+            background-color: #f0fdf4;
         }
 
+        .btn-secondary {
+            background-color: white;
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary:not(:disabled):hover {
+            background-color: #f9fafb;
+            color: var(--text-primary);
+        }
+
+        /* Filter Controls */
+        .filter-pagination-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            gap: 1rem;
+            flex-wrap: wrap;
+            background: #f8fafc;
+            padding: 1rem;
+            border-radius: var(--radius);
+        }
+
+        .filter-controls {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            flex: 1;
+        }
+
+        .filter-controls .form-input {
+            width: auto;
+            min-width: 150px;
+        }
+
+        .pagination-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        #pageInfo {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        /* Tracking List */
         .tracking-list {
             list-style: none;
+            display: grid;
+            gap: 1rem;
         }
 
         .tracking-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 1rem;
-            background-color: var(--card-background);
-            border-radius: 0.5rem;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            margin-bottom: 1rem;
+            padding: 1.25rem;
+            background-color: white;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            transition: all 0.2s;
+        }
+
+        .tracking-item:hover {
+            border-color: var(--primary-color);
+            box-shadow: var(--shadow);
         }
 
         .tracking-info {
@@ -200,37 +295,110 @@
         }
 
         .tracking-id {
-            font-weight: 500;
+            font-weight: 600;
             color: var(--primary-color);
+            font-family: monospace;
+            font-size: 1.1rem;
+            margin-bottom: 0.25rem;
         }
 
-        .tracking-status {
-            font-size: 0.875rem;
-            color: var(--secondary-color);
+        .tracking-details {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, auto));
+            gap: 1rem;
+            margin-top: 0.5rem;
+            align-items: center;
+        }
+
+        .tracking-detail-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .detail-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #94a3b8;
+            margin-bottom: 0.125rem;
+        }
+
+        .detail-value {
+            font-weight: 500;
+            color: var(--text-primary);
         }
 
         .tracking-actions {
             display: flex;
             gap: 0.5rem;
+            margin-left: 1rem;
         }
 
+        /* Status Badges */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 2rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: capitalize;
+        }
+
+        .status-delivered {
+            background-color: #d1fae5;
+            color: #047857;
+        }
+
+        .status-in-transit {
+            background-color: #e0e7ff;
+            color: #4338ca;
+        }
+
+        .status-pending {
+            background-color: #fef3c7;
+            color: #b45309;
+        }
+
+        .status-exception {
+            background-color: #fee2e2;
+            color: #b91c1c;
+        }
+
+        /* Notifications */
         .message {
             padding: 1rem;
-            border-radius: 0.375rem;
-            margin-bottom: 1rem;
+            border-radius: var(--radius);
+            margin-bottom: 1.5rem;
             display: none;
+            font-weight: 500;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .message.success {
-            background-color: #dcfce7;
-            color: #166534;
-            border: 1px solid #86efac;
+            background-color: #ecfdf5;
+            color: #047857;
+            border: 1px solid #a7f3d0;
         }
 
         .message.error {
-            background-color: #fee2e2;
-            color: #991b1b;
-            border: 1px solid #fca5a5;
+            background-color: #fef2f2;
+            color: #b91c1c;
+            border: 1px solid #fecaca;
         }
 
         /* Mobile Menu Button */
@@ -240,26 +408,25 @@
             border: none;
             cursor: pointer;
             padding: 0.5rem;
+            color: var(--text-primary);
         }
 
-        /* Mobile Responsive Styles */
+        /* Responsive */
         @media (max-width: 768px) {
             .header {
-                padding: 1rem;
+                padding: 0 1rem;
             }
 
             .nav-menu {
                 display: none;
                 position: fixed;
-                top: 72px;
+                top: 70px;
                 left: 0;
                 right: 0;
-                background-color: var(--card-background);
+                background-color: white;
                 padding: 1rem;
                 flex-direction: column;
-                gap: 0.5rem;
-                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-                z-index: 1000;
+                box-shadow: var(--shadow);
             }
 
             .nav-menu.active {
@@ -268,154 +435,65 @@
 
             .mobile-menu-btn {
                 display: block;
-                background: none;
-                border: none;
-                cursor: pointer;
-                padding: 0.5rem;
-                color: var(--text-color);
-            }
-
-            .nav-menu li {
-                width: 100%;
-            }
-
-            .nav-link {
-                display: block;
-                padding: 0.75rem;
-                width: 100%;
-                text-align: center;
-                border-radius: 0.375rem;
-            }
-
-            .nav-link:hover {
-                background-color: var(--background-color);
-            }
-
-            .nav-link.active {
-                background-color: var(--primary-color);
-                color: white;
             }
 
             .container {
-                margin: 5rem 1rem 1rem;
-                padding: 0;
-            }
-
-            .card {
-                padding: 1rem;
-                margin-bottom: 1rem;
-            }
-
-            .card-header {
-                flex-direction: column;
-                gap: 1rem;
-                align-items: flex-start;
+                margin-top: 5rem;
+                padding: 0 1rem;
             }
 
             .tracking-item {
                 flex-direction: column;
+                align-items: flex-start;
                 gap: 1rem;
-                padding: 1rem;
             }
 
             .tracking-actions {
+                margin-left: 0;
                 width: 100%;
-                display: flex;
-                gap: 0.5rem;
+                justify-content: flex-end;
+                border-top: 1px solid var(--border-color);
+                padding-top: 1rem;
             }
 
-            .btn {
-                flex: 1;
-                padding: 0.5rem;
-                font-size: 0.875rem;
-            }
-        }
-
-        /* Small Mobile Devices */
-        @media (max-width: 480px) {
-            .header {
-                padding: 0.75rem;
+            .filter-pagination-controls {
+                flex-direction: column;
+                align-items: stretch;
             }
 
-            .logo-small {
-                height: 24px;
-                width: 24px;
+            .filter-controls {
+                flex-direction: column;
             }
 
-            .container {
-                margin: 4rem 0.5rem 0.5rem;
+            .filter-controls .form-input {
+                width: 100%;
             }
 
-            .card {
-                padding: 0.75rem;
+            .tracking-details {
+                grid-template-columns: 1fr 1fr;
             }
-
-            .card-title {
-                font-size: 1.125rem;
-            }
-
-            .form-input {
-                padding: 0.5rem;
-                font-size: 0.875rem;
-            }
-        }
-
-        /* Tablet Devices */
-        @media (min-width: 769px) and (max-width: 1024px) {
-            .container {
-                max-width: 90%;
-            }
-
-            .tracking-item {
-                padding: 1.25rem;
-            }
-        }
-
-        /* Add status badge styles */
-        .status-badge {
-            display: inline-block;
-            padding: 0.25rem 0.5rem;
-            border-radius: 0.25rem;
-            font-size: 0.875rem;
-            font-weight: 500;
-        }
-
-        .status-delivered {
-            background-color: #dcfce7;
-            color: #166534;
-        }
-
-        .status-in-transit {
-            background-color: #dbeafe;
-            color: #1e40af;
-        }
-
-        .status-pending {
-            background-color: #fef3c7;
-            color: #92400e;
-        }
-
-        .status-exception {
-            background-color: #fee2e2;
-            color: #991b1b;
         }
     </style>
 </head>
+
 <body>
     <header class="header">
         <nav class="nav-container">
-            <div class="logo-container">
-                <img src="/Logos/logo.jpeg" alt="Package Tracking Logo" class="logo-small">
-                <span>Package Tracking</span>
-            </div>
+            <a href="/admin" class="logo-container">
+                <img src="/Logos/logo.jpeg" alt="Logo" class="logo-small">
+                <span>Admin Dashboard</span>
+            </a>
             <ul class="nav-menu">
                 <li><a href="/admin" class="nav-link active">Dashboard</a></li>
                 <li><a href="/config" class="nav-link">Configuration</a></li>
                 <li><a href="#" class="nav-link" onclick="handleLogout()">Logout</a></li>
             </ul>
             <button class="mobile-menu-btn" aria-label="Toggle menu">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M3 12h18M3 6h18M3 18h18"></path>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
                 </svg>
             </button>
         </nav>
@@ -426,75 +504,98 @@
 
         <div class="card">
             <div class="card-header">
-                <h2 class="card-title">Generate Tracking ID</h2>
+                <h2 class="card-title">Generate New Tracking</h2>
             </div>
-            <form id="trackingForm" onsubmit="generateTrackingId(event)">
-                <div class="form-group">
-                    <label class="form-label" for="originalTrackingId">Original Tracking ID</label>
-                    <input type="text" id="originalTrackingId" class="form-input" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label" for="provider">Provider</label>
-                    <select id="provider" class="form-input" required>
-                        <option value="">Select Provider</option>
-                    </select>
-                </div>
-                <button type="submit" class="btn btn-primary">Generate</button>
-            </form>
+            <div class="card-body">
+                <form id="trackingForm" onsubmit="generateTrackingId(event)">
+                    <div
+                        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; align-items: end;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label" for="originalTrackingId">Original Tracking ID</label>
+                            <input type="text" id="originalTrackingId" class="form-input"
+                                placeholder="e.g. UPS123456789" required>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label" for="provider">Provider</label>
+                            <select id="provider" class="form-input" required>
+                                <option value="">Select Provider...</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="height: 46px;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                            Generate ID
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
 
         <div class="card">
             <div class="card-header">
-                <h2 class="card-title">Recent Tracking IDs</h2>
+                <h2 class="card-title">Tracking Management</h2>
             </div>
-            <!-- Filter and Pagination Controls -->
-            <div class="filter-pagination-controls">
-                <div class="filter-controls">
-                    <input type="text" id="filterTrackingId" class="form-input" placeholder="Filter by Tracking ID">
-                    <select id="filterProvider" class="form-input">
-                        <option value="">All Providers</option>
-                        <!-- Provider options will be loaded here -->
-                    </select>
-                    <select id="filterStatus" class="form-input">
-                        <option value="">All Statuses</option>
-                        <option value="pending">Pending</option>
-                        <option value="in-transit">In Transit</option>
-                        <option value="delivered">Delivered</option>
-                        <option value="exception">Exception</option>
-                    </select>
-                    <!-- Page Size Dropdown -->
-                    <select id="pageSize" class="form-input">
-                        <option value="5">5 per page</option>
-                        <option value="10" selected>10 per page</option>
-                        <option value="25">25 per page</option>
-                        <option value="50">50 per page</option>
-                        <option value="100">100 per page</option>
-                    </select>
+            <div class="card-body">
+                <!-- Filter and Pagination Controls -->
+                <div class="filter-pagination-controls">
+                    <div class="filter-controls">
+                        <input type="text" id="filterTrackingId" class="form-input" placeholder="Search Tracking ID...">
+                        <select id="filterProvider" class="form-input">
+                            <option value="">All Providers</option>
+                        </select>
+                        <select id="filterStatus" class="form-input">
+                            <option value="">All Statuses</option>
+                            <option value="pending">Pending</option>
+                            <option value="in-transit">In Transit</option>
+                            <option value="delivered">Delivered</option>
+                            <option value="exception">Exception</option>
+                        </select>
+                        <select id="pageSize" class="form-input" style="width: auto;">
+                            <option value="10">10 / page</option>
+                            <option value="25">25 / page</option>
+                            <option value="50">50 / page</option>
+                        </select>
+                    </div>
+                    <div class="pagination-controls">
+                        <button id="prevPage" class="btn btn-secondary" title="Previous Page">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="15 18 9 12 15 6"></polyline>
+                            </svg>
+                        </button>
+                        <span id="pageInfo">Page 1 of 1</span>
+                        <button id="nextPage" class="btn btn-secondary" title="Next Page">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="9 18 15 12 9 6"></polyline>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
-                <div class="pagination-controls">
-                    <button id="prevPage" class="btn btn-secondary">Previous</button>
-                    <span id="pageInfo">Page 1 of 1</span>
-                    <button id="nextPage" class="btn btn-secondary">Next</button>
-                </div>
-            </div>
 
-            <ul class="tracking-list" id="trackingList"></ul>
+                <ul class="tracking-list" id="trackingList">
+                    <!-- Items will be populated here -->
+                </ul>
+            </div>
         </div>
     </div>
 
     <script>
+        // Keep existing JS logic
+
         // Mobile menu functionality
         const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
         const navMenu = document.querySelector('.nav-menu');
 
         mobileMenuBtn.addEventListener('click', () => {
             navMenu.classList.toggle('active');
-            // Toggle aria-expanded attribute
             const isExpanded = navMenu.classList.contains('active');
             mobileMenuBtn.setAttribute('aria-expanded', isExpanded);
         });
 
-        // Close mobile menu when clicking outside
         document.addEventListener('click', (event) => {
             if (!navMenu.contains(event.target) && !mobileMenuBtn.contains(event.target)) {
                 navMenu.classList.remove('active');
@@ -502,7 +603,6 @@
             }
         });
 
-        // Close mobile menu when clicking on a link
         navMenu.querySelectorAll('a').forEach(link => {
             link.addEventListener('click', () => {
                 navMenu.classList.remove('active');
@@ -510,39 +610,28 @@
             });
         });
 
-        // State variables for pagination and filtering
         let currentPage = 1;
-        let itemsPerPage = 10; // You can adjust this number
+        let itemsPerPage = 10;
         let filterTrackingId = '';
         let filterProvider = '';
         let filterStatus = '';
 
-        // Check authentication
         async function checkAuth() {
             try {
-                const response = await fetch('/api/login/check', {
-                    credentials: 'include'
-                });
-                if (!response.ok) {
-                    window.location.href = '/login';
-                }
+                const response = await fetch('/api/login/check', { credentials: 'include' });
+                if (!response.ok) window.location.href = '/login';
             } catch (error) {
-                console.error('Auth check failed:', error);
                 window.location.href = '/login';
             }
         }
 
-        // Load providers
         async function loadProviders() {
             try {
-                const response = await fetch('/api/providers', {
-                    credentials: 'include'
-                });
+                const response = await fetch('/api/providers', { credentials: 'include' });
                 const providers = await response.json();
 
-                // Populate "Generate Tracking ID" provider dropdown
                 const generateProviderSelect = document.getElementById('provider');
-                generateProviderSelect.innerHTML = '<option value="">Select Provider</option>';
+                generateProviderSelect.innerHTML = '<option value="">Select Provider...</option>';
                 providers.forEach(provider => {
                     const option = document.createElement('option');
                     option.value = provider.name;
@@ -550,9 +639,8 @@
                     generateProviderSelect.appendChild(option);
                 });
 
-                // Populate "Recent Tracking IDs" filter provider dropdown
                 const filterProviderSelect = document.getElementById('filterProvider');
-                filterProviderSelect.innerHTML = '<option value="">All Providers</option>'; // Add "All Providers" option
+                filterProviderSelect.innerHTML = '<option value="">All Providers</option>';
                 providers.forEach(provider => {
                     const option = document.createElement('option');
                     option.value = provider.name;
@@ -561,12 +649,10 @@
                 });
 
             } catch (error) {
-                console.error('Error loading providers:', error);
                 showMessage('Error loading providers', 'error');
             }
         }
 
-        // Generate tracking ID
         async function generateTrackingId(event) {
             event.preventDefault();
             const originalTrackingId = document.getElementById('originalTrackingId').value;
@@ -575,9 +661,7 @@
             try {
                 const response = await fetch('/api/tracking/generate', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     credentials: 'include',
                     body: JSON.stringify({ originalTrackingId, provider })
                 });
@@ -586,19 +670,17 @@
                 if (response.ok) {
                     showMessage(`Tracking ID generated: ${data.trackingId}`, 'success');
                     document.getElementById('trackingForm').reset();
+                    currentPage = 1;
                     loadTrackingList();
                 } else {
                     showMessage(data.error || 'Error generating tracking ID', 'error');
                 }
             } catch (error) {
-                console.error('Error generating tracking ID:', error);
                 showMessage('Error generating tracking ID', 'error');
             }
         }
 
-        // Load tracking list with pagination and filters
         async function loadTrackingList() {
-            console.log('Attempting to load tracking list...');
             try {
                 const queryParams = new URLSearchParams({
                     page: currentPage,
@@ -607,22 +689,16 @@
                     provider: filterProvider,
                     status: filterStatus
                 });
-                console.log('Fetching tracking list with params:', queryParams.toString());
-                const response = await fetch(`/api/tracking/list?${queryParams.toString()}`, {
-                    credentials: 'include'
-                });
-                console.log('Received response status for tracking list:', response.status);
+
+                const response = await fetch(`/api/tracking/list?${queryParams.toString()}`, { credentials: 'include' });
 
                 if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || `API error: ${response.status}`);
+                    throw new Error(`API error: ${response.status}`);
                 }
 
                 const data = await response.json();
-                console.log('Received tracking data:', data);
 
                 if (!data || !Array.isArray(data.entries)) {
-                    console.error('Received data does not contain an entries array:', data);
                     throw new Error('Invalid data format received from server.');
                 }
 
@@ -630,14 +706,13 @@
                 list.innerHTML = '';
 
                 if (data.entries.length === 0 && currentPage > 1) {
-                     // If current page is empty, go back to the previous page
                     currentPage--;
                     loadTrackingList();
                     return;
                 }
 
                 if (data.entries.length === 0) {
-                    list.innerHTML = '<li>No tracking entries found.</li>';
+                    list.innerHTML = '<li style="text-align: center; padding: 2rem; color: #6b7280;">No tracking entries found.</li>';
                     document.getElementById('pageInfo').textContent = 'Page 0 of 0';
                     document.getElementById('prevPage').disabled = true;
                     document.getElementById('nextPage').disabled = true;
@@ -650,46 +725,56 @@
                     li.innerHTML = `
                         <div class="tracking-info">
                             <div class="tracking-id">${item.trackingId}</div>
-                            <div class="tracking-status">
-                                Original ID: ${item.originalTrackingId}<br>
-                                Provider: ${item.provider}<br>
-                                Status: <span class="status-badge status-${getStatusClass(item.status)}">${item.status}</span><br>
-                                Last Updated: ${new Date(item.lastUpdated).toLocaleString()}
+                            <div class="tracking-details">
+                                <div class="tracking-detail-item">
+                                    <span class="detail-label">Original ID</span>
+                                    <span class="detail-value">${item.originalTrackingId}</span>
+                                </div>
+                                <div class="tracking-detail-item">
+                                    <span class="detail-label">Provider</span>
+                                    <span class="detail-value">${item.provider}</span>
+                                </div>
+                                <div class="tracking-detail-item">
+                                    <span class="detail-label">Updated</span>
+                                    <span class="detail-value">${new Date(item.lastUpdated).toLocaleDateString()}</span>
+                                </div>
+                                <div class="tracking-detail-item">
+                                    <span class="detail-label">Status</span>
+                                    <div><span class="status-badge status-${getStatusClass(item.status)}">${item.status}</span></div>
+                                </div>
                             </div>
                         </div>
                         <div class="tracking-actions">
-                            <button class="btn btn-primary" onclick="viewOnProviderWebsite('${item.trackingId}')">View</button>
-                            ${item.status !== 'Delivered' ? `<button class="btn btn-success" onclick="confirmUpdateStatus('${item.trackingId}')">Mark as Delivered</button>` : ''}
-                            <button class="btn btn-danger" onclick="deleteTracking('${item.trackingId}')">Delete</button>
+                            <button class="btn btn-secondary" onclick="viewOnProviderWebsite('${item.trackingId}')" title="View Public Page">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                            </button>
+                            ${item.status !== 'Delivered' ? `
+                            <button class="btn btn-success" onclick="confirmUpdateStatus('${item.trackingId}')" title="Mark Delivered">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            </button>` : ''}
+                            <button class="btn btn-danger" onclick="deleteTracking('${item.trackingId}')" title="Delete">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                            </button>
                         </div>
                     `;
                     list.appendChild(li);
                 });
 
-                // Update pagination info
                 const totalPages = Math.ceil(data.total / itemsPerPage);
                 document.getElementById('pageInfo').textContent = `Page ${currentPage} of ${totalPages}`;
                 document.getElementById('prevPage').disabled = currentPage === 1;
                 document.getElementById('nextPage').disabled = currentPage === totalPages || data.entries.length === 0;
 
             } catch (error) {
-                console.error('Error loading tracking list:', error);
+                console.error(error);
                 showMessage('Error loading tracking list: ' + error.message, 'error');
-                 document.getElementById('trackingList').innerHTML = '<li>Error loading tracking entries.</li>';
-                 document.getElementById('pageInfo').textContent = 'Page 0 of 0';
-                 document.getElementById('prevPage').disabled = true;
-                 document.getElementById('nextPage').disabled = true;
             }
         }
 
-        // Delete tracking ID
         async function deleteTracking(trackingId) {
-            if (!confirm('Are you sure you want to delete this tracking ID?')) {
-                return;
-            }
+            if (!confirm('Are you sure you want to delete this tracking ID?')) return;
 
             try {
-                console.log('🗑️ Deleting tracking ID:', trackingId);
                 const response = await fetch(`/api/tracking/${trackingId}`, {
                     method: 'DELETE',
                     credentials: 'include'
@@ -703,19 +788,15 @@
                 showMessage('Tracking ID deleted successfully', 'success');
                 loadTrackingList();
             } catch (error) {
-                console.error('Error deleting tracking ID:', error);
                 showMessage(error.message || 'Failed to delete tracking ID', 'error');
             }
         }
 
-        // Update tracking status
         async function updateStatus(trackingId, status) {
             try {
                 const response = await fetch(`/api/tracking/${trackingId}/status`, {
                     method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     credentials: 'include',
                     body: JSON.stringify({ status })
                 });
@@ -728,59 +809,46 @@
                 showMessage('Tracking status updated successfully', 'success');
                 loadTrackingList();
             } catch (error) {
-                console.error('Error updating tracking status:', error);
                 showMessage(error.message || 'Failed to update tracking status', 'error');
             }
         }
 
-        // Show message
         function showMessage(text, type) {
             const message = document.getElementById('message');
             message.textContent = text;
             message.className = `message ${type}`;
             message.style.display = 'block';
-            setTimeout(() => {
-                message.style.display = 'none';
-            }, 5000);
+            setTimeout(() => { message.style.display = 'none'; }, 5000);
         }
 
-        // Handle logout
         async function handleLogout() {
             try {
-                const response = await fetch('/api/logout', {
-                    method: 'POST',
-                    credentials: 'include'
-                });
-                if (response.ok) {
-                    window.location.href = '/';
-                }
+                const response = await fetch('/api/logout', { method: 'POST', credentials: 'include' });
+                if (response.ok) window.location.href = '/';
             } catch (error) {
-                console.error('Logout failed:', error);
                 showMessage('Error logging out', 'error');
             }
         }
 
-        // Initial load
         checkAuth();
         loadProviders();
         loadTrackingList();
 
-        // Event listeners for filters and pagination
         document.getElementById('filterTrackingId').addEventListener('input', (event) => {
             filterTrackingId = event.target.value;
-            currentPage = 1; // Reset to first page on filter change
+            currentPage = 1;
             loadTrackingList();
         });
 
         document.getElementById('filterProvider').addEventListener('change', (event) => {
             filterProvider = event.target.value;
-            currentPage = 1; // Reset to first page on filter change
+            currentPage = 1;
             loadTrackingList();
         });
 
         document.getElementById('filterStatus').addEventListener('change', (event) => {
             filterStatus = event.target.value;
-            currentPage = 1; // Reset to first page on filter change
+            currentPage = 1;
             loadTrackingList();
         });
 
@@ -796,51 +864,30 @@
             loadTrackingList();
         });
 
-        // Event listener for page size dropdown
         document.getElementById('pageSize').addEventListener('change', (event) => {
-            itemsPerPage = parseInt(event.target.value); // Update itemsPerPage
-            currentPage = 1; // Reset to first page when page size changes
-            loadTrackingList(); // Reload list with new page size
+            itemsPerPage = parseInt(event.target.value);
+            currentPage = 1;
+            loadTrackingList();
         });
 
-        // Add confirmation dialog for status update
-        function confirmUpdateStatus(trackingId) {
-            if (confirm('Are you sure you want to mark this package as delivered?')) {
-                updateStatus(trackingId, 'Delivered');
-            }
-        }
-
-        // Add helper function for status class
         function getStatusClass(status) {
-            status = status.toLowerCase();
-            if (status.includes('delivered')) return 'delivered';
-            if (status.includes('in transit')) return 'in-transit';
-            if (status.includes('pending')) return 'pending';
-            if (status.includes('exception')) return 'exception';
-            return 'pending';
+            if (!status) return 'in-transit';
+            const statusLower = status.toLowerCase();
+            if (statusLower.includes('deliver')) return 'delivered';
+            if (statusLower.includes('delay') || statusLower.includes('exception')) return 'exception';
+            return 'in-transit';
         }
 
-        // Add new function to view on provider's website
-        async function viewOnProviderWebsite(trackingId) {
-            try {
-                const response = await fetch(`/api/tracking/${trackingId}`, {
-                    credentials: 'include'
-                });
-                if (!response.ok) {
-                    throw new Error('Failed to fetch tracking data');
-                }
-                const data = await response.json();
-                if (data.trackingUrl && data.originalTrackingId) {
-                    const trackingUrl = data.trackingUrl.replace('{trackingId}', encodeURIComponent(data.originalTrackingId));
-                    window.open(trackingUrl, '_blank');
-                } else {
-                    showMessage('Provider tracking URL not available', 'error');
-                }
-            } catch (error) {
-                console.error('Error opening provider website:', error);
-                showMessage('Failed to open provider website', 'error');
+        function viewOnProviderWebsite(trackingId) {
+            window.open(`/tracking.html?id=${trackingId}`, '_blank');
+        }
+
+        function confirmUpdateStatus(trackingId) {
+            if (confirm('Mark this package as Delivered?')) {
+                updateStatus(trackingId, 'Delivered');
             }
         }
     </script>
 </body>
-</html> 
+
+</html>

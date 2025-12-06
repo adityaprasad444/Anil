@@ -1,31 +1,38 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Package Tracking</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <title>Package Tracking - Fast & Reliable</title>
+    <link rel="icon" type="image/jpeg" href="/Logos/logo.jpeg">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
     <style>
         :root {
-            --primary-color: #2563eb;
-            --primary-hover: #1d4ed8;
-            --error-color: #dc2626;
-            --success-color: #059669;
-            --background-color: #f3f4f6;
-            --card-background: #ffffff;
+            --primary-color: #4f46e5;
+            --primary-hover: #4338ca;
+            --primary-light: #e0e7ff;
+            --bg-body: #f3f4f6;
+            --bg-card: #ffffff;
             --text-primary: #1f2937;
-            --text-secondary: #4b5563;
+            --text-secondary: #6b7280;
+            --border-color: #e5e7eb;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            --radius: 1rem;
         }
 
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
         }
 
         body {
-            font-family: 'Poppins', sans-serif;
-            background-color: var(--background-color);
+            background-color: var(--bg-body);
             color: var(--text-primary);
             line-height: 1.6;
             min-height: 100vh;
@@ -33,13 +40,15 @@
 
         /* Header Styles */
         .header {
-            background-color: var(--card-background);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            background-color: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            box-shadow: var(--shadow-sm);
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
             z-index: 1000;
+            transition: all 0.3s ease;
         }
 
         .nav-container {
@@ -54,6 +63,7 @@
         .logo-small {
             width: 40px;
             height: 40px;
+            border-radius: 8px;
         }
 
         .nav-menu {
@@ -67,6 +77,7 @@
             text-decoration: none;
             font-weight: 500;
             transition: color 0.2s;
+            font-size: 0.95rem;
         }
 
         .nav-menu a:hover {
@@ -79,34 +90,101 @@
             border: none;
             cursor: pointer;
             padding: 0.5rem;
+            color: var(--text-primary);
         }
 
-        /* Main Content Styles */
-        .main-content {
-            padding-top: 80px;
-            min-height: calc(100vh - 80px);
+        /* Hero Section */
+        .hero {
+            padding-top: 140px;
+            padding-bottom: 80px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
             display: flex;
-            flex-direction: column;
             align-items: center;
+            justify-content: center;
+            text-align: center;
         }
 
-        .container {
-            background: var(--card-background);
-            padding: 2rem;
-            border-radius: 1rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        .hero-container {
             width: 100%;
-            max-width: 600px;
+            max-width: 700px;
+            padding: 0 1.5rem;
+        }
+
+        .hero h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+            letter-spacing: -0.02em;
+        }
+
+        .hero p {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            margin-bottom: 2.5rem;
+        }
+
+        .tracking-card {
+            background: var(--bg-card);
+            padding: 2.5rem;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
             position: relative;
             overflow: hidden;
-            margin: 2rem auto;
+        }
+
+        .tracking-form {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .tracking-input-wrapper {
+            flex: 1;
+            position: relative;
+        }
+
+        input {
+            width: 100%;
+            padding: 1rem 1.5rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 0.75rem;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: all 0.2s;
+            background: #f9fafb;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            background: white;
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+        }
+
+        button {
+            padding: 1rem 2rem;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 0.75rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+            box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2);
+        }
+
+        button:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-1px);
         }
 
         /* Services Section */
         .services-section {
-            width: 100%;
-            padding: 4rem 2rem;
-            background-color: var(--card-background);
+            padding: 6rem 2rem;
+            background-color: white;
         }
 
         .services-container {
@@ -114,187 +192,67 @@
             margin: 0 auto;
         }
 
+        .section-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .section-header h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .section-header p {
+            color: var(--text-secondary);
+        }
+
         .services-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 2rem;
-            margin-top: 2rem;
         }
 
         .service-card {
-            background: var(--card-background);
-            padding: 2rem;
-            border-radius: 1rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            text-align: center;
-            transition: transform 0.2s;
+            background: #f9fafb;
+            padding: 2.5rem;
+            border-radius: var(--radius);
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
         }
 
         .service-card:hover {
             transform: translateY(-5px);
+            background: white;
+            box-shadow: var(--shadow-lg);
+            border-color: var(--border-color);
         }
 
         .service-icon {
-            width: 64px;
-            height: 64px;
-            margin-bottom: 1rem;
+            width: 56px;
+            height: 56px;
+            margin-bottom: 1.5rem;
+            color: var(--primary-color);
+            background: var(--primary-light);
+            padding: 12px;
+            border-radius: 12px;
         }
 
         .service-title {
             font-size: 1.25rem;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
+            font-weight: 700;
+            margin-bottom: 0.75rem;
             color: var(--text-primary);
         }
 
         .service-description {
             color: var(--text-secondary);
-            font-size: 0.875rem;
+            font-size: 0.95rem;
+            line-height: 1.7;
         }
 
-        .logo-container {
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-
-        .logo {
-            width: 120px;
-            height: 120px;
-            margin-bottom: 1rem;
-        }
-
-        h1 {
-            text-align: center;
-            color: var(--text-primary);
-            font-size: 2rem;
-            font-weight: 600;
-            margin-bottom: 1.5rem;
-        }
-
-        .tracking-form {
-            display: flex;
-            gap: 0.75rem;
-            margin-bottom: 1.5rem;
-            flex-wrap: wrap;
-        }
-
-        input {
-            flex: 1;
-            min-width: 200px;
-            padding: 0.875rem 1rem;
-            border: 2px solid #e5e7eb;
-            border-radius: 0.5rem;
-            font-size: 1rem;
-            font-family: inherit;
-            transition: border-color 0.2s;
-        }
-
-        input:focus {
-            outline: none;
-            border-color: var(--primary-color);
-        }
-
-        button {
-            padding: 0.875rem 1.5rem;
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            border-radius: 0.5rem;
-            font-size: 1rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: background-color 0.2s;
-            white-space: nowrap;
-        }
-
-        button:hover {
-            background-color: var(--primary-hover);
-        }
-
-        button:disabled {
-            background-color: #9ca3af;
-            cursor: not-allowed;
-        }
-
-        .result {
-            margin-top: 1.5rem;
-            padding: 1.5rem;
-            border-radius: 0.5rem;
-            background-color: #f8fafc;
-            display: none;
-            animation: fadeIn 0.3s ease-in-out;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .result.show {
-            display: block;
-        }
-
-        .result-item {
-            background-color: white;
-            padding: 1.25rem;
-            border-radius: 0.5rem;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        }
-
-        .result-item div {
-            margin-bottom: 0.75rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .result-item div:last-child {
-            margin-bottom: 0;
-        }
-
-        .status {
-            font-weight: 500;
-            color: var(--primary-color);
-            padding: 0.25rem 0.75rem;
-            background-color: #eff6ff;
-            border-radius: 1rem;
-        }
-
-        .error {
-            color: var(--error-color);
-            text-align: center;
-            padding: 1rem;
-            background-color: #fee2e2;
-            border-radius: 0.5rem;
-            margin-top: 1.5rem;
-            animation: shake 0.5s ease-in-out;
-        }
-
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
-        }
-
-        .admin-link {
-            text-align: center;
-            margin-top: 1.5rem;
-            padding-top: 1.5rem;
-            border-top: 1px solid #e5e7eb;
-        }
-
-        .admin-link a {
-            color: var(--primary-color);
-            text-decoration: none;
-            font-weight: 500;
-            transition: color 0.2s;
-        }
-
-        .admin-link a:hover {
-            color: var(--primary-hover);
-        }
-
-        /* Mobile Menu Styles */
+        /* Mobile Responsive */
         @media (max-width: 768px) {
             .nav-menu {
                 display: none;
@@ -302,12 +260,13 @@
                 top: 72px;
                 left: 0;
                 right: 0;
-                background-color: var(--card-background);
-                padding: 1rem;
+                background-color: white;
+                padding: 1.5rem;
                 flex-direction: column;
                 gap: 1rem;
-                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-                z-index: 1000;
+                box-shadow: var(--shadow);
+                align-items: center;
+                text-align: center;
             }
 
             .nav-menu.active {
@@ -316,166 +275,194 @@
 
             .mobile-menu-btn {
                 display: block;
-                background: none;
-                border: none;
-                cursor: pointer;
-                padding: 0.5rem;
-                color: var(--text-primary);
             }
 
-            .nav-menu li {
-                width: 100%;
+            .hero {
+                padding-top: 120px;
             }
 
-            .nav-menu a {
-                display: block;
-                padding: 0.75rem;
-                width: 100%;
-                text-align: center;
-                border-radius: 0.375rem;
-            }
-
-            .nav-menu a:hover {
-                background-color: var(--background-color);
-            }
-
-            .container {
-                margin: 1rem;
-                padding: 1.5rem;
+            .hero h1 {
+                font-size: 2rem;
             }
 
             .tracking-form {
                 flex-direction: column;
             }
 
-            input {
-                width: 100%;
-                min-width: unset;
-            }
-
             button {
                 width: 100%;
             }
 
-            .services-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .service-card {
-                padding: 1.5rem;
-            }
-
-            h1 {
-                font-size: 1.5rem;
-            }
-
-            .logo {
-                width: 80px;
-                height: 80px;
-            }
-        }
-
-        /* Small Mobile Devices */
-        @media (max-width: 480px) {
-            .nav-container {
-                padding: 0.75rem 1rem;
-            }
-
-            .container {
-                margin: 0.5rem;
-                padding: 1rem;
-            }
-
             .services-section {
-                padding: 2rem 1rem;
-            }
-
-            .service-card {
-                padding: 1rem;
-            }
-        }
-
-        /* Tablet Devices */
-        @media (min-width: 769px) and (max-width: 1024px) {
-            .container {
-                max-width: 90%;
-            }
-
-            .services-grid {
-                grid-template-columns: repeat(2, 1fr);
+                padding: 4rem 1.5rem;
             }
         }
     </style>
 </head>
+
 <body>
     <header class="header">
         <nav class="nav-container">
-            <div class="logo-container">
-                <img src="/Logos/logo.jpeg" alt="Package Tracking Logo" class="logo-small">
-            </div>
+            <a href="#" class="logo-small">
+                <img src="/Logos/logo.jpeg" alt="Logo" class="logo-small">
+            </a>
             <ul class="nav-menu">
-                <li><a href="#tracking">Track Package</a></li>
+                <li><a href="#tracking">Track</a></li>
                 <li><a href="#services">Services</a></li>
-                <li><a href="#about">About Us</a></li>
                 <li><a href="#contact">Contact</a></li>
                 <li><a href="/login">Admin Login</a></li>
             </ul>
             <button class="mobile-menu-btn" aria-label="Toggle menu">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M3 12h18M3 6h18M3 18h18"></path>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
                 </svg>
             </button>
         </nav>
     </header>
 
-    <main class="main-content">
-        <div class="container" id="tracking">
-            <div class="logo-container">
-                <img src="/Logos/logo.jpeg" alt="Package Tracking Logo" class="logo">
-                <h1>Package Tracking</h1>
-            </div>
-            <form id="trackingForm" onsubmit="handleTrackingSubmit(event)">
-                <div class="form-group">
-                    <input type="text" id="trackingId" placeholder="Enter your tracking ID" required>
-                </div>
-                <button type="submit">Track Package</button>
-            </form>
-            <div id="result" class="result"></div>
-        </div>
+    <div class="hero" id="tracking">
+        <div class="hero-container">
+            <h1>Track Your Delivery</h1>
+            <p>Real-time delivery updates for your packages.</p>
 
-        <section class="services-section" id="services">
-            <div class="services-container">
-                <h2 style="text-align: center; margin-bottom: 2rem;">Our Services</h2>
-                <div class="services-grid">
-                    <div class="service-card">
-                        <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2">
-                            <path d="M20 7H4C2.89543 7 2 7.89543 2 9V19C2 20.1046 2.89543 21 4 21H20C21.1046 21 22 20.1046 22 19V9C22 7.89543 21.1046 7 20 7Z"/>
-                            <path d="M16 21V5C16 3.89543 15.1046 3 14 3H10C8.89543 3 8 3.89543 8 5V21"/>
-                        </svg>
-                        <h3 class="service-title">Real-time Tracking</h3>
-                        <p class="service-description">Track your packages in real-time with our advanced tracking system.</p>
+            <div class="tracking-card">
+                <form id="trackingForm" onsubmit="handleTrackingSubmit(event)" class="tracking-form">
+                    <div class="tracking-input-wrapper">
+                        <input type="text" id="trackingId" placeholder="Enter your tracking number..." required>
                     </div>
-                    <div class="service-card">
-                        <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2">
-                            <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"/>
-                            <path d="M12 6V12L16 14"/>
-                        </svg>
-                        <h3 class="service-title">24/7 Support</h3>
-                        <p class="service-description">Round-the-clock customer support to assist you with any queries.</p>
-                    </div>
-                    <div class="service-card">
-                        <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2">
-                            <path d="M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V15"/>
-                            <path d="M7 10L12 15L17 10"/>
-                            <path d="M12 15V3"/>
-                        </svg>
-                        <h3 class="service-title">Multi-carrier Support</h3>
-                        <p class="service-description">Track packages from multiple carriers in one place.</p>
-                    </div>
+                    <button type="submit">Track Package</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <section class="services-section" id="services">
+        <div class="services-container">
+            <div class="section-header">
+                <h2>Why Choose Us</h2>
+                <p>We provide the best tracking experience for your shipments.</p>
+            </div>
+
+            <div class="services-grid">
+                <div class="service-card">
+                    <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path
+                            d="M20 7H4C2.89543 7 2 7.89543 2 9V19C2 20.1046 2.89543 21 4 21H20C21.1046 21 22 20.1046 22 19V9C22 7.89543 21.1046 7 20 7Z" />
+                        <path d="M16 21V5C16 3.89543 15.1046 3 14 3H10C8.89543 3 8 3.89543 8 5V21" />
+                    </svg>
+                    <h3 class="service-title">Real-time Tracking</h3>
+                    <p class="service-description">Get instant updates on your package location and status changes as
+                        they happen.</p>
+                </div>
+                <div class="service-card">
+                    <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path
+                            d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" />
+                        <path d="M12 6V12L16 14" />
+                    </svg>
+                    <h3 class="service-title">24 X 7 Availability</h3>
+                    <p class="service-description">Our tracking system is available round the clock so you never lose
+                        sight of your shipment.</p>
+                </div>
+                <div class="service-card">
+                    <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path
+                            d="M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V15" />
+                        <path d="M7 10L12 15L17 10" />
+                        <path d="M12 15V3" />
+                    </svg>
+                    <h3 class="service-title">Multi-Carrier Support</h3>
+                    <p class="service-description">We seamlessly integrate with multiple logistics providers for a
+                        unified tracking experience.</p>
                 </div>
             </div>
-        </section>
-    </main>
+        </div>
+    </section>
+
+    <section class="services-section" id="contact" style="background-color: #f9fafb;">
+        <div class="services-container">
+            <div class="section-header">
+                <h2>Contact Us</h2>
+                <p>Get in touch with us for any queries or support.</p>
+            </div>
+
+            <div
+                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; max-width: 900px; margin: 0 auto;">
+
+                <!-- Address Card -->
+                <div
+                    style="background: white; padding: 2.5rem; border-radius: var(--radius); box-shadow: var(--shadow); text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                    <div
+                        style="width: 56px; height: 56px; background: #eff6ff; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem; color: var(--primary-color);">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                            <circle cx="12" cy="10" r="3"></circle>
+                        </svg>
+                    </div>
+                    <h3
+                        style="font-size: 1.25rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.5rem;">
+                        Visit Us</h3>
+                    <div
+                        style="font-weight: 600; font-size: 1.1rem; color: var(--text-primary); margin-bottom: 0.5rem;">
+                        AK Logistics</div>
+                    <p style="color: var(--text-secondary); line-height: 1.6;">Beside BIG C, Ring
+                        Road,<br>Ravulapalem-533238</p>
+                </div>
+
+                <!-- Contact Card -->
+                <div
+                    style="background: white; padding: 2.5rem; border-radius: var(--radius); box-shadow: var(--shadow); text-align: center;">
+                    <div
+                        style="width: 56px; height: 56px; background: #f0fdf4; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem auto; color: #16a34a;">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path
+                                d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z">
+                            </path>
+                        </svg>
+                    </div>
+                    <h3
+                        style="font-size: 1.25rem; font-weight: 600; color: var(--text-primary); margin-bottom: 1.5rem;">
+                        Reach Us</h3>
+
+                    <div style="display: flex; flex-direction: column; gap: 1rem;">
+                        <a href="tel:+919912642444"
+                            style="text-decoration: none; color: inherit; display: flex; align-items: center; justify-content: center; gap: 0.75rem; padding: 0.875rem; background: #f3f4f6; border-radius: 0.75rem; transition: all 0.2s; font-weight: 500;"
+                            onmouseover="this.style.background='#e5e7eb'" onmouseout="this.style.background='#f3f4f6'">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                style="color: var(--primary-color);">
+                                <path
+                                    d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z">
+                                </path>
+                            </svg>
+                            +91 9912642444
+                        </a>
+
+                        <a href="https://wa.me/919182228692" target="_blank"
+                            style="text-decoration: none; color: inherit; display: flex; align-items: center; justify-content: center; gap: 0.75rem; padding: 0.875rem; background: #f0fdf4; border-radius: 0.75rem; transition: all 0.2s; border: 1px solid #dcfce7; font-weight: 500;"
+                            onmouseover="this.style.background='#dcfce7'" onmouseout="this.style.background='#f0fdf4'">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #16a34a;">
+                                <path
+                                    d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z">
+                                </path>
+                            </svg>
+                            <span style="color: #166534;">WhatsApp: +91 9182228692</span>
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
 
     <script>
         async function handleTrackingSubmit(event) {
@@ -492,12 +479,10 @@
 
         mobileMenuBtn.addEventListener('click', () => {
             navMenu.classList.toggle('active');
-            // Toggle aria-expanded attribute
             const isExpanded = navMenu.classList.contains('active');
             mobileMenuBtn.setAttribute('aria-expanded', isExpanded);
         });
 
-        // Close mobile menu when clicking outside
         document.addEventListener('click', (event) => {
             if (!navMenu.contains(event.target) && !mobileMenuBtn.contains(event.target)) {
                 navMenu.classList.remove('active');
@@ -505,7 +490,6 @@
             }
         });
 
-        // Close mobile menu when clicking on a link
         navMenu.querySelectorAll('a').forEach(link => {
             link.addEventListener('click', () => {
                 navMenu.classList.remove('active');
@@ -514,4 +498,5 @@
         });
     </script>
 </body>
-</html> 
+
+</html>

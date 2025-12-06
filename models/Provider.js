@@ -61,8 +61,8 @@ const providerSchema = new mongoose.Schema({
     },
     authType: {
         type: String,
-        enum: ['api_key', 'oauth', 'basic_auth', 'bearer_token'],
-        default: 'api_key'
+        enum: ['none', 'api_key', 'oauth', 'basic_auth', 'bearer_token'],
+        default: 'none'
     },
     rateLimit: {
         type: Number,
@@ -94,19 +94,19 @@ const providerSchema = new mongoose.Schema({
 });
 
 // Update the updatedAt timestamp before saving
-providerSchema.pre('save', function(next) {
+providerSchema.pre('save', function (next) {
     this.updatedAt = new Date();
-    
+
     // If API endpoint is provided, ensure it ends with a slash
     if (this.apiEndpoint && !this.apiEndpoint.endsWith('/')) {
         this.apiEndpoint += '/';
     }
-    
+
     next();
 });
 
 // Virtual for the provider's API base URL
-providerSchema.virtual('apiBaseUrl').get(function() {
+providerSchema.virtual('apiBaseUrl').get(function () {
     if (!this.apiEndpoint) return null;
     try {
         const url = new URL(this.apiEndpoint);
@@ -117,9 +117,9 @@ providerSchema.virtual('apiBaseUrl').get(function() {
 });
 
 // Method to get authentication headers
-providerSchema.methods.getAuthHeaders = function() {
+providerSchema.methods.getAuthHeaders = function () {
     const headers = {};
-    
+
     switch (this.authType) {
         case 'api_key':
             headers['X-API-Key'] = this.apiKey;
@@ -133,29 +133,29 @@ providerSchema.methods.getAuthHeaders = function() {
             break;
         // For OAuth, you would typically get a token first
     }
-    
+
     return headers;
 };
 
 // Method to get API configuration with tracking ID replaced
-providerSchema.methods.getApiRequest = function(trackingId) {
+providerSchema.methods.getApiRequest = function (trackingId) {
     if (!this.apiConfig || !this.apiConfig.endpoint) {
         return null;
     }
-    
+
     const config = {
         url: this.apiConfig.endpoint,
         method: this.apiConfig.method || 'POST',
         headers: {}
     };
-    
+
     // Convert Map to object for headers
     if (this.apiConfig.headers) {
         this.apiConfig.headers.forEach((value, key) => {
             config.headers[key] = value;
         });
     }
-    
+
     // Replace tracking ID in request body template
     if (this.apiConfig.requestBodyTemplate) {
         try {
@@ -165,7 +165,7 @@ providerSchema.methods.getApiRequest = function(trackingId) {
             console.error('Error parsing request body template:', e);
         }
     }
-    
+
     return config;
 };
 

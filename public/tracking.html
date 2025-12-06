@@ -3,20 +3,24 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width,ruz, initialtera-scale=-reduced=1Update=1 voluntary=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Track Package - Package Tracking</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/jpeg" href="/Logos/logo.jpeg">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
     <style>
         :root {
-            --primary-color: #2563eb;
-            --primary-hover: #1d4ed8;
-            --success-color: #22c55e;
-            --warning-color: #eab308;
+            --primary-color: #4f46e5;
+            --primary-light: #818cf8;
+            --primary-dark: #3730a3;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
             --danger-color: #ef4444;
-            --background-color: #f8fafc;
-            --card-background: #ffffff;
-            --text-color: #1e293b;
-            --border-color: #e2e8f0;
+            --text-primary: #1f2937;
+            --text-secondary: #6b7280;
+            --bg-body: #f3f4f6;
+            --bg-card: #ffffff;
+            --transition: all 0.3s ease;
         }
 
         * {
@@ -27,176 +31,271 @@
         }
 
         body {
-            background-color: var(--background-color);
-            color: var(--text-color);
-            line-height: 1.6;
+            background-color: var(--bg-body);
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: var(--text-primary);
             min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
         }
 
         .container {
-            max-width: 800px;
-            margin: 2rem auto;
-            padding: 0 1rem;
+            width: 100%;
+            max-width: 600px;
         }
 
         .tracking-card {
-            background-color: var(--card-background);
-            border-radius: 1rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            padding: 2rem;
-            margin-bottom: 2rem;
+            background: var(--bg-card);
+            border-radius: 24px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            overflow: hidden;
+            animation: slideUp 0.5s ease-out;
+            position: relative;
         }
 
-        .tracking-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            padding: 2.5rem 2rem;
+            color: white;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 60%);
+            transform: rotate(30deg);
         }
 
         .tracking-title {
             font-size: 1.5rem;
-            font-weight: 600;
-            color: var(--text-color);
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            position: relative;
         }
 
-        .tracking-id {
-            font-family: monospace;
-            font-size: 1.25rem;
-            color: var(--primary-color);
-            background-color: #f1f5f9;
+        .tracking-id-pill {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(4px);
             padding: 0.5rem 1rem;
-            border-radius: 0.5rem;
+            border-radius: 50px;
+            font-family: 'Courier New', monospace;
+            font-weight: 600;
+            letter-spacing: 1px;
+            margin-top: 0.5rem;
+            position: relative;
+            border: 1px solid rgba(255, 255, 255, 0.3);
         }
 
-        .tracking-info {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1.5rem;
+        .card-body {
+            padding: 2rem;
+        }
+
+        .status-container {
+            text-align: center;
             margin-bottom: 2rem;
-        }
-
-        .info-group {
-            background-color: #f8fafc;
-            padding: 1rem;
-            border-radius: 0.5rem;
-        }
-
-        .info-label {
-            font-size: 0.875rem;
-            color: #64748b;
-            margin-bottom: 0.25rem;
-        }
-
-        .info-value {
-            font-weight: 500;
-            color: var(--text-color);
+            padding-bottom: 2rem;
+            border-bottom: 1px solid #f3f4f6;
         }
 
         .status-badge {
-            display: inline-block;
-            padding: 0.5rem 1rem;
-            border-radius: 2rem;
-            font-weight: 500;
-            font-size: 0.875rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
         }
 
         .status-in-transit {
-            background-color: #dbeafe;
+            background-color: #eff6ff;
             color: #1e40af;
+            border: 1px solid #dbeafe;
         }
 
         .status-delivered {
-            background-color: #dcfce7;
+            background-color: #f0fdf4;
             color: #166534;
+            border: 1px solid #dcfce7;
         }
 
         .status-delayed {
-            background-color: #fef3c7;
-            color: #92400e;
+            background-color: #fefce8;
+            color: #854d0e;
+            border: 1px solid #fef9c3;
         }
 
-        .tracking-history {
-            margin-top: 2rem;
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .info-item {
+            background: #f9fafb;
+            padding: 1rem;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .info-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .info-value {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .history-section {
+            margin-top: 1rem;
+        }
+
+        .history-title-container {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
         }
 
         .history-title {
-            font-size: 1.25rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-primary);
         }
 
         .history-list {
             list-style: none;
+            position: relative;
+            padding-left: 1.5rem;
+        }
+
+        .history-list::before {
+            content: '';
+            position: absolute;
+            left: 6px;
+            top: 6px;
+            bottom: 6px;
+            width: 2px;
+            background: #e5e7eb;
+            border-radius: 2px;
         }
 
         .history-item {
-            display: flex;
-            gap: 1rem;
-            padding: 1rem;
-            border-left: 2px solid var(--border-color);
-            margin-left: 1rem;
             position: relative;
-        }
-
-        .history-item::before {
-            content: '';
-            position: absolute;
-            left: -0.5rem;
-            width: 1rem;
-            height: 1rem;
-            background-color: var(--card-background);
-            border: 2px solid var(--primary-color);
-            border-radius: 50%;
+            padding-bottom: 2rem;
+            padding-left: 1.5rem;
         }
 
         .history-item:last-child {
-            border-left: none;
+            padding-bottom: 0;
         }
 
-        .history-content {
-            flex: 1;
+        .history-dot {
+            position: absolute;
+            left: -1px;
+            top: 2px;
+            width: 16px;
+            height: 16px;
+            background: #fff;
+            border: 3px solid var(--primary-color);
+            border-radius: 50%;
+            z-index: 10;
+            transition: var(--transition);
+        }
+
+        .history-item:hover .history-dot {
+            background: var(--primary-color);
+            transform: scale(1.1);
+        }
+
+        .history-item:first-child .history-dot {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.2);
         }
 
         .history-status {
-            font-weight: 500;
+            font-weight: 600;
+            color: var(--text-primary);
             margin-bottom: 0.25rem;
         }
 
-        .history-location {
-            font-size: 0.875rem;
-            color: #64748b;
+        .history-meta {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            align-items: center;
         }
 
-        .history-time {
-            font-size: 0.75rem;
-            color: #94a3b8;
+        .history-meta span:not(:last-child)::after {
+            content: '•';
+            margin-left: 0.5rem;
+            color: #d1d5db;
+        }
+
+        .loading,
+        .error-message {
+            text-align: center;
+            padding: 3rem;
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
         }
 
         .error-message {
-            background-color: #fee2e2;
-            color: #991b1b;
-            padding: 1rem;
-            border-radius: 0.5rem;
-            margin-bottom: 1rem;
-            display: none;
+            color: var(--danger-color);
+            background: #fef2f2;
         }
 
-        .loading {
-            text-align: center;
-            padding: 2rem;
-            color: #64748b;
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
         }
 
-        @media (max-width: 640px) {
-            .tracking-header {
-                flex-direction: column;
-                gap: 1rem;
-                text-align: center;
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
             }
 
-            .tracking-info {
-                grid-template-columns: 1fr;
+            100% {
+                transform: rotate(360deg);
             }
         }
     </style>
@@ -204,57 +303,42 @@
 
 <body>
     <div class="container">
-        <div class="tracking-card">
-            <div id="error" class="error-message"></div>
-            <div id="loading" class="loading">Loading tracking information...</div>
-            <div id="tracking-content" style="display: none;">
-                <div class="tracking-header">
-                    <h1 class="tracking-title">Package Tracking</h1>
-                    <div class="tracking-id" id="trackingId"></div>
+        <!-- Error State -->
+        <div id="error" class="error-message" style="display: none;"></div>
+
+        <!-- Loading State -->
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p>Locating your package...</p>
+        </div>
+
+        <!-- Content State -->
+        <div id="tracking-content" class="tracking-card" style="display: none;">
+            <div class="card-header">
+                <h1 class="tracking-title">Package Status</h1>
+                <div class="tracking-id-pill" id="trackingId"></div>
+            </div>
+
+            <div class="card-body">
+                <div class="status-container">
+                    <span id="status" class="status-badge"></span>
                 </div>
 
-                <div class="tracking-info">
-                    <div class="info-group">
-                        <div class="info-label">Status</div>
-                        <div class="info-value">
-                            <span id="status" class="status-badge"></span>
-                        </div>
-                    </div>
-                    <!-- <div class="info-group">
-                        <div class="info-label">Current Location</div>
-                        <div class="info-value" id="location"></div>
-                    </div>
-                    <div class="info-group">
-                        <div class="info-label">Estimated Delivery</div>
-                        <div class="info-value" id="estimatedDelivery"></div>
-                    </div> -->
-                    <div class="info-group">
-                        <div class="info-label">Last Updated</div>
-                        <div class="info-value" id="lastUpdated"></div>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label">Last Updated</span>
+                        <span class="info-value" id="lastUpdated"></span>
                     </div>
                 </div>
 
-                <!-- History Section -->
-                <div id="history-section" class="tracking-history" style="display: none;">
-                    <h2 class="history-title">Tracking History</h2>
+                <div id="history-section" class="history-section" style="display: none;">
+                    <div class="history-title-container">
+                        <h2 class="history-title">Tracking History</h2>
+                    </div>
                     <ul id="history-list" class="history-list">
-                        <!-- History items will be populated here -->
+                        <!-- History items populated via JS -->
                     </ul>
                 </div>
-
-                <!-- Add tracking link section -->
-                <!-- <div class="tracking-link" style="margin-top: 1.5rem; text-align: center;">
-                    <a id="providerTrackingLink" href="#" target="_blank" style="
-                        display: inline-block;
-                        padding: 0.75rem 1.5rem;
-                        background-color: var(--primary-color);
-                        color: white;
-                        text-decoration: none;
-                        border-radius: 0.5rem;
-                        font-weight: 500;
-                        transition: background-color 0.2s;
-                    ">View on Provider's Website</a>
-                </div> -->
 
                 <div id="provider-iframe-container" style="display:none; margin-top:2rem;">
                     <div id="iframe-fallback" style="display:none; margin-top:1rem; text-align:center;">
@@ -299,25 +383,7 @@
             statusElement.className = 'status-badge ' + getStatusClass(data.status);
 
             // Update other info
-            // document.getElementById('location').textContent = data.location || 'N/A';
-            // document.getElementById('estimatedDelivery').textContent = formatDate(data.estimatedDelivery);
             document.getElementById('lastUpdated').textContent = formatDate(data.lastUpdated);
-
-            // Update provider link
-            if (data.trackingUrl) {
-                const trackingUrl = data.trackingUrl.replace('{trackingId}', encodeURIComponent(data.originalTrackingId || trackingId));
-                const link = document.getElementById('providerTrackingLink');
-                if (link) {
-                    link.href = trackingUrl;
-                    link.textContent = `Track on ${data.provider || 'Provider'}'s Website`;
-                    document.querySelector('.tracking-link').style.display = 'block';
-                }
-            } else {
-                const linkDiv = document.querySelector('.tracking-link');
-                if (linkDiv) {
-                    linkDiv.style.display = 'none';
-                }
-            }
 
             // Render History
             const historyContainer = document.getElementById('history-list');
@@ -325,13 +391,16 @@
                 // Sort history by timestamp descending (newest first)
                 const sortedHistory = [...data.history].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
-                historyContainer.innerHTML = sortedHistory.map(item => `
+                historyContainer.innerHTML = sortedHistory.map((item, index) => `
                     <li class="history-item">
+                        <div class="history-dot"></div>
                         <div class="history-content">
                             <div class="history-status">${item.status}</div>
-                            <div class="history-location">${item.location || ''}</div>
-                            <div class="history-time">${formatDate(item.timestamp)}</div>
-                            ${item.description ? `<div class="history-description" style="font-size: 0.85rem; color: #64748b; margin-top: 0.25rem;">${item.description}</div>` : ''}
+                            <div class="history-meta">
+                                <span>${formatDate(item.timestamp)}</span>
+                                ${item.location ? `<span>${item.location}</span>` : ''}
+                            </div>
+                            ${item.description ? `<div style="font-size: 0.85rem; color: #6b7280; margin-top: 0.25rem;">${item.description}</div>` : ''}
                         </div>
                     </li>
                 `).join('');
