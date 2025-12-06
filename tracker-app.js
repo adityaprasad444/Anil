@@ -379,7 +379,7 @@ app.get('/map-tracking', requireAuth, (req, res) => {
 
 // Configuration route
 app.get('/config', requireAuth, (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'config.html'));
+  res.sendFile(path.join(publicPath, 'config.html'));
 });
 
 // Provider API routes
