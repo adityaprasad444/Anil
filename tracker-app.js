@@ -37,7 +37,8 @@ app.use(session({
 }));
 
 // Serve static files
-app.use(express.static('public'));
+// Serve static files
+app.use(express.static(path.join(__dirname, 'public')));
 // Add this after your static file serving middleware
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
