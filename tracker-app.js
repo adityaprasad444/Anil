@@ -532,11 +532,33 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Internal server error' });
 });
 
+// MongoDB connection cache for serverless
+let isConnected = false;
+
+const ensureDbConnection = async (req, res, next) => {
+  if (isConnected) {
+    return next();
+  }
+
+  try {
+    await connectDB();
+    isConnected = true;
+    next();
+  } catch (error) {
+    console.error('❌ Database connection failed:', error);
+    res.status(500).json({ error: 'Database connection failed' });
+  }
+};
+
+// Apply DB connection middleware globally
+app.use(ensureDbConnection);
+
 // Start the server
 const startServer = async () => {
   try {
     // Connect to MongoDB
     await connectDB();
+    isConnected = true;
 
     const PORT = config.server.port || 3001;
     app.listen(PORT, () => {
@@ -552,5 +574,10 @@ const startServer = async () => {
   }
 };
 
-// Start the application
-startServer();
+// Only start the server if run directly (not imported as a module)
+if (require.main === module) {
+  startServer();
+}
+
+// Export the app for Vercel
+module.exports = app;
