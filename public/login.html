@@ -211,7 +211,7 @@
             loginButton.disabled = true;
             loginButton.textContent = 'Signing in...';
 
-            const username = usernameInput.value;
+            const username = usernameInput.value.toLowerCase();
             const password = passwordInput.value;
 
             try {
