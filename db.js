@@ -1,26 +1,46 @@
 const mongoose = require('mongoose');
 const config = require('./config');
 
-// MongoDB connection with updated options
+// MongoDB connection cache for serverless
+let cached = global.mongoose;
+
+if (!cached) {
+  cached = global.mongoose = { conn: null, promise: null };
+}
+
 const connectDB = async () => {
-  // If already connected, use existing connection
-  if (mongoose.connection.readyState === 1) {
-    return mongoose.connection;
+  if (!config.mongo.uri) {
+    throw new Error('MONGODB_URI is not defined in environment variables');
   }
 
-  try {
-    const conn = await mongoose.connect(config.mongo.uri, {
+  if (cached.conn) {
+    console.log('📦 Using cached MongoDB connection');
+    return cached.conn;
+  }
+
+  if (!cached.promise) {
+    const opts = {
       useNewUrlParser: true,
       useUnifiedTopology: true,
       bufferCommands: false, // Disable Mongoose buffering
-      serverSelectionTimeoutMS: 5000 // Timeout after 5s instead of 30s
+      serverSelectionTimeoutMS: 5000 // Timeout after 5s
+    };
+
+    console.log('🔌 Establishing new MongoDB connection...');
+    cached.promise = mongoose.connect(config.mongo.uri, opts).then((mongoose) => {
+      console.log('✅ MongoDB connected successfully');
+      return mongoose;
     });
-    console.log(` MongoDB: Connected to ${conn.connection.host}/${conn.connection.name}`);
-    return conn;
-  } catch (error) {
-    console.error(' MongoDB connection error:', error.message);
-    throw error; // Rethrow to let caller handle it
   }
+
+  try {
+    cached.conn = await cached.promise;
+  } catch (e) {
+    cached.promise = null;
+    throw e;
+  }
+
+  return cached.conn;
 };
 
 // Define the tracking data schema
