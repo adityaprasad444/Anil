@@ -616,6 +616,12 @@
         let filterProvider = '';
         let filterStatus = '';
 
+        function formatDateSafe(dateString) {
+            if (!dateString) return 'N/A';
+            const date = new Date(dateString);
+            return isNaN(date.getTime()) ? 'N/A' : date.toLocaleDateString();
+        }
+
         async function checkAuth() {
             try {
                 const response = await fetch('/api/login/check', { credentials: 'include' });
@@ -736,7 +742,7 @@
                                 </div>
                                 <div class="tracking-detail-item">
                                     <span class="detail-label">Updated</span>
-                                    <span class="detail-value">${new Date(item.lastUpdated).toLocaleDateString()}</span>
+                                    <span class="detail-value">${formatDateSafe(item.lastUpdated)}</span>
                                 </div>
                                 <div class="tracking-detail-item">
                                     <span class="detail-label">Status</span>
