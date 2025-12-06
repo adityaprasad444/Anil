@@ -38,7 +38,7 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-const MongoStore = require('connect-mongo');
+const MongoStore = require('connect-mongo').default;
 
 app.use(session({
   secret: config.session.secret,
