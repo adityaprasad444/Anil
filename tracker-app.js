@@ -14,6 +14,18 @@ const cron = require('node-cron');
 
 const app = express();
 
+// Database connection middleware - MUST be the first thing
+const ensureDbConnection = async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (error) {
+    console.error('❌ Database connection failed:', error);
+    res.status(500).json({ error: 'Database connection failed' });
+  }
+};
+app.use(ensureDbConnection);
+
 // Middleware
 app.use(helmet({
   contentSecurityPolicy: false // Disable CSP for development
@@ -520,19 +532,6 @@ app.use((err, req, res, next) => {
   console.error('❌ Global error:', err);
   res.status(500).json({ error: 'Internal server error' });
 });
-
-const ensureDbConnection = async (req, res, next) => {
-  try {
-    await connectDB();
-    next();
-  } catch (error) {
-    console.error('❌ Database connection failed:', error);
-    res.status(500).json({ error: 'Database connection failed' });
-  }
-};
-
-// Apply DB connection middleware globally
-app.use(ensureDbConnection);
 
 // Start the server
 const startServer = async () => {
