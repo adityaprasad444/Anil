@@ -354,16 +354,29 @@ app.post('/api/logout', (req, res) => {
 
 app.post('/api/tracking/generate', requireAuth, async (req, res) => {
   try {
-    const { provider, originalTrackingId } = req.body;
-    console.log('📦 Tracking ID generation request:', { provider, originalTrackingId });
+    const { provider, originalTrackingId, manualTrackingId } = req.body;
+    console.log('📦 Tracking ID generation request:', { provider, originalTrackingId, manualTrackingId });
 
     if (!provider || !originalTrackingId) {
       return res.status(400).json({ error: 'Provider and original tracking ID are required' });
     }
 
-    // Generate a 6-digit random number
-    const randomNumber = Math.floor(100000 + Math.random() * 900000);
-    const trackingId = `ak${randomNumber}lg`;
+    let trackingId;
+
+    if (manualTrackingId) {
+      // Use manually provided ID
+      trackingId = manualTrackingId.trim();
+
+      // Check for duplicates
+      const existing = await TrackingData.findOne({ trackingId });
+      if (existing) {
+        return res.status(400).json({ error: 'Tracking ID already exists' });
+      }
+    } else {
+      // Generate a 6-digit random number
+      const randomNumber = Math.floor(100000 + Math.random() * 900000);
+      trackingId = `ak${randomNumber}lg`;
+    }
 
     const trackingData = new TrackingData({
       trackingId,
@@ -376,6 +389,9 @@ app.post('/api/tracking/generate', requireAuth, async (req, res) => {
     res.json({ success: true, trackingId });
   } catch (error) {
     console.error('❌ Tracking ID generation error:', error);
+    if (error.code === 11000) {
+      return res.status(400).json({ error: 'Tracking ID already exists' });
+    }
     res.status(500).json({ error: 'Internal server error' });
   }
 });

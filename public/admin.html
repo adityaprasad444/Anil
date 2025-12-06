@@ -508,8 +508,30 @@
             </div>
             <div class="card-body">
                 <form id="trackingForm" onsubmit="generateTrackingId(event)">
+                    <!-- ID Generation Type Selection -->
+                    <div class="form-group">
+                        <label class="form-label">Tracking ID Type</label>
+                        <div style="display: flex; gap: 1.5rem;">
+                            <label style="display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                <input type="radio" name="idType" value="system" checked onchange="toggleManualInput()">
+                                <span>System Generated</span>
+                            </label>
+                            <label style="display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                <input type="radio" name="idType" value="manual" onchange="toggleManualInput()">
+                                <span>Manual Entry</span>
+                            </label>
+                        </div>
+                    </div>
+
                     <div
-                        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; align-items: end;">
+                        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; align-items: end;">
+
+                        <!-- Manual ID Input (Hidden by default) -->
+                        <div class="form-group" id="manualIdGroup" style="display: none; margin-bottom: 0;">
+                            <label class="form-label" for="manualTrackingId">Custom Tracking ID</label>
+                            <input type="text" id="manualTrackingId" class="form-input" placeholder="e.g. CUSTOM123">
+                        </div>
+
                         <div class="form-group" style="margin-bottom: 0;">
                             <label class="form-label" for="originalTrackingId">Original Tracking ID</label>
                             <input type="text" id="originalTrackingId" class="form-input"
@@ -531,6 +553,23 @@
                         </button>
                     </div>
                 </form>
+
+                <script>
+                    function toggleManualInput() {
+                        const idType = document.querySelector('input[name="idType"]:checked').value;
+                        const manualGroup = document.getElementById('manualIdGroup');
+                        const manualInput = document.getElementById('manualTrackingId');
+
+                        if (idType === 'manual') {
+                            manualGroup.style.display = 'block';
+                            manualInput.required = true;
+                        } else {
+                            manualGroup.style.display = 'none';
+                            manualInput.required = false;
+                            manualInput.value = '';
+                        }
+                    }
+                </script>
             </div>
         </div>
 
@@ -664,12 +703,23 @@
             const originalTrackingId = document.getElementById('originalTrackingId').value;
             const provider = document.getElementById('provider').value;
 
+            const idType = document.querySelector('input[name="idType"]:checked').value;
+            let manualTrackingId = null;
+            if (idType === 'manual') {
+                manualTrackingId = document.getElementById('manualTrackingId').value.trim();
+                // Basic client-side validation
+                if (!manualTrackingId) {
+                    showMessage('Please enter a custom Tracking ID', 'error');
+                    return;
+                }
+            }
+
             try {
                 const response = await fetch('/api/tracking/generate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     credentials: 'include',
-                    body: JSON.stringify({ originalTrackingId, provider })
+                    body: JSON.stringify({ originalTrackingId, provider, manualTrackingId })
                 });
 
                 const data = await response.json();
