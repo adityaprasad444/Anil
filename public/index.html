@@ -32,17 +32,25 @@
         }
 
         body {
-            /* Fixed background for scrolling effect */
-            background: url('/images/home-banner.jpg') no-repeat center center fixed;
-            background-size: cover;
             color: var(--text-primary);
             line-height: 1.6;
             min-height: 100vh;
         }
 
+        .page-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: url('/images/home-banner.jpg') no-repeat center top;
+            background-size: cover;
+        }
+
         /* Header Styles */
         .header {
-            background-color: rgba(255, 255, 255, 0.9);
+            background-color: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
             box-shadow: var(--shadow-sm);
             position: fixed;
@@ -193,8 +201,8 @@
         /* Services Section */
         .services-section {
             padding: 6rem 2rem;
-            background-color: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(5px);
+            background-color: rgba(255, 255, 255, 0.85);
+            /* Transparent for background visibility */
         }
 
         .services-container {
@@ -330,10 +338,6 @@
 
         /* Mobile Responsive */
         @media (max-width: 768px) {
-            body {
-                background-attachment: scroll;
-                /* Fix for mobile background */
-            }
 
             .nav-menu {
                 display: none;
@@ -362,7 +366,6 @@
                 padding-top: 100px;
                 padding-bottom: 40px;
                 min-height: 50vh;
-                background-attachment: scroll;
             }
 
             .hero h1 {
@@ -400,6 +403,7 @@
 </head>
 
 <body>
+    <div class="page-background"></div>
     <header class="header">
         <nav class="nav-container">
             <a href="#" style="display: flex; align-items: center; gap: 0.75rem; text-decoration: none;">
@@ -490,7 +494,7 @@
                             d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" />
                         <path d="M12 6V12L16 14" />
                     </svg>
-                    <h3 class="service-title">24/7 Support</h3>
+                    <h3 class="service-title">24 X 7 Support</h3>
                     <p class="service-description">Dedicated customer support team available round the clock to assist
                         you.</p>
                 </div>
