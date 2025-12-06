@@ -3,16 +3,23 @@ const config = require('./config');
 
 // MongoDB connection with updated options
 const connectDB = async () => {
+  // If already connected, use existing connection
+  if (mongoose.connection.readyState === 1) {
+    return mongoose.connection;
+  }
+
   try {
     const conn = await mongoose.connect(config.mongo.uri, {
       useNewUrlParser: true,
-      useUnifiedTopology: true
+      useUnifiedTopology: true,
+      bufferCommands: false, // Disable Mongoose buffering
+      serverSelectionTimeoutMS: 5000 // Timeout after 5s instead of 30s
     });
     console.log(` MongoDB: Connected to ${conn.connection.host}/${conn.connection.name}`);
     return conn;
   } catch (error) {
     console.error(' MongoDB connection error:', error.message);
-    process.exit(1);
+    throw error; // Rethrow to let caller handle it
   }
 };
 
