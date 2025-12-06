@@ -37,16 +37,8 @@ app.use(session({
 }));
 
 // Serve static files
-app.use(express.static(path.join(__dirname, 'public')));
-// Add this after your static file serving middleware
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-// If you're using login.html as the entry point:
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'login.html'));
-});
+const publicPath = path.join(process.cwd(), 'public');
+app.use(express.static(publicPath));
 
 // Authentication middleware
 const requireAuth = (req, res, next) => {
@@ -58,7 +50,6 @@ const requireAuth = (req, res, next) => {
 };
 
 // Setup Cron Job for automatic tracking data updates
-// Runs every hour at minute 0
 cron.schedule('* 1 * * *', async () => {
   console.log('\n⏰ Cron job started: Updating all tracking data...');
   try {
@@ -69,19 +60,17 @@ cron.schedule('* 1 * * *', async () => {
   }
 });
 
-console.log('📅 Cron job scheduled: Tracking data will be updated every min');
-
 // Routes
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.sendFile(path.join(publicPath, 'index.html'));
 });
 
 app.get('/login', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'login.html'));
+  res.sendFile(path.join(publicPath, 'login.html'));
 });
 
 app.get('/admin', requireAuth, (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+  res.sendFile(path.join(publicPath, 'admin.html'));
 });
 
 // Session check endpoint
