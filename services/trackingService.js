@@ -1,5 +1,6 @@
 const { TrackingData } = require('../db');
 const Provider = require('../models/Provider');
+const CronLog = require('../models/CronLog');
 const apiClient = require('./apiClient');
 
 class TrackingService {
@@ -77,7 +78,14 @@ class TrackingService {
 
       // Fetch data from provider API
       const originalTrackingId = trackingEntry.originalTrackingId || trackingId;
-      const apiResponse = await apiClient.fetchTrackingData(provider, originalTrackingId);
+      const apiResult = await apiClient.fetchTrackingData(provider, originalTrackingId);
+
+      // Use just the data part for parsing
+      const apiResponse = apiResult.data;
+      const requestDetails = {
+        url: apiResult.requestUrl,
+        statusCode: apiResult.responseStatus
+      };
 
       // Parse API response
       const parsedData = apiClient.parseResponse(apiResponse, provider, originalTrackingId);
@@ -125,7 +133,18 @@ class TrackingService {
       );
 
       console.log(`✅ Updated tracking data for: ${trackingId}`);
-      return updatedData;
+
+      // Return enhanced result with log info
+      return {
+        trackingData: updatedData,
+        log: {
+          trackingId,
+          provider: provider.name,
+          requestUrl: requestDetails.url,
+          responseStatus: requestDetails.statusCode,
+          response: JSON.stringify(apiResponse).substring(0, 500) // Truncate response for log
+        }
+      };
 
     } catch (error) {
       console.error(`❌ Error fetching and storing tracking data:`, error);
@@ -141,6 +160,7 @@ class TrackingService {
   // In services/trackingService.js, update the updateAllTrackingData method:
 
   async updateAllTrackingData() {
+    const startTime = Date.now();
     try {
       console.log('🔄 Starting bulk update of all tracking data...');
 
@@ -164,27 +184,52 @@ class TrackingService {
         total: activeEntries.length,
         updated: 0,
         failed: 0,
-        skipped: 0
+        skipped: 0,
+        logs: []
       };
 
       // Update each entry
       for (const entry of activeEntries) {
         try {
-          await this.fetchAndStoreTrackingData(entry.trackingId);
+          const result = await this.fetchAndStoreTrackingData(entry.trackingId);
           results.updated++;
+          if (result.log) results.logs.push(result.log);
         } catch (error) {
           console.error(`Failed to update ${entry.trackingId}:`, error.message);
           results.failed++;
+          results.logs.push({
+            trackingId: entry.trackingId,
+            error: error.message,
+            provider: entry.provider
+          });
         }
         // Small delay to avoid overwhelming the API
         await new Promise(resolve => setTimeout(resolve, 500));
       }
 
       console.log(`✅ Bulk update completed:`, results);
+
+      // Log success to DB
+      await CronLog.create({
+        level: 'info',
+        message: 'Bulk tracking update completed',
+        details: results,
+        durationMs: Date.now() - startTime
+      });
+
       return results;
 
     } catch (error) {
       console.error('❌ Error in updateAllTrackingData:', error);
+
+      // Log failure to DB
+      await CronLog.create({
+        level: 'error',
+        message: 'Bulk tracking update failed',
+        details: { error: error.message, stack: error.stack },
+        durationMs: Date.now() - startTime
+      });
+
       throw error;
     }
   }
@@ -237,7 +282,10 @@ class TrackingService {
    */
   async refreshTrackingData(trackingId) {
     console.log(`🔄 Manual refresh requested for: ${trackingId}`);
-    return await this.fetchAndStoreTrackingData(trackingId);
+    const result = await this.fetchAndStoreTrackingData(trackingId);
+    // If we return the whole result, the caller might be confused if they expect checking properties directly.
+    // However, looking at previous usage, caller might expect the trackingData object.
+    return result.trackingData ? result.trackingData : result;
   }
 }
 

@@ -46,7 +46,13 @@ class ApiClient {
             const response = await axios(config);
 
             console.log(`✅ Successfully fetched data from ${provider.name} API`);
-            return response.data;
+            // console.log("Response Data:", response);
+            return {
+                data: response.data,
+                requestUrl: config.url,
+                requestHeaders: config.headers,
+                responseStatus: response.status
+            };
 
         } catch (error) {
             console.error(`❌ Error fetching from ${provider.name} API:`, error.message);
@@ -101,6 +107,8 @@ class ApiClient {
             rawResponse: apiResponse
         };
 
+        console.log('Provider Name Check:', provider.name, 'Lower:', provider.name.toLowerCase());
+
         if (provider.name.toLowerCase().includes("dtdc")) {
             return this.parseDTDCResponse(apiResponse, trackingData);
         }
@@ -109,11 +117,60 @@ class ApiClient {
             return this.parseICLResponse(apiResponse, trackingData);
         }
 
+        if (provider.name.toLowerCase().includes("xpressbees")) {
+            console.log('Routing to XpressBees Parser');
+            return this.parseXpressBeesResponse(apiResponse, trackingData);
+        }
+
         if (provider.name.toLowerCase().includes("delhivery")) {
             return this.parseDelhiveryResponse(apiResponse, trackingData);
         }
 
+        console.log('Routing to Generic Parser');
+
         return this.parseGenericResponse(apiResponse, trackingData);
+    }
+
+    /**
+     * XpressBees-specific parser
+     */
+    parseXpressBeesResponse(apiResponse, trackingData) {
+        try {
+            // Check if response has data array
+            if (!apiResponse.data || !Array.isArray(apiResponse.data) || apiResponse.data.length === 0) {
+                trackingData.status = "No data found";
+                return trackingData;
+            }
+
+            const latest = apiResponse.data[0];
+
+            // Check if any history item indicates delivery
+            const deliveredItem = apiResponse.data.find(d =>
+                d.label && d.label.toLowerCase().includes('delivered')
+            );
+
+            if (deliveredItem) {
+                trackingData.status = deliveredItem.label;
+                trackingData.location = deliveredItem.location || latest.location;
+            } else {
+                trackingData.status = latest.label || "In Transit";
+                trackingData.location = latest.location || "Unknown";
+            }
+
+            // Map history
+            trackingData.history = apiResponse.data.map(item => ({
+                timestamp: item.shipmentDate ? new Date(item.shipmentDate) : new Date(),
+                status: item.label || "Update",
+                location: item.location || "",
+                description: item.label || ""
+            }));
+
+            return trackingData;
+        } catch (err) {
+            console.error("❌ Error parsing XpressBees:", err);
+            trackingData.status = "Error parsing XpressBees response";
+            return trackingData;
+        }
     }
 
     /**
@@ -250,7 +307,7 @@ class ApiClient {
                 return trackingData;
             }
 
-            trackingData.status = tracking.Status || "In Transit";
+            trackingData.status = this.toTitleCase(tracking.Status) || "In Transit";
             trackingData.location = events.length > 0 ? events[0].Location : "Unknown";
             trackingData.estimatedDelivery = tracking.ExpectedDeliveryDate || null;
             trackingData.origin = tracking.Origin || "";
@@ -259,7 +316,7 @@ class ApiClient {
             // Parse events into history
             trackingData.history = events.map(event => ({
                 timestamp: this.parseICLDate(event.EventDate, event.EventTime),
-                status: event.Status || "Update",
+                status: this.toTitleCase(event.Status) || "Update",
                 location: event.Location || "",
                 description: event.Status || ""
             }));
@@ -334,6 +391,14 @@ class ApiClient {
         }
 
         return trackingData;
+    }
+
+    /**
+     * Convert string to Title Case
+     */
+    toTitleCase(str) {
+        if (!str) return '';
+        return str.toLowerCase().replace(/\b\w/g, s => s.toUpperCase());
     }
 
     /**

@@ -71,7 +71,8 @@ const requireAuth = (req, res, next) => {
 };
 
 // Setup Cron Job for automatic tracking data updates
-cron.schedule('1 * * * *', async () => {
+/*
+cron.schedule('* * * * *', async () => {
   console.log('\n⏰ Cron job started: Updating all tracking data...');
   try {
     const results = await trackingService.updateAllTrackingData();
@@ -80,6 +81,7 @@ cron.schedule('1 * * * *', async () => {
     console.error('❌ Cron job failed:', error);
   }
 });
+*/
 
 // Health Check
 app.get('/api/health', async (req, res) => {

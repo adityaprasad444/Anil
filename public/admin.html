@@ -576,6 +576,13 @@
         <div class="card">
             <div class="card-header">
                 <h2 class="card-title">Tracking Management</h2>
+                <button onclick="syncAllTrackingData()" class="btn btn-primary" id="syncBtn">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.5rem;">
+                        <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.3" />
+                    </svg>
+                    Sync All
+                </button>
             </div>
             <div class="card-body">
                 <!-- Filter and Pagination Controls -->
@@ -733,6 +740,40 @@
                 }
             } catch (error) {
                 showMessage('Error generating tracking ID', 'error');
+            }
+        }
+
+        async function syncAllTrackingData() {
+            if (!confirm('Are you sure you want to sync ALL tracking data? This may take some time.')) {
+                return;
+            }
+
+            const btn = document.getElementById('syncBtn');
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = 'Syncing...';
+
+            try {
+                const response = await fetch('/api/tracking/refresh-all', {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showMessage(data.message || 'Sync started successfully', 'success');
+                    // Refresh list after a short delay
+                    setTimeout(loadTrackingList, 2000);
+                } else {
+                    showMessage(data.error || 'Error starting sync', 'error');
+                }
+            } catch (error) {
+                console.error('Sync error:', error);
+                showMessage('Error starting sync', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
             }
         }
 
