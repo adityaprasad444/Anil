@@ -298,11 +298,16 @@ class ApiClient {
     parseISTDate(dateStr) {
         try {
             if (!dateStr) return new Date();
-            // If already has timezone info
-            if (dateStr.includes('Z') || dateStr.includes('+') || dateStr.includes('-')) {
+
+            // Check if string intentionally contains a timezone indicator (Z, +HH:mm, -HH:mm) at the end
+            // This avoids catching YYYY-MM-DD dashes
+            const hasTimezone = /Z|[+-]\d{2}:?\d{2}$/.test(dateStr);
+
+            if (hasTimezone) {
                 return new Date(dateStr);
             }
-            // Append IST offset
+
+            // If it looks like an ISO string but has no timezone, append IST
             return new Date(`${dateStr}+05:30`);
         } catch (e) {
             return new Date();
