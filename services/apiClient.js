@@ -268,7 +268,7 @@ class ApiClient {
             trackingData.destination = consignment.dest_name || "";
 
             trackingData.history = history.map(item => ({
-                timestamp: item.status_date ? new Date(item.status_date) : new Date(),
+                timestamp: this.parseISTDate(item.status_date),
                 status: item.status || "Update",
                 location: item.dispatch_location_name || "",
                 description: item.Remarks || item.status || ""
@@ -289,6 +289,23 @@ class ApiClient {
             console.error("❌ Error parsing ICL:", err);
             trackingData.status = "Error parsing ICL response";
             return trackingData;
+        }
+    }
+
+    /**
+     * Parse date assuming IST if no timezone present
+     */
+    parseISTDate(dateStr) {
+        try {
+            if (!dateStr) return new Date();
+            // If already has timezone info
+            if (dateStr.includes('Z') || dateStr.includes('+') || dateStr.includes('-')) {
+                return new Date(dateStr);
+            }
+            // Append IST offset
+            return new Date(`${dateStr}+05:30`);
+        } catch (e) {
+            return new Date();
         }
     }
 
