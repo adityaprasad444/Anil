@@ -159,7 +159,7 @@ class ApiClient {
 
             // Map history
             trackingData.history = apiResponse.data.map(item => ({
-                timestamp: item.shipmentDate ? new Date(item.shipmentDate) : new Date(),
+                timestamp: this.parseISTDate(item.shipmentDate),
                 status: item.label || "Update",
                 location: item.location || "",
                 description: item.label || ""
@@ -197,7 +197,7 @@ class ApiClient {
 
             // Map history
             trackingData.history = scans.map(scan => ({
-                timestamp: scan.scanDateTime ? new Date(scan.scanDateTime) : new Date(),
+                timestamp: this.parseISTDate(scan.scanDateTime),
                 status: scan.scan || scan.scanType,
                 location: scan.scannedLocation || scan.scanLocation || "",
                 description: scan.instructions || scan.message || ""
@@ -225,7 +225,7 @@ class ApiClient {
                 trackingData.location = latest.actBranchCode || latest.location || '';
 
                 trackingData.history = statuses.map(s => ({
-                    timestamp: s.statusTimestamp || s.date || new Date(),
+                    timestamp: this.parseISTDate(s.statusTimestamp || s.date),
                     status: s.statusDescription || s.status,
                     location: s.actBranchCode || s.location || '',
                     description: s.remarks || s.statusDescription || ''
@@ -372,7 +372,8 @@ class ApiClient {
             const [day, month, year] = dateStr.split('/');
             const hour = timeStr ? timeStr.substring(0, 2) : '00';
             const minute = timeStr ? timeStr.substring(2, 4) : '00';
-            return new Date(`${year}-${month}-${day}T${hour}:${minute}:00`);
+            // Append IST offset +05:30
+            return new Date(`${year}-${month}-${day}T${hour}:${minute}:00+05:30`);
         } catch (e) {
             return new Date();
         }
