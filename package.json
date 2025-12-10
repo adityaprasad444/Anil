@@ -20,6 +20,8 @@
     "helmet": "^6.0.1",
     "mongoose": "^7.0.3",
     "node-cron": "^4.2.1",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1",
     "tough-cookie": "^6.0.0"
   },
   "devDependencies": {

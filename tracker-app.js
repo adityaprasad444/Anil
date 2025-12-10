@@ -11,6 +11,10 @@ const User = require('./models/User');
 const Provider = require('./models/Provider');
 const trackingService = require('./services/trackingService');
 const cron = require('node-cron');
+const swaggerUi = require('swagger-ui-express');
+const swaggerJsdoc = require('swagger-jsdoc');
+const swaggerOptions = require('./swaggerConfig');
+
 
 const app = express();
 app.set('trust proxy', 1); // Trust first proxy (Vercel)
@@ -61,6 +65,11 @@ app.use(session({
 const publicPath = path.join(process.cwd(), 'public');
 app.use(express.static(publicPath));
 
+// Swagger Setup
+const swaggerSpec = swaggerJsdoc(swaggerOptions);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+
 // Authentication middleware
 const requireAuth = (req, res, next) => {
   if (req.session && req.session.user) {
@@ -83,7 +92,28 @@ cron.schedule('* * * * *', async () => {
 });
 */
 
-// Health Check
+/**
+ * @swagger
+ * /api/health:
+ *   get:
+ *     summary: Check server health
+ *     tags: [System]
+ *     responses:
+ *       200:
+ *         description: Server is running
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: ok
+ *                 environment:
+ *                   type: string
+ *                 dbState:
+ *                   type: integer
+ */
 app.get('/api/health', async (req, res) => {
   const dbStatus = mongoose.connection.readyState;
   res.status(200).json({
@@ -107,7 +137,80 @@ app.get('/admin', requireAuth, (req, res) => {
   res.sendFile(path.join(publicPath, 'admin.html'));
 });
 
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     TrackingData:
+ *       type: object
+ *       properties:
+ *         trackingId:
+ *           type: string
+ *         originalTrackingId:
+ *           type: string
+ *         provider:
+ *           type: string
+ *         status:
+ *           type: string
+ *         location:
+ *           type: string
+ *         lastUpdated:
+ *           type: string
+ *           format: date-time
+ *         history:
+ *           type: array
+ *           items:
+ *             type: object
+ *             properties:
+ *               status:
+ *                 type: string
+ *               location:
+ *                 type: string
+ *               timestamp:
+ *                 type: string
+ *                 format: date-time
+ *               description:
+ *                 type: string
+ *     Provider:
+ *       type: object
+ *       properties:
+ *         _id:
+ *           type: string
+ *         name:
+ *           type: string
+ *         trackingUrl:
+ *           type: string
+ *         apiConfig:
+ *           type: object
+ */
+
 // Session check endpoint
+/**
+ * @swagger
+ * /api/login/check:
+ *   get:
+ *     summary: Check current session status
+ *     tags: [Auth]
+ *     responses:
+ *       200:
+ *         description: User is authenticated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 authenticated:
+ *                   type: boolean
+ *                 user:
+ *                   type: object
+ *                   properties:
+ *                     username:
+ *                       type: string
+ *                     role:
+ *                       type: string
+ *       401:
+ *         description: User is not authenticated
+ */
 app.get('/api/login/check', (req, res) => {
   if (req.session && req.session.user) {
     res.json({
@@ -123,6 +226,59 @@ app.get('/api/login/check', (req, res) => {
 });
 
 // Tracking API routes
+/**
+ * @swagger
+ * /api/tracking/list:
+ *   get:
+ *     summary: List all tracking entries
+ *     tags: [Tracking]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *         description: Number of items per page
+ *       - in: query
+ *         name: trackingId
+ *         schema:
+ *           type: string
+ *         description: Filter by partial tracking ID
+ *       - in: query
+ *         name: provider
+ *         schema:
+ *           type: string
+ *         description: Filter by provider
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *         description: Filter by status
+ *     responses:
+ *       200:
+ *         description: List of tracking entries
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 entries:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/TrackingData'
+ *                 total:
+ *                   type: integer
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Internal server error
+ */
 app.get('/api/tracking/list', requireAuth, async (req, res) => {
   try {
     console.log('📋 Fetching tracking list');
@@ -157,6 +313,31 @@ app.get('/api/tracking/list', requireAuth, async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/tracking/{trackingId}:
+ *   get:
+ *     summary: Get tracking data by ID
+ *     tags: [Tracking]
+ *     parameters:
+ *       - in: path
+ *         name: trackingId
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The tracking ID
+ *     responses:
+ *       200:
+ *         description: The tracking data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/TrackingData'
+ *       404:
+ *         description: Tracking ID not found
+ *       500:
+ *         description: Internal server error
+ */
 app.get('/api/tracking/:trackingId', async (req, res) => {
   try {
     const { trackingId } = req.params;
@@ -212,6 +393,28 @@ app.get('/api/tracking/:trackingId', async (req, res) => {
 });
 
 // Add delete endpoint for tracking IDs
+/**
+ * @swagger
+ * /api/tracking/{trackingId}:
+ *   delete:
+ *     summary: Delete a tracking entry
+ *     tags: [Tracking]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: trackingId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Tracking ID deleted successfully
+ *       404:
+ *         description: Tracking ID not found
+ *       500:
+ *         description: Internal server error
+ */
 app.delete('/api/tracking/:trackingId', requireAuth, async (req, res) => {
   try {
     const { trackingId } = req.params;
@@ -233,6 +436,39 @@ app.delete('/api/tracking/:trackingId', requireAuth, async (req, res) => {
 });
 
 // Add update status endpoint for tracking IDs
+/**
+ * @swagger
+ * /api/tracking/{trackingId}/status:
+ *   put:
+ *     summary: Update tracking status
+ *     tags: [Tracking]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: trackingId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - status
+ *             properties:
+ *               status:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Status updated successfully
+ *       404:
+ *         description: Tracking ID not found
+ *       500:
+ *         description: Internal server error
+ */
 app.put('/api/tracking/:trackingId/status', requireAuth, async (req, res) => {
   try {
     const { trackingId } = req.params;
@@ -262,6 +498,26 @@ app.put('/api/tracking/:trackingId/status', requireAuth, async (req, res) => {
 });
 
 // Manual refresh endpoint for a specific tracking ID
+/**
+ * @swagger
+ * /api/tracking/{trackingId}/refresh:
+ *   post:
+ *     summary: Manually refresh tracking data for a specific ID
+ *     tags: [Tracking]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: trackingId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Tracking data refreshed successfully
+ *       500:
+ *         description: Failed to refresh tracking data
+ */
 app.post('/api/tracking/:trackingId/refresh', requireAuth, async (req, res) => {
   try {
     const { trackingId } = req.params;
@@ -281,6 +537,20 @@ app.post('/api/tracking/:trackingId/refresh', requireAuth, async (req, res) => {
 });
 
 // Bulk refresh endpoint - refresh all active tracking data
+/**
+ * @swagger
+ * /api/tracking/refresh-all:
+ *   post:
+ *     summary: Trigger bulk refresh of all active tracking data
+ *     tags: [Tracking]
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Bulk refresh started
+ *       500:
+ *         description: Failed to start bulk refresh
+ */
 app.post('/api/tracking/refresh-all', requireAuth, async (req, res) => {
   try {
     console.log('🔄 Bulk refresh requested for all tracking data');
@@ -306,6 +576,34 @@ app.post('/api/tracking/refresh-all', requireAuth, async (req, res) => {
 });
 
 // API Routes
+/**
+ * @swagger
+ * /api/login:
+ *   post:
+ *     summary: Login to the system
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - username
+ *               - password
+ *             properties:
+ *               username:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Login successful
+ *       400:
+ *         description: Missing credentials
+ *       401:
+ *         description: Invalid credentials
+ */
 app.post('/api/login', async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -349,11 +647,62 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/logout:
+ *   post:
+ *     summary: Logout from the system
+ *     tags: [Auth]
+ *     responses:
+ *       200:
+ *         description: Logout successful
+ */
 app.post('/api/logout', (req, res) => {
   req.session.destroy();
   res.json({ success: true });
 });
 
+/**
+ * @swagger
+ * /api/tracking/generate:
+ *   post:
+ *     summary: Generate a new tracking ID
+ *     tags: [Tracking]
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - provider
+ *               - originalTrackingId
+ *             properties:
+ *               provider:
+ *                 type: string
+ *               originalTrackingId:
+ *                 type: string
+ *               manualTrackingId:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Tracking ID generated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 trackingId:
+ *                   type: string
+ *       400:
+ *         description: Bad request or duplicate ID
+ *       500:
+ *         description: Internal server error
+ */
 app.post('/api/tracking/generate', requireAuth, async (req, res) => {
   try {
     const { provider, originalTrackingId, manualTrackingId } = req.body;
@@ -409,6 +758,40 @@ app.get('/config', requireAuth, (req, res) => {
 });
 
 // Provider API routes
+/**
+ * @swagger
+ * /api/providers:
+ *   get:
+ *     summary: Get all providers
+ *     tags: [Providers]
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: List of providers
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Provider'
+ *   post:
+ *     summary: Create a new provider
+ *     tags: [Providers]
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Provider'
+ *     responses:
+ *       201:
+ *         description: Provider created
+ *       400:
+ *         description: Invalid input
+ */
 app.get('/api/providers', requireAuth, async (req, res) => {
   try {
     console.log('📋 Fetching providers list');
@@ -421,6 +804,68 @@ app.get('/api/providers', requireAuth, async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/providers/{id}:
+ *   get:
+ *     summary: Get a provider by ID
+ *     tags: [Providers]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Provider details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Provider'
+ *       404:
+ *         description: Provider not found
+ *   put:
+ *     summary: Update a provider
+ *     tags: [Providers]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Provider'
+ *     responses:
+ *       200:
+ *         description: Provider updated
+ *       404:
+ *         description: Provider not found
+ *   delete:
+ *     summary: Delete a provider
+ *     tags: [Providers]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Provider deleted
+ *       404:
+ *         description: Provider not found
+ */
 app.get('/api/providers/:id', requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
