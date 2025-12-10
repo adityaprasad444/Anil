@@ -8,6 +8,7 @@
     "dev": "nodemon tracker-app.js"
   },
   "dependencies": {
+    "@vercel/analytics": "^1.6.1",
     "axios": "^1.13.2",
     "axios-cookiejar-support": "^6.0.5",
     "bcryptjs": "^2.4.3",
