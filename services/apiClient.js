@@ -160,9 +160,9 @@ class ApiClient {
             // Map history
             trackingData.history = apiResponse.data.map(item => ({
                 timestamp: this.parseISTDate(item.shipmentDate),
-                status: item.label || "Update",
-                location: item.location || "",
-                description: item.label || ""
+                status: this.cleanText(item.label || "Update"),
+                location: this.cleanText(item.location || ""),
+                description: this.cleanText(item.label || "")
             }));
 
             return trackingData;
@@ -198,9 +198,9 @@ class ApiClient {
             // Map history
             trackingData.history = scans.map(scan => ({
                 timestamp: this.parseISTDate(scan.scanDateTime),
-                status: scan.scan || scan.scanType,
-                location: scan.scannedLocation || scan.scanLocation || "",
-                description: scan.instructions || scan.message || ""
+                status: this.cleanText(scan.scan || scan.scanType),
+                location: this.cleanText(scan.scannedLocation || scan.scanLocation || ""),
+                description: this.cleanText(scan.instructions || scan.message || "")
             }));
 
             return trackingData;
@@ -226,9 +226,9 @@ class ApiClient {
 
                 trackingData.history = statuses.map(s => ({
                     timestamp: this.parseISTDate(s.statusTimestamp || s.date),
-                    status: s.statusDescription || s.status,
-                    location: s.actBranchCode || s.location || '',
-                    description: s.remarks || s.statusDescription || ''
+                    status: this.cleanText(s.statusDescription || s.status),
+                    location: this.cleanText(s.actBranchCode || s.location || ''),
+                    description: this.cleanText(s.remarks || s.statusDescription || '')
                 }));
             } else {
                 trackingData.status = apiResponse.statusDescription || 'No tracking info';
@@ -269,9 +269,9 @@ class ApiClient {
 
             trackingData.history = history.map(item => ({
                 timestamp: this.parseISTDate(item.status_date),
-                status: item.status || "Update",
-                location: item.dispatch_location_name || "",
-                description: item.Remarks || item.status || ""
+                status: this.cleanText(item.status || "Update"),
+                location: this.cleanText(item.dispatch_location_name || ""),
+                description: this.cleanText(item.Remarks || item.status || "")
             })).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
             trackingData.additionalInfo = {
@@ -452,6 +452,24 @@ class ApiClient {
             }
         }
         return null;
+    }
+    /**
+     * Remove HTML tags and URLs from text
+     */
+    cleanText(text) {
+        if (!text) return "";
+        if (typeof text !== 'string') return String(text);
+
+        // Remove HTML tags
+        let clean = text.replace(/<[^>]*>?/gm, '');
+
+        // Remove URLs (http/https/ftp)
+        clean = clean.replace(/(?:https?|ftp):\/\/[\n\S]+/g, '');
+
+        // Remove www. URLs
+        clean = clean.replace(/www\.[\n\S]+/g, '');
+
+        return clean.trim();
     }
 }
 
