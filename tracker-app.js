@@ -5,6 +5,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const cookieParser = require('cookie-parser');
 const path = require('path');
+const mongoose = require('mongoose');
 const config = require('./config');
 const { connectDB, TrackingData } = require('./db');
 const User = require('./models/User');
@@ -14,6 +15,19 @@ const cron = require('node-cron');
 const swaggerUi = require('swagger-ui-express');
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerOptions = require('./swaggerConfig');
+
+// Vercel Web Analytics - Server-side integration for Next.js-like servers
+// Note: For plain Express servers, the main analytics tracking happens client-side
+let analyticsModule;
+try {
+  analyticsModule = require('@vercel/analytics/server');
+  if (analyticsModule) {
+    console.log('✅ @vercel/analytics/server loaded successfully');
+  }
+} catch (error) {
+  console.warn('⚠️ @vercel/analytics/server not available, which is expected for Express servers. Client-side analytics will handle tracking.');
+  analyticsModule = null;
+}
 
 
 const app = express();
@@ -69,6 +83,34 @@ app.use(express.static(publicPath));
 const swaggerSpec = swaggerJsdoc(swaggerOptions);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
+// Vercel Web Analytics middleware - Track API requests with Server-Timing headers
+// Server-Timing headers help Vercel Web Analytics measure backend performance
+app.use((req, res, next) => {
+  // Record request start time for analytics
+  const startTime = Date.now();
+  
+  // Capture original response methods
+  const originalSend = res.send;
+  const originalJson = res.json;
+  
+  // Override res.send to track response timing
+  res.send = function(data) {
+    const duration = Date.now() - startTime;
+    // Add Server-Timing header for web vitals tracking (RFC 7231 compliant)
+    res.setHeader('Server-Timing', `backend;dur=${duration};desc="Backend Processing"`);
+    return originalSend.call(this, data);
+  };
+  
+  // Override res.json to track response timing
+  res.json = function(data) {
+    const duration = Date.now() - startTime;
+    // Add Server-Timing header for web vitals tracking
+    res.setHeader('Server-Timing', `backend;dur=${duration};desc="Backend Processing"`);
+    return originalJson.call(this, data);
+  };
+  
+  next();
+});
 
 // Authentication middleware
 const requireAuth = (req, res, next) => {
