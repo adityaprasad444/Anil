@@ -555,23 +555,18 @@ app.post('/api/tracking/refresh-all', requireAuth, async (req, res) => {
   try {
     console.log('🔄 Bulk refresh requested for all tracking data');
 
-    // Run the update in the background
-    trackingService.updateAllTrackingData()
-      .then(results => {
-        console.log('✅ Bulk refresh completed:', results);
-      })
-      .catch(error => {
-        console.error('❌ Bulk refresh failed:', error);
-      });
+    // Run the update and wait for it to complete (required for Vercel/Serverless)
+    const results = await trackingService.updateAllTrackingData();
+    console.log('✅ Bulk refresh completed:', results);
 
-    // Respond immediately
+    // Respond with results
     res.json({
-      message: 'Bulk refresh started in background',
-      note: 'This may take a few minutes depending on the number of tracking entries'
+      message: 'Bulk refresh completed',
+      results: results
     });
   } catch (error) {
-    console.error('❌ Error starting bulk refresh:', error);
-    res.status(500).json({ error: 'Failed to start bulk refresh' });
+    console.error('❌ Error during bulk refresh:', error);
+    res.status(500).json({ error: 'Failed to complete bulk refresh', details: error.message });
   }
 });
 
