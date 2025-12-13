@@ -46,8 +46,11 @@ const ensureDbConnection = async (req, res, next) => {
 app.use(ensureDbConnection);
 
 // Middleware
+// Middleware
 app.use(helmet({
-  contentSecurityPolicy: false // Disable CSP for development
+  contentSecurityPolicy: false, // Disable CSP for development to allow external scripts/styles
+  crossOriginResourcePolicy: { policy: "cross-origin" }, // Allow resources from Google Maps
+  crossOriginEmbedderPolicy: false // DISABLE strict embedding policy to allow iframes
 }));
 app.use(cors({
   origin: 'http://localhost:3001',
@@ -88,27 +91,27 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use((req, res, next) => {
   // Record request start time for analytics
   const startTime = Date.now();
-  
+
   // Capture original response methods
   const originalSend = res.send;
   const originalJson = res.json;
-  
+
   // Override res.send to track response timing
-  res.send = function(data) {
+  res.send = function (data) {
     const duration = Date.now() - startTime;
     // Add Server-Timing header for web vitals tracking (RFC 7231 compliant)
     res.setHeader('Server-Timing', `backend;dur=${duration};desc="Backend Processing"`);
     return originalSend.call(this, data);
   };
-  
+
   // Override res.json to track response timing
-  res.json = function(data) {
+  res.json = function (data) {
     const duration = Date.now() - startTime;
     // Add Server-Timing header for web vitals tracking
     res.setHeader('Server-Timing', `backend;dur=${duration};desc="Backend Processing"`);
     return originalJson.call(this, data);
   };
-  
+
   next();
 });
 
