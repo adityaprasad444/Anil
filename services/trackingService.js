@@ -71,6 +71,12 @@ class TrackingService {
         throw new Error(`Provider not found: ${trackingEntry.provider}`);
       }
 
+      // Check if package is already delivered - if so, ignore all future updates
+      if (trackingEntry.status && trackingEntry.status.toLowerCase().includes('deliver')) {
+        console.log(`📦 Package already delivered, skipping update for: ${trackingId}`);
+        return trackingEntry;
+      }
+
       if (!provider.apiConfig || !provider.apiConfig.endpoint) {
         console.log(`⚠️ No API configuration for provider: ${provider.name}`);
         return trackingEntry;
@@ -93,6 +99,34 @@ class TrackingService {
       // Default 'Unknown' status to 'In Transit'
       if (parsedData.status && parsedData.status.toLowerCase() === 'unknown') {
         parsedData.status = 'In Transit';
+      }
+
+      // Check for 'Delivered' status in history and enforce it
+      if (parsedData.history && Array.isArray(parsedData.history)) {
+        const deliveredEvent = parsedData.history.find(h =>
+          h.status &&
+          h.status.toLowerCase().includes('deliver') &&
+          !h.status.toLowerCase().includes('attempt') &&
+          !h.status.toLowerCase().includes('out for') &&
+          !h.status.toLowerCase().includes('schedule') &&
+          !h.status.toLowerCase().includes('expected') &&
+          !h.status.toLowerCase().includes('fail') &&
+          !h.status.toLowerCase().includes('return')
+        );
+
+        if (deliveredEvent) {
+          // If we found a delivery event, enforce it as the main status
+          // This prevents "POD Uploaded" from overwriting "Delivered"
+          if (parsedData.status !== deliveredEvent.status) {
+            parsedData.status = deliveredEvent.status;
+          }
+
+          // Filter out post-delivery updates specifically "POD" related ones
+          parsedData.history = parsedData.history.filter(h =>
+            !h.status.toLowerCase().includes('pod upload') &&
+            !h.status.toLowerCase().includes('pod update')
+          );
+        }
       }
 
       // Update tracking data in database
@@ -244,6 +278,13 @@ class TrackingService {
       return true; // Never updated, needs refresh
     }
 
+    // If package is delivered, never refresh
+    if (trackingData.status &&
+      trackingData.status.toLowerCase().includes('deliver') &&
+      !trackingData.status.toLowerCase().includes('out for')) {
+      return false;
+    }
+
     const now = new Date();
     const lastUpdated = new Date(trackingData.lastUpdated);
     const timeSinceUpdate = now - lastUpdated;
@@ -254,10 +295,7 @@ class TrackingService {
     if (trackingData.status) {
       const statusLower = trackingData.status.toLowerCase();
 
-      if (statusLower.includes('deliver')) {
-        // If delivered, check less frequently (24 hours)
-        cacheDuration = 24 * 60 * 60 * 1000;
-      } else if (statusLower.includes('exception') || statusLower.includes('delay')) {
+      if (statusLower.includes('exception') || statusLower.includes('delay')) {
         // If there's an issue, check more frequently (30 minutes)
         cacheDuration = 30 * 60 * 1000;
       }

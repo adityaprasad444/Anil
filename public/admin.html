@@ -72,7 +72,7 @@
             text-decoration: none;
             color: var(--text-primary);
             font-weight: 600;
-            font-size: 1.1rem;
+            font-size: 1rem;
         }
 
         .logo-small {
@@ -94,7 +94,7 @@
             padding: 0.5rem 1rem;
             border-radius: 0.5rem;
             transition: all 0.2s;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
         }
 
         .nav-link:hover {
@@ -237,7 +237,6 @@
             align-items: center;
             margin-bottom: 1.5rem;
             gap: 1rem;
-            flex-wrap: wrap;
             background: #f8fafc;
             padding: 1rem;
             border-radius: var(--radius);
@@ -246,22 +245,32 @@
         .filter-controls {
             display: flex;
             gap: 0.75rem;
-            flex-wrap: wrap;
+            align-items: center;
             flex: 1;
+            flex-wrap: nowrap;
         }
 
         .filter-controls .form-input {
             width: auto;
-            min-width: 150px;
+            min-width: 140px;
+            flex-shrink: 1;
         }
 
         .pagination-controls {
             display: flex;
             align-items: center;
             gap: 0.75rem;
+            flex-shrink: 0;
+            white-space: nowrap;
         }
 
         #pageInfo {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        #totalCount {
             font-size: 0.9rem;
             color: var(--text-secondary);
             font-weight: 500;
@@ -613,6 +622,7 @@
                             </svg>
                         </button>
                         <span id="pageInfo">Page 1 of 1</span>
+                        <span id="totalCount">Total: 0 entries</span>
                         <button id="nextPage" class="btn btn-secondary" title="Next Page">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -811,6 +821,7 @@
                 if (data.entries.length === 0) {
                     list.innerHTML = '<li style="text-align: center; padding: 2rem; color: #6b7280;">No tracking entries found.</li>';
                     document.getElementById('pageInfo').textContent = 'Page 0 of 0';
+                    document.getElementById('totalCount').textContent = 'Total: 0 entries';
                     document.getElementById('prevPage').disabled = true;
                     document.getElementById('nextPage').disabled = true;
                     return;
@@ -859,6 +870,7 @@
 
                 const totalPages = Math.ceil(data.total / itemsPerPage);
                 document.getElementById('pageInfo').textContent = `Page ${currentPage} of ${totalPages}`;
+                document.getElementById('totalCount').textContent = `Total: ${data.total} ${data.total === 1 ? 'entry' : 'entries'}`;
                 document.getElementById('prevPage').disabled = currentPage === 1;
                 document.getElementById('nextPage').disabled = currentPage === totalPages || data.entries.length === 0;
 

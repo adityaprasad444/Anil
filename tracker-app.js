@@ -340,7 +340,7 @@ app.get('/api/tracking/list', requireAuth, async (req, res) => {
       filter.provider = req.query.provider;
     }
     if (req.query.status) {
-      filter.status = req.query.status;
+      filter.status = { $regex: req.query.status, $options: 'i' }; // Case-insensitive match
     }
 
     const trackingList = await TrackingData.find(filter)
