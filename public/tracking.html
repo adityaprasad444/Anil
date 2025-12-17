@@ -4,73 +4,320 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Track Package - Package Tracking</title>
+    <title>Track Package - AK Logistics</title>
+    <meta name="description" content="Track your package shipment in real-time with AK Logistics">
     <link rel="icon" type="image/jpeg" href="/Logos/logo.jpeg">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet">
     <style>
         :root {
-            --primary-color: #4f46e5;
+            --primary: #6366f1;
             --primary-light: #818cf8;
-            --primary-dark: #3730a3;
-            --success-color: #10b981;
-            --warning-color: #f59e0b;
-            --danger-color: #ef4444;
-            --text-primary: #1f2937;
-            --text-secondary: #6b7280;
-            --bg-body: #f3f4f6;
-            --bg-card: #ffffff;
-            --transition: all 0.3s ease;
+            --primary-dark: #4f46e5;
+            --accent: #06b6d4;
+            --success: #10b981;
+            --success-light: #34d399;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --bg-dark: #0f172a;
+            --bg-card: rgba(30, 41, 59, 0.8);
+            --bg-card-solid: #1e293b;
+            --border-color: rgba(148, 163, 184, 0.1);
+            --glow: 0 0 40px rgba(99, 102, 241, 0.3);
         }
 
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Poppins', sans-serif;
         }
 
         body {
-            background-color: var(--bg-body);
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            color: var(--text-primary);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-dark);
+            background-image:
+                radial-gradient(ellipse at 20% 20%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(6, 182, 212, 0.1) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(16, 185, 129, 0.05) 0%, transparent 70%);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 1rem;
+            padding: 1.5rem;
+            color: var(--text-primary);
         }
 
-        .container {
+        /* Main Layout - Three Column */
+        .page-wrapper {
             width: 100%;
-            max-width: 600px;
+            max-width: 1200px;
+            display: grid;
+            grid-template-columns: 200px 1fr 200px;
+            gap: 2rem;
+            align-items: center;
         }
 
-        .tracking-card {
+        /* Side Services */
+        .services-side {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .service-item {
             background: var(--bg-card);
-            border-radius: 24px;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-            overflow: hidden;
-            animation: slideUp 0.5s ease-out;
-            position: relative;
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.25rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            animation: fadeSlideIn 0.5s ease forwards;
+            opacity: 0;
         }
 
-        @keyframes slideUp {
+        .service-item:hover {
+            border-color: var(--primary);
+            transform: translateY(-4px);
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.2);
+        }
+
+        .service-item:nth-child(1) {
+            animation-delay: 0.1s;
+        }
+
+        .service-item:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .service-item:nth-child(3) {
+            animation-delay: 0.3s;
+        }
+
+        .service-item:nth-child(4) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes fadeSlideIn {
             from {
                 opacity: 0;
-                transform: translateY(20px);
+                transform: translateX(-20px);
             }
 
             to {
                 opacity: 1;
-                transform: translateY(0);
+                transform: translateX(0);
             }
         }
 
-        .card-header {
-            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
-            padding: 2.5rem 2rem;
+        .services-side.right .service-item {
+            animation-name: fadeSlideInRight;
+        }
+
+        @keyframes fadeSlideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .service-icon {
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 0.75rem;
+            background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .service-item:nth-child(2) .service-icon {
+            background: linear-gradient(135deg, var(--accent), #22d3ee);
+        }
+
+        .service-item:nth-child(3) .service-icon {
+            background: linear-gradient(135deg, var(--success), var(--success-light));
+        }
+
+        .service-item:nth-child(4) .service-icon {
+            background: linear-gradient(135deg, var(--warning), #fbbf24);
+        }
+
+        .service-title {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .service-desc {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        /* Center Container */
+        .container {
+            width: 100%;
+            max-width: 520px;
+            margin: 0 auto;
+        }
+
+        /* Loading State */
+        .loading {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            border: 1px solid var(--border-color);
+        }
+
+        .loader {
+            width: 56px;
+            height: 56px;
+            margin: 0 auto 1.5rem;
+            position: relative;
+        }
+
+        .loader::before,
+        .loader::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            border: 3px solid transparent;
+        }
+
+        .loader::before {
+            border-top-color: var(--primary);
+            animation: spin 1s linear infinite;
+        }
+
+        .loader::after {
+            border-right-color: var(--accent);
+            animation: spin 0.5s linear infinite reverse;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .loading p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        /* Error State */
+        .error-message {
+            text-align: center;
+            padding: 3rem 2rem;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 24px;
+            backdrop-filter: blur(20px);
+        }
+
+        .error-icon {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 1rem;
+            background: rgba(239, 68, 68, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+        }
+
+        .error-message h3 {
+            color: var(--danger);
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .error-message p {
+            color: var(--text-secondary);
+        }
+
+        /* Main Card */
+        .tracking-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            box-shadow: var(--glow);
+            animation: cardSlide 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+        }
+
+        /* Navigation Buttons */
+        .nav-buttons {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            right: 1rem;
+            display: flex;
+            justify-content: space-between;
+            z-index: 10;
+        }
+
+        .nav-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
             color: white;
+            font-size: 1.1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            text-decoration: none;
+        }
+
+        .nav-btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: scale(1.1);
+        }
+
+        .nav-btn:active {
+            transform: scale(0.95);
+        }
+
+        @keyframes cardSlide {
+            from {
+                opacity: 0;
+                transform: translateY(30px) scale(0.98);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        /* Header */
+        .card-header {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 50%, var(--accent) 100%);
+            padding: 2rem;
             text-align: center;
             position: relative;
             overflow: hidden;
@@ -79,291 +326,683 @@
         .card-header::before {
             content: '';
             position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 60%);
-            transform: rotate(30deg);
+            inset: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            opacity: 0.5;
+        }
+
+        .package-icon {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 1rem;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            position: relative;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-8px);
+            }
         }
 
         .tracking-title {
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 0.75rem;
+            position: relative;
+        }
+
+        .tracking-id-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
             position: relative;
         }
 
         .tracking-id-pill {
-            display: inline-block;
-            background: rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(4px);
-            padding: 0.5rem 1rem;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            padding: 0.625rem 1.25rem;
             border-radius: 50px;
-            font-family: 'Courier New', monospace;
+            font-family: 'SF Mono', 'Courier New', monospace;
             font-weight: 600;
-            letter-spacing: 1px;
-            margin-top: 0.5rem;
-            position: relative;
-            border: 1px solid rgba(255, 255, 255, 0.3);
+            font-size: 1rem;
+            letter-spacing: 1.5px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
         }
 
-        .card-body {
-            padding: 2rem;
-        }
-
-        .status-container {
-            text-align: center;
-            margin-bottom: 2rem;
-            padding-bottom: 2rem;
-            border-bottom: 1px solid #f3f4f6;
-        }
-
-        .status-badge {
-            display: inline-flex;
+        .copy-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
             align-items: center;
-            gap: 0.5rem;
-            padding: 0.75rem 1.5rem;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: 1.1rem;
-            letter-spacing: 0.5px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            justify-content: center;
+            font-size: 1rem;
+            transition: all 0.2s ease;
         }
 
-        .status-in-transit {
-            background-color: #eff6ff;
-            color: #1e40af;
-            border: 1px solid #dbeafe;
+        .copy-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
         }
 
-        .status-delivered {
-            background-color: #f0fdf4;
-            color: #166534;
-            border: 1px solid #dcfce7;
+        /* Card Body */
+        .card-body {
+            padding: 1.5rem;
         }
 
-        .status-delayed {
-            background-color: #fefce8;
-            color: #854d0e;
-            border: 1px solid #fef9c3;
+        /* Status Section */
+        .status-section {
+            text-align: center;
+            padding: 1.5rem;
+            background: var(--bg-card-solid);
+            border-radius: 16px;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border-color);
         }
 
+        .status-icon {
+            width: 72px;
+            height: 72px;
+            margin: 0 auto 1rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            position: relative;
+        }
+
+        .status-icon::after {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: 50%;
+            border: 2px solid currentColor;
+            opacity: 0.3;
+            animation: pulse-ring 2s infinite;
+        }
+
+        @keyframes pulse-ring {
+            0% {
+                transform: scale(1);
+                opacity: 0.3;
+            }
+
+            50% {
+                transform: scale(1.1);
+                opacity: 0.1;
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 0.3;
+            }
+        }
+
+        .status-in-transit .status-icon {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(6, 182, 212, 0.2));
+            color: var(--primary-light);
+        }
+
+        .status-delivered .status-icon {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(52, 211, 153, 0.2));
+            color: var(--success);
+        }
+
+        .status-delayed .status-icon {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(251, 191, 36, 0.2));
+            color: var(--warning);
+        }
+
+        .status-text {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .status-in-transit .status-text {
+            color: var(--primary-light);
+        }
+
+        .status-delivered .status-text {
+            color: var(--success);
+        }
+
+        .status-delayed .status-text {
+            color: var(--warning);
+        }
+
+        .status-subtitle {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        /* Info Cards */
         .info-grid {
             display: grid;
-            grid-template-columns: 1fr;
-            gap: 1rem;
-            margin-bottom: 2rem;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
         }
 
-        .info-item {
-            background: #f9fafb;
+        .info-card {
+            background: var(--bg-card-solid);
             padding: 1rem;
             border-radius: 12px;
+            border: 1px solid var(--border-color);
+            transition: all 0.2s ease;
+        }
+
+        .info-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .info-card.full-width {
+            grid-column: span 2;
+        }
+
+        .info-icon {
+            width: 32px;
+            height: 32px;
+            background: rgba(99, 102, 241, 0.15);
+            border-radius: 8px;
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            justify-content: center;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
         }
 
         .info-label {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-size: 0.75rem;
             font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.25rem;
         }
 
         .info-value {
             color: var(--text-primary);
             font-weight: 600;
+            font-size: 0.9rem;
         }
 
-        .history-section {
-            margin-top: 1rem;
-        }
-
-        .history-title-container {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
+        /* Timeline */
+        .timeline-section {
+            background: var(--bg-card-solid);
+            border-radius: 16px;
+            padding: 1.25rem;
+            border: 1px solid var(--border-color);
             margin-bottom: 1.5rem;
         }
 
-        .history-title {
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: var(--text-primary);
+        .timeline-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border-color);
         }
 
-        .history-list {
+        .timeline-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .timeline-count {
+            background: var(--primary);
+            color: white;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 50px;
+            font-weight: 600;
+        }
+
+        .timeline {
             list-style: none;
             position: relative;
-            padding-left: 1.5rem;
+            max-height: 450px;
+            overflow-y: auto;
+            padding-right: 0.75rem;
+            scroll-behavior: smooth;
         }
 
-        .history-list::before {
-            content: '';
-            position: absolute;
-            left: 6px;
-            top: 6px;
-            bottom: 6px;
-            width: 2px;
-            background: #e5e7eb;
-            border-radius: 2px;
+        .timeline::-webkit-scrollbar {
+            width: 6px;
         }
 
-        .history-item {
+        .timeline::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.5);
+            border-radius: 6px;
+            margin: 4px 0;
+        }
+
+        .timeline::-webkit-scrollbar-thumb {
+            background: linear-gradient(to bottom, var(--primary), var(--accent));
+            border-radius: 6px;
+        }
+
+        .timeline::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(to bottom, var(--primary-light), var(--accent));
+        }
+
+        .timeline-item {
             position: relative;
-            padding-bottom: 2rem;
-            padding-left: 1.5rem;
+            padding-left: 2rem;
+            padding-bottom: 1.25rem;
         }
 
-        .history-item:last-child {
+        .timeline-item:last-child {
             padding-bottom: 0;
         }
 
-        .history-dot {
+        .timeline-item::before {
+            content: '';
             position: absolute;
-            left: -1px;
-            top: 2px;
+            left: 7px;
+            top: 20px;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(to bottom, var(--primary), var(--border-color));
+        }
+
+        .timeline-item:last-child::before {
+            display: none;
+        }
+
+        .timeline-dot {
+            position: absolute;
+            left: 0;
+            top: 4px;
             width: 16px;
             height: 16px;
-            background: #fff;
-            border: 3px solid var(--primary-color);
+            background: var(--bg-card-solid);
+            border: 3px solid var(--text-muted);
             border-radius: 50%;
-            z-index: 10;
-            transition: var(--transition);
+            z-index: 1;
+            transition: all 0.3s ease;
         }
 
-        .history-item:hover .history-dot {
-            background: var(--primary-color);
-            transform: scale(1.1);
+        .timeline-item:first-child .timeline-dot {
+            background: var(--primary);
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.25);
         }
 
-        .history-item:first-child .history-dot {
-            background: var(--primary-color);
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.2);
+        .timeline-item:hover .timeline-dot {
+            border-color: var(--primary);
+            transform: scale(1.2);
         }
 
-        .history-status {
+        .timeline-content {
+            background: rgba(15, 23, 42, 0.5);
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            transition: all 0.2s ease;
+        }
+
+        .timeline-item:hover .timeline-content {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        .timeline-status {
             font-weight: 600;
+            font-size: 0.9rem;
             color: var(--text-primary);
             margin-bottom: 0.25rem;
         }
 
-        .history-meta {
-            font-size: 0.85rem;
-            color: var(--text-secondary);
+        .timeline-meta {
             display: flex;
             flex-wrap: wrap;
-            gap: 0.5rem;
+            gap: 0.75rem;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .timeline-meta span {
+            display: flex;
             align-items: center;
+            gap: 0.25rem;
         }
 
-        .history-meta span:not(:last-child)::after {
-            content: '•';
-            margin-left: 0.5rem;
-            color: #d1d5db;
-        }
-
-        .loading,
-        .error-message {
+        /* Provider Link */
+        .provider-link {
+            display: block;
             text-align: center;
-            padding: 3rem;
-            background: white;
-            border-radius: 24px;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            padding: 1rem 1.5rem;
+            background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+            color: white;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
         }
 
-        .error-message {
-            color: var(--danger-color);
-            background: #fef2f2;
+        .provider-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
         }
 
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid var(--primary-color);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 1rem;
+        .provider-link span {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
-        @keyframes spin {
-            0% {
-                transform: rotate(0deg);
+        /* Footer */
+        .card-footer {
+            padding: 1rem 1.5rem;
+            text-align: center;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .footer-text {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .footer-text a {
+            color: var(--primary-light);
+            text-decoration: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .page-wrapper {
+                grid-template-columns: 1fr;
+                max-width: 520px;
             }
 
-            100% {
-                transform: rotate(360deg);
+            .services-side {
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                gap: 0.75rem;
             }
+
+            .services-side.left {
+                order: 2;
+            }
+
+            .services-side.right {
+                display: none;
+            }
+
+            .container {
+                order: 1;
+            }
+
+            .service-item {
+                padding: 1rem;
+            }
+
+            .service-icon {
+                width: 40px;
+                height: 40px;
+                font-size: 1.25rem;
+                margin-bottom: 0.5rem;
+            }
+
+            .service-title {
+                font-size: 0.7rem;
+            }
+
+            .service-desc {
+                display: none;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .services-side {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 1rem;
+            }
+
+            .card-header {
+                padding: 1.5rem;
+            }
+
+            .package-icon {
+                width: 52px;
+                height: 52px;
+                font-size: 1.5rem;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .info-card.full-width {
+                grid-column: span 1;
+            }
+
+            .status-icon {
+                width: 60px;
+                height: 60px;
+            }
+        }
+
+        /* Animations */
+        .fade-in {
+            animation: fadeIn 0.4s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .stagger-1 {
+            animation-delay: 0.1s;
+            opacity: 0;
+        }
+
+        .stagger-2 {
+            animation-delay: 0.2s;
+            opacity: 0;
+        }
+
+        .stagger-3 {
+            animation-delay: 0.3s;
+            opacity: 0;
+        }
+
+        .stagger-4 {
+            animation-delay: 0.4s;
+            opacity: 0;
         }
     </style>
 </head>
 
 <body>
-    <div class="container">
-        <!-- Error State -->
-        <div id="error" class="error-message" style="display: none;"></div>
+    <div class="page-wrapper">
+        <!-- Left Services -->
+        <aside class="services-side left">
+            <div class="service-item">
+                <div class="service-icon">🚚</div>
+                <div class="service-title">Fast Delivery</div>
+                <div class="service-desc">Express shipping across India</div>
+            </div>
+            <div class="service-item">
+                <div class="service-icon">📍</div>
+                <div class="service-title">Live Tracking</div>
+                <div class="service-desc">Real-time shipment updates</div>
+            </div>
+            <div class="service-item">
+                <div class="service-icon">🔒</div>
+                <div class="service-title">Secure Handling</div>
+                <div class="service-desc">Safe & insured packages</div>
+            </div>
+            <div class="service-item">
+                <div class="service-icon">💬</div>
+                <div class="service-title">24/7 Support</div>
+                <div class="service-desc">Always here to help</div>
+            </div>
+        </aside>
 
-        <!-- Loading State -->
-        <div id="loading" class="loading">
-            <div class="spinner"></div>
-            <p>Locating your package...</p>
-        </div>
-
-        <!-- Content State -->
-        <div id="tracking-content" class="tracking-card" style="display: none;">
-            <div class="card-header">
-                <h1 class="tracking-title">Package Status</h1>
-                <div class="tracking-id-pill" id="trackingId"></div>
+        <!-- Main Tracking Card -->
+        <div class="container">
+            <!-- Error State -->
+            <div id="error" class="error-message" style="display: none;">
+                <div class="error-icon">⚠️</div>
+                <h3>Tracking Error</h3>
+                <p id="error-text"></p>
             </div>
 
-            <div class="card-body">
-                <div class="status-container">
-                    <span id="status" class="status-badge"></span>
-                </div>
+            <!-- Loading State -->
+            <div id="loading" class="loading">
+                <div class="loader"></div>
+                <p>Locating your package...</p>
+            </div>
 
-                <div class="info-grid">
-                    <div class="info-item">
-                        <span class="info-label">Last Updated</span>
-                        <span class="info-value" id="lastUpdated"></span>
+            <!-- Content State -->
+            <div id="tracking-content" class="tracking-card" style="display: none;">
+                <div class="nav-buttons">
+                    <a href="/" class="nav-btn" title="Go to Home" aria-label="Go to Home">🏠</a>
+                    <button class="nav-btn" onclick="window.close(); window.location.href='/'" title="Close"
+                        aria-label="Close">✕</button>
+                </div>
+                <div class="card-header">
+                    <div class="package-icon">📦</div>
+                    <h1 class="tracking-title">Package Tracking</h1>
+                    <div class="tracking-id-container">
+                        <div class="tracking-id-pill" id="trackingId"></div>
+                        <button class="copy-btn" onclick="copyTrackingId()" title="Copy tracking ID"
+                            aria-label="Copy tracking ID">📋</button>
                     </div>
                 </div>
 
-                <div id="history-section" class="history-section" style="display: none;">
-                    <div class="history-title-container">
-                        <h2 class="history-title">Tracking History</h2>
+                <div class="card-body">
+                    <!-- Status Section -->
+                    <div id="status-section" class="status-section fade-in stagger-1">
+                        <div class="status-icon" id="statusIcon">🚚</div>
+                        <div class="status-text" id="status"></div>
+                        <div class="status-subtitle" id="lastUpdated"></div>
                     </div>
-                    <ul id="history-list" class="history-list">
-                        <!-- History items populated via JS -->
-                    </ul>
+
+                    <!-- Info Grid -->
+                    <div class="info-grid fade-in stagger-2">
+
+                        <div class="info-card" id="locationCard" style="display:none;">
+                            <div class="info-icon">📍</div>
+                            <div class="info-label">Current Location</div>
+                            <div class="info-value" id="location"></div>
+                        </div>
+                        <div class="info-card" id="originCard" style="display:none;">
+                            <div class="info-icon">🏁</div>
+                            <div class="info-label">Origin</div>
+                            <div class="info-value" id="origin"></div>
+                        </div>
+                        <div class="info-card" id="destinationCard" style="display:none;">
+                            <div class="info-icon">🎯</div>
+                            <div class="info-label">Destination</div>
+                            <div class="info-value" id="destination"></div>
+                        </div>
+                        <div class="info-card full-width" id="etaCard" style="display:none;">
+                            <div class="info-icon">📅</div>
+                            <div class="info-label">Estimated Delivery</div>
+                            <div class="info-value" id="eta"></div>
+                        </div>
+                    </div>
+
+                    <!-- Timeline -->
+                    <div id="timeline-section" class="timeline-section fade-in stagger-3" style="display: none;">
+                        <div class="timeline-header">
+                            <div class="timeline-title">
+                                📜 Tracking History
+                                <span class="timeline-count" id="historyCount">0</span>
+                            </div>
+                        </div>
+                        <ul id="timeline" class="timeline"></ul>
+                    </div>
+
+
                 </div>
 
-                <div id="provider-iframe-container" style="display:none; margin-top:2rem;">
-                    <div id="iframe-fallback" style="display:none; margin-top:1rem; text-align:center;">
-                        <div style="color:#64748b; font-size:0.9rem; margin-top:0.5rem;">(If the tracking page does not
-                            load above, click the link.)</div>
-                    </div>
+                <div class="card-footer">
+                    <p class="footer-text">Powered by <a href="/">AK Logistics</a></p>
                 </div>
             </div>
         </div>
+
+        <!-- Right Services -->
+        <aside class="services-side right">
+            <div class="service-item">
+                <div class="service-icon">🌍</div>
+                <div class="service-title">Pan India</div>
+                <div class="service-desc">Delivery to 28,000+ pincodes</div>
+            </div>
+            <div class="service-item">
+                <div class="service-icon">⚡</div>
+                <div class="service-title">Same Day</div>
+                <div class="service-desc">Priority express options</div>
+            </div>
+            <div class="service-item">
+                <div class="service-icon">📦</div>
+                <div class="service-title">All Sizes</div>
+                <div class="service-desc">From documents to cargo</div>
+            </div>
+            <div class="service-item">
+                <div class="service-icon">💰</div>
+                <div class="service-title">COD Available</div>
+                <div class="service-desc">Cash on delivery support</div>
+            </div>
+        </aside>
     </div>
 
     <script>
-        // Get tracking ID from URL
         const urlParams = new URLSearchParams(window.location.search);
         const trackingId = urlParams.get('id');
 
-        // Function to format date
         function formatDate(dateString) {
             if (!dateString) return 'N/A';
             const date = new Date(dateString);
-            // Check if date is valid
             if (isNaN(date.getTime())) return 'N/A';
 
             const options = {
-                year: 'numeric',
                 month: 'short',
                 day: 'numeric',
                 hour: '2-digit',
@@ -373,92 +1012,128 @@
             return date.toLocaleDateString('en-US', options);
         }
 
-        // Function to update the UI with tracking data
+        function formatFullDate(dateString) {
+            if (!dateString) return 'N/A';
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return 'N/A';
+
+            const options = {
+                weekday: 'short',
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+            };
+            return date.toLocaleDateString('en-US', options);
+        }
+
+        function getStatusIcon(status) {
+            if (!status) return '🚚';
+            const s = status.toLowerCase();
+            if (s.includes('deliver')) return '✅';
+            if (s.includes('out for')) return '🚛';
+            if (s.includes('transit') || s.includes('arrived') || s.includes('hub')) return '🚚';
+            if (s.includes('picked') || s.includes('pickup')) return '📤';
+            if (s.includes('delay') || s.includes('exception')) return '⚠️';
+            return '📦';
+        }
+
+        function getStatusClass(status) {
+            if (!status) return 'status-in-transit';
+            const s = status.toLowerCase();
+            if (s.includes('deliver')) return 'status-delivered';
+            if (s.includes('delay') || s.includes('exception')) return 'status-delayed';
+            return 'status-in-transit';
+        }
+
+        function copyTrackingId() {
+            navigator.clipboard.writeText(document.getElementById('trackingId').textContent);
+            const btn = document.querySelector('.copy-btn');
+            btn.textContent = '✓';
+            setTimeout(() => btn.textContent = '📋', 1500);
+        }
+
+        function showInfoCard(id, value) {
+            if (value && value.trim() !== '' && value !== 'N/A') {
+                document.getElementById(id + 'Card').style.display = 'block';
+                document.getElementById(id).textContent = value;
+            }
+        }
+
         function updateTrackingUI(data) {
             document.getElementById('loading').style.display = 'none';
             const content = document.getElementById('tracking-content');
 
-            // Update basic tracking info
+            // Update tracking ID
             document.getElementById('trackingId').textContent = data.trackingId;
 
-            // Update status with appropriate styling
-            const statusElement = document.getElementById('status');
-            statusElement.textContent = data.status || 'In Transit';
-            statusElement.className = 'status-badge ' + getStatusClass(data.status);
+            // Update status
+            const statusSection = document.getElementById('status-section');
+            const statusClass = getStatusClass(data.status);
+            statusSection.className = 'status-section fade-in stagger-1 ' + statusClass;
 
-            // Calculate Last Updated
+            document.getElementById('statusIcon').textContent = getStatusIcon(data.status);
+            document.getElementById('status').textContent = data.status || 'In Transit';
+
+            // Calculate last updated
             let lastUpdatedDate = data.lastUpdated;
-
-            // Render History & Determine latest date if needed
-            const historyContainer = document.getElementById('history-list');
             if (data.history && data.history.length > 0) {
-                // Sort history by timestamp descending (newest first)
                 const sortedHistory = [...data.history].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                if (!lastUpdatedDate) lastUpdatedDate = sortedHistory[0].timestamp;
+            }
+            document.getElementById('lastUpdated').textContent = 'Updated: ' + formatFullDate(lastUpdatedDate);
 
-                // If lastUpdated is missing/invalid, use the latest history timestamp
-                if (!lastUpdatedDate || lastUpdatedDate === 'Invalid Date') {
-                    lastUpdatedDate = sortedHistory[0].timestamp;
-                }
+            // Show info cards
+            showInfoCard('location', data.location);
+            showInfoCard('origin', data.origin);
+            showInfoCard('destination', data.destination);
+            showInfoCard('eta', data.estimatedDelivery ? formatFullDate(data.estimatedDelivery) : null);
 
-                historyContainer.innerHTML = sortedHistory.map((item, index) => `
-                    <li class="history-item">
-                        <div class="history-dot"></div>
-                        <div class="history-content">
-                            <div class="history-status">${item.status}</div>
-                            <div class="history-meta">
-                                <span>${formatDate(item.timestamp)}</span>
-                                ${item.location ? `<span>${item.location}</span>` : ''}
+            // Render timeline
+            if (data.history && data.history.length > 0) {
+                const sortedHistory = [...data.history].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                document.getElementById('historyCount').textContent = sortedHistory.length;
+
+                const timelineHtml = sortedHistory.map((item, index) => `
+                    <li class="timeline-item">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-content">
+                            <div class="timeline-status">${getStatusIcon(item.status)} ${item.status}</div>
+                            <div class="timeline-meta">
+                                <span>🕐 ${formatDate(item.timestamp)}</span>
+                                ${item.location ? `<span>📍 ${item.location}</span>` : ''}
                             </div>
-                            ${item.description ? `<div style="font-size: 0.85rem; color: #6b7280; margin-top: 0.25rem;">${item.description}</div>` : ''}
                         </div>
                     </li>
                 `).join('');
-                document.getElementById('history-section').style.display = 'block';
-            } else {
-                document.getElementById('history-section').style.display = 'none';
+
+                document.getElementById('timeline').innerHTML = timelineHtml;
+                document.getElementById('timeline-section').style.display = 'block';
             }
 
-            // Update Last Updated field
-            document.getElementById('lastUpdated').textContent = formatDate(lastUpdatedDate);
 
-            // Show the content
+
             content.style.display = 'block';
         }
 
-        // Helper function to get status class
-        function getStatusClass(status) {
-            if (!status) return 'status-in-transit';
-
-            const statusLower = status.toLowerCase();
-            if (statusLower.includes('deliver')) return 'status-delivered';
-            if (statusLower.includes('delay') || statusLower.includes('exception')) return 'status-delayed';
-            return 'status-in-transit';
-        }
-
-        // Function to show error message
         function showError(message) {
             document.getElementById('loading').style.display = 'none';
-            const errorElement = document.getElementById('error');
-            errorElement.textContent = message;
-            errorElement.style.display = 'block';
+            document.getElementById('error-text').textContent = message;
+            document.getElementById('error').style.display = 'block';
         }
 
-        // Initialize the page
         if (!trackingId) {
-            showError('No tracking ID provided');
+            showError('No tracking ID provided. Please check your tracking link.');
         } else {
-            // Fetch tracking data
             fetch(`/api/tracking/${trackingId}`)
                 .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Failed to fetch tracking data');
-                    }
+                    if (!response.ok) throw new Error('Tracking ID not found');
                     return response.json();
                 })
                 .then(data => {
-                    if (data.error) {
-                        throw new Error(data.error);
-                    }
+                    if (data.error) throw new Error(data.error);
                     updateTrackingUI(data);
                 })
                 .catch(error => {
@@ -467,8 +1142,8 @@
                 });
         }
     </script>
-    
-    <!-- Client-side Analytics Initialization -->
+
+    <!-- Client-side Analytics -->
     <script src="/analytics.js"></script>
     <!-- Vercel Web Analytics -->
     <script defer src="/_vercel/insights/script.js"></script>
