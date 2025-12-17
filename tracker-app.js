@@ -334,7 +334,11 @@ app.get('/api/tracking/list', requireAuth, async (req, res) => {
 
     const filter = {};
     if (req.query.trackingId) {
-      filter.trackingId = { $regex: req.query.trackingId, $options: 'i' }; // Case-insensitive partial match
+      // Search in both trackingId and originalTrackingId fields
+      filter.$or = [
+        { trackingId: { $regex: req.query.trackingId, $options: 'i' } },
+        { originalTrackingId: { $regex: req.query.trackingId, $options: 'i' } }
+      ];
     }
     if (req.query.provider) {
       filter.provider = req.query.provider;
