@@ -523,8 +523,8 @@ app.get('/api/tracking/:trackingId', async (req, res) => {
     console.log(`✅ Found tracking data for ID: ${trackingId}`);
     res.json({
       trackingId: trackingData.trackingId,
-      originalTrackingId: trackingData.originalTrackingId,
-      provider: trackingData.provider,
+      // originalTrackingId: trackingData.originalTrackingId,
+      // provider: trackingData.provider,
       status: trackingData.status,
       location: trackingData.location,
       estimatedDelivery: trackingData.estimatedDelivery,
@@ -534,7 +534,7 @@ app.get('/api/tracking/:trackingId', async (req, res) => {
       dimensions: trackingData.dimensions,
       history: trackingData.history || [],
       lastUpdated: trackingData.lastUpdated,
-      trackingUrl: trackingUrl
+      // trackingUrl: trackingUrl
     });
   } catch (error) {
     console.error('Error fetching tracking data:', error);
@@ -595,7 +595,10 @@ app.delete('/api/tracking/:trackingId', requireAuth, async (req, res) => {
     const { trackingId } = req.params;
     console.log('🗑️ Deleting tracking ID:', trackingId);
 
-    const trackingData = await TrackingData.findOneAndDelete({ trackingId });
+    const escapedId = trackingId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const trackingData = await TrackingData.findOneAndDelete({
+      trackingId: { $regex: new RegExp(`^${escapedId}$`, 'i') }
+    });
 
     if (!trackingData) {
       console.log('❌ Tracking ID not found:', trackingId);
@@ -670,8 +673,9 @@ app.put('/api/tracking/:trackingId/status', requireAuth, async (req, res) => {
     const { status } = req.body;
     console.log('📝 Updating tracking status:', { trackingId, status });
 
+    const escapedId = trackingId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const trackingData = await TrackingData.findOneAndUpdate(
-      { trackingId },
+      { trackingId: { $regex: new RegExp(`^${escapedId}$`, 'i') } },
       {
         status,
         lastUpdated: new Date()

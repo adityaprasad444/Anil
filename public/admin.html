@@ -1018,7 +1018,19 @@
                     const line = lines[i].trim();
                     if (!line) continue;
 
-                    const [originalTrackingId, provider, manualTrackingId] = line.split(',').map(s => s.trim());
+
+                    let [originalTrackingId, provider, manualTrackingId] = line.split(',').map(s => s.trim());
+
+                    // Fix Excel Scientific Notation (e.g. 1.00005E+11 -> 100005000000)
+                    if (originalTrackingId && /^[0-9]+(\.[0-9]+)?[eE]\+[0-9]+$/.test(originalTrackingId)) {
+                        try {
+                            // Convert to number and back to string without notation
+                            originalTrackingId = Number(originalTrackingId).toLocaleString('fullwide', { useGrouping: false });
+                        } catch (e) {
+                            console.warn('Failed to convert scientific notation:', originalTrackingId);
+                        }
+                    }
+
                     if (originalTrackingId && provider) {
                         trackingItems.push({ originalTrackingId, provider, manualTrackingId });
                     }

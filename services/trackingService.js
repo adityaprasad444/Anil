@@ -18,8 +18,12 @@ class TrackingService {
     try {
       console.log(`🔍 Getting tracking data for: ${trackingId}`);
 
-      // First, check if we have this tracking ID in our database
-      let trackingData = await TrackingData.findOne({ trackingId });
+      // First, check if we have this tracking ID in our database (Case Insensitive)
+      // Escape special characters for regex safety
+      const escapedId = trackingId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      let trackingData = await TrackingData.findOne({
+        trackingId: { $regex: new RegExp(`^${escapedId}$`, 'i') }
+      });
 
       if (!trackingData) {
         console.log(`❌ Tracking ID not found in database: ${trackingId}`);
@@ -30,11 +34,11 @@ class TrackingService {
       const needsRefresh = this.needsRefresh(trackingData);
 
       if (needsRefresh) {
-        console.log(`🔄 Data is stale, fetching fresh data for: ${trackingId}`);
+        console.log(`🔄 Data is stale, fetching fresh data for: ${trackingData.trackingId}`);
         try {
-          await this.fetchAndStoreTrackingData(trackingId);
+          await this.fetchAndStoreTrackingData(trackingData.trackingId);
           // Reload the updated data
-          trackingData = await TrackingData.findOne({ trackingId });
+          trackingData = await TrackingData.findOne({ trackingId: trackingData.trackingId });
         } catch (error) {
           console.error(`⚠️ Failed to refresh data, returning cached data:`, error.message);
           // Return cached data if refresh fails
@@ -57,8 +61,11 @@ class TrackingService {
    */
   async fetchAndStoreTrackingData(trackingId) {
     try {
-      // Get tracking entry from database
-      const trackingEntry = await TrackingData.findOne({ trackingId });
+      // Get tracking entry from database (Case Insensitive)
+      const escapedId = trackingId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const trackingEntry = await TrackingData.findOne({
+        trackingId: { $regex: new RegExp(`^${escapedId}$`, 'i') }
+      });
 
       if (!trackingEntry) {
         throw new Error('Tracking ID not found in database');
