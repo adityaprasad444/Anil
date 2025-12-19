@@ -281,9 +281,9 @@
             height: 40px;
             border-radius: 50%;
             border: none;
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(10px);
-            color: white;
+            background: rgba(240, 240, 240, 0.5);
+            backdrop-filter: blur(12px);
+            color: #1e293b;
             font-size: 1.1rem;
             cursor: pointer;
             display: flex;
@@ -291,10 +291,11 @@
             justify-content: center;
             transition: all 0.2s ease;
             text-decoration: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
 
         .nav-btn:hover {
-            background: rgba(255, 255, 255, 0.25);
+            background: rgba(255, 255, 255, 0.7);
             transform: scale(1.1);
         }
 
@@ -335,7 +336,7 @@
             width: 64px;
             height: 64px;
             margin: 0 auto 1rem;
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.25);
             border-radius: 16px;
             display: flex;
             align-items: center;
@@ -360,7 +361,7 @@
         .tracking-title {
             font-size: 1.125rem;
             font-weight: 600;
-            color: rgba(255, 255, 255, 0.9);
+            color: rgba(255, 255, 255, 1);
             margin-bottom: 0.75rem;
             position: relative;
         }
@@ -374,16 +375,17 @@
         }
 
         .tracking-id-pill {
-            background: rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
             padding: 0.625rem 1.25rem;
             border-radius: 50px;
             font-family: 'SF Mono', 'Courier New', monospace;
-            font-weight: 600;
-            font-size: 1rem;
-            letter-spacing: 1.5px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: white;
+            font-weight: 800;
+            font-size: 1.1rem;
+            letter-spacing: 2px;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            color: var(--primary-dark);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
         }
 
         .copy-btn {
@@ -860,7 +862,7 @@
 <body>
     <div class="page-wrapper">
         <!-- Left Services -->
-        <aside class="services-side left">
+        <aside class="services-side left" aria-label="Premium Services">
             <div class="service-item">
                 <div class="service-icon">🚚</div>
                 <div class="service-title">Fast Delivery</div>
@@ -969,7 +971,7 @@
         </div>
 
         <!-- Right Services -->
-        <aside class="services-side right">
+        <aside class="services-side right" aria-label="Service Highlights">
             <div class="service-item">
                 <div class="service-icon">🌍</div>
                 <div class="service-title">Pan India</div>
@@ -994,28 +996,29 @@
     </div>
 
     <script>
-        const urlParams = new URLSearchParams(window.location.search);
+        const urlParams = new URLSearchParams(globalThis.location.search);
         const trackingId = urlParams.get('id');
 
         function formatDate(dateString) {
             if (!dateString) return 'N/A';
             const date = new Date(dateString);
-            if (isNaN(date.getTime())) return 'N/A';
+            if (Number.isNaN(date.getTime())) return 'N/A';
 
             const options = {
                 month: 'short',
                 day: 'numeric',
                 hour: '2-digit',
                 minute: '2-digit',
-                hour12: true
+                hour12: true,
+                timeZone: 'Asia/Kolkata'
             };
-            return date.toLocaleDateString('en-US', options);
+            return date.toLocaleDateString('en-IN', options);
         }
 
         function formatFullDate(dateString) {
             if (!dateString) return 'N/A';
             const date = new Date(dateString);
-            if (isNaN(date.getTime())) return 'N/A';
+            if (Number.isNaN(date.getTime())) return 'N/A';
 
             const options = {
                 weekday: 'short',
@@ -1024,17 +1027,18 @@
                 year: 'numeric',
                 hour: '2-digit',
                 minute: '2-digit',
-                hour12: true
+                hour12: true,
+                timeZone: 'Asia/Kolkata'
             };
-            return date.toLocaleDateString('en-US', options);
+            return date.toLocaleDateString('en-IN', options);
         }
 
         function getStatusIcon(status) {
             if (!status) return '🚚';
             const s = status.toLowerCase();
-            if (s.includes('deliver')) return '✅';
-            if (s.includes('out for')) return '🚛';
-            if (s.includes('transit') || s.includes('arrived') || s.includes('hub')) return '🚚';
+            if (s === 'delivered') return '✅';
+            if (s.includes('out for delivery') || s.includes('scheduled for delivery')) return '🚛';
+            if (s.includes('transit')) return '🚚';
             if (s.includes('picked') || s.includes('pickup')) return '📤';
             if (s.includes('delay') || s.includes('exception')) return '⚠️';
             return '📦';
@@ -1043,7 +1047,8 @@
         function getStatusClass(status) {
             if (!status) return 'status-in-transit';
             const s = status.toLowerCase();
-            if (s.includes('deliver')) return 'status-delivered';
+            if (s === 'delivered') return 'status-delivered';
+            if (s.includes('out for delivery') || s.includes('scheduled for delivery')) return 'status-out-for-delivery';
             if (s.includes('delay') || s.includes('exception')) return 'status-delayed';
             return 'status-in-transit';
         }
@@ -1057,12 +1062,15 @@
 
         function showInfoCard(id, value) {
             if (value && value.trim() !== '' && value !== 'N/A') {
-                document.getElementById(id + 'Card').style.display = 'block';
-                document.getElementById(id).textContent = value;
+                const element = document.getElementById(id + 'Card');
+                if (element) {
+                    element.style.display = 'block';
+                    document.getElementById(id).textContent = value;
+                }
             }
         }
 
-        function updateTrackingUI(data) {
+        async function updateTrackingUI(data) {
             document.getElementById('loading').style.display = 'none';
             const content = document.getElementById('tracking-content');
 
@@ -1096,7 +1104,7 @@
                 const sortedHistory = [...data.history].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
                 document.getElementById('historyCount').textContent = sortedHistory.length;
 
-                const timelineHtml = sortedHistory.map((item, index) => `
+                const timelineHtml = sortedHistory.map((item) => `
                     <li class="timeline-item">
                         <div class="timeline-dot"></div>
                         <div class="timeline-content">
@@ -1113,8 +1121,6 @@
                 document.getElementById('timeline-section').style.display = 'block';
             }
 
-
-
             content.style.display = 'block';
         }
 
@@ -1124,23 +1130,27 @@
             document.getElementById('error').style.display = 'block';
         }
 
-        if (!trackingId) {
-            showError('No tracking ID provided. Please check your tracking link.');
-        } else {
-            fetch(`/api/tracking/${trackingId}`)
-                .then(response => {
-                    if (!response.ok) throw new Error('Tracking ID not found');
-                    return response.json();
-                })
-                .then(data => {
-                    if (data.error) throw new Error(data.error);
-                    updateTrackingUI(data);
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    showError(error.message || 'Failed to fetch tracking data');
-                });
+        async function initTracking() {
+            if (!trackingId) {
+                showError('No tracking ID provided. Please check your tracking link.');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/tracking/${trackingId}`);
+                if (!response.ok) throw new Error('Tracking ID not found');
+
+                const data = await response.json();
+                if (data.error) throw new Error(data.error);
+
+                await updateTrackingUI(data);
+            } catch (error) {
+                console.error('Tracking fetch error:', error);
+                showError(error.message || 'Failed to fetch tracking data');
+            }
         }
+
+        initTracking();
     </script>
 
     <!-- Client-side Analytics -->

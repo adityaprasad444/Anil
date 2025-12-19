@@ -150,10 +150,10 @@ class ApiClient {
             );
 
             if (deliveredItem) {
-                trackingData.status = deliveredItem.label;
+                trackingData.status = this.normalizeStatus(deliveredItem.label);
                 trackingData.location = deliveredItem.location || latest.location;
             } else {
-                trackingData.status = latest.label || "In Transit";
+                trackingData.status = this.normalizeStatus(latest.label || "In Transit");
                 trackingData.location = latest.location || "Unknown";
             }
 
@@ -188,7 +188,7 @@ class ApiClient {
             const statusObj = shipment.status || {};
             const scans = shipment.scans || [];
 
-            trackingData.status = statusObj.status || "In Transit";
+            trackingData.status = this.normalizeStatus(statusObj.status || "In Transit");
             trackingData.location = statusObj.statusLocation || "Unknown";
             trackingData.origin = shipment.origin || "";
             trackingData.destination = shipment.destination || "";
@@ -221,7 +221,7 @@ class ApiClient {
             if (statuses.length > 0) {
                 const latest = statuses[0];
 
-                trackingData.status = latest.statusDescription || latest.status || 'In Transit';
+                trackingData.status = this.normalizeStatus(latest.statusDescription || latest.status || 'In Transit');
                 trackingData.location = latest.actBranchCode || latest.location || '';
 
                 trackingData.history = statuses.map(s => ({
@@ -261,7 +261,7 @@ class ApiClient {
             const consignment = apiResponse.ConsignmentDetails_Traking || {};
             const history = apiResponse.Sheet_History || [];
 
-            trackingData.status = consignment.current_status_name || "In Transit";
+            trackingData.status = this.normalizeStatus(consignment.current_status_name || "In Transit");
             trackingData.location = consignment.current_location_name || "Unknown";
             trackingData.estimatedDelivery = consignment.ExpectedDeliveryDate || null;
             trackingData.origin = consignment.origin_name || "";
@@ -329,7 +329,7 @@ class ApiClient {
                 return trackingData;
             }
 
-            trackingData.status = this.toTitleCase(tracking.Status) || "In Transit";
+            trackingData.status = this.normalizeStatus(tracking.Status || "In Transit");
             trackingData.location = events.length > 0 ? events[0].Location : "Unknown";
             trackingData.estimatedDelivery = tracking.ExpectedDeliveryDate || null;
             trackingData.origin = tracking.Origin || "";
@@ -397,7 +397,7 @@ class ApiClient {
             history: ['history', 'events', 'trackingHistory', 'shipmentHistory', 'scans']
         };
 
-        trackingData.status = this.extractField(apiResponse, fieldSets.status) || 'Unknown';
+        trackingData.status = this.normalizeStatus(this.extractField(apiResponse, fieldSets.status) || 'In Transit');
         trackingData.location = this.extractField(apiResponse, fieldSets.location) || 'Unknown';
         trackingData.estimatedDelivery = this.extractField(apiResponse, fieldSets.estimatedDelivery);
         trackingData.origin = this.extractField(apiResponse, fieldSets.origin);
@@ -422,6 +422,21 @@ class ApiClient {
     toTitleCase(str) {
         if (!str) return '';
         return str.toLowerCase().replace(/\b\w/g, s => s.toUpperCase());
+    }
+
+    /**
+     * Normalize status strings to consistent format
+     */
+    normalizeStatus(status) {
+        if (!status) return 'In Transit';
+        const s = status.toLowerCase().trim();
+        if (s.includes('delivered')) return 'Delivered';
+        if (s.includes('transit')) return 'In Transit';
+        if (s.includes('out for delivery')) return 'Out for Delivery';
+        if (s.includes('pickup') || s.includes('booked') || s.includes('pending')) return 'Pending';
+        if (s.includes('exception') || s.includes('delay') || s.includes('failed') || s.includes('issue')) return 'Exception';
+        // Capitalize for display if no match
+        return this.toTitleCase(status);
     }
 
     /**

@@ -10,6 +10,7 @@ const config = require('./config');
 const { connectDB, TrackingData } = require('./db');
 const User = require('./models/User');
 const Provider = require('./models/Provider');
+const BulkUpload = require('./models/BulkUpload');
 const trackingService = require('./services/trackingService');
 const cron = require('node-cron');
 const swaggerUi = require('swagger-ui-express');
@@ -324,6 +325,78 @@ app.get('/api/login/check', (req, res) => {
  *       500:
  *         description: Internal server error
  */
+/**
+ * @swagger
+ * /api/tracking/stats:
+ *   get:
+ *     summary: Get tracking statistics
+ *     tags: [Tracking]
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Statistics object
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 total:
+ *                   type: integer
+ *                 delivered:
+ *                   type: integer
+ *                 inTransit:
+ *                   type: integer
+ *                 pending:
+ *                   type: integer
+ *                 exception:
+ *                   type: integer
+ *       401:
+ *         description: Unauthorized
+ */
+app.get('/api/tracking/stats', requireAuth, async (req, res) => {
+  try {
+    const stats = await TrackingData.aggregate([
+      {
+        $group: {
+          _id: { $toLower: "$status" },
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+
+    const result = {
+      total: 0,
+      delivered: 0,
+      inTransit: 0,
+      pending: 0,
+      exception: 0,
+      outForDelivery: 0
+    };
+
+    stats.forEach(s => {
+      const count = s.count;
+      result.total += count;
+      const status = s._id || '';
+      if (status === 'delivered') {
+        result.delivered += count;
+      } else if (status.includes('out for delivery') || status.includes('scheduled for delivery')) {
+        result.outForDelivery += count;
+      } else if (status.includes('exception') || status.includes('delay') || status.includes('fail')) {
+        result.exception += count;
+      } else {
+        // Catch-all for all other active statuses (In Transit, Shipped, Booked, Pending, etc.)
+        result.inTransit += count;
+      }
+    });
+
+    res.json(result);
+  } catch (error) {
+    console.error('❌ Error fetching stats:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 app.get('/api/tracking/list', requireAuth, async (req, res) => {
   try {
     console.log('📋 Fetching tracking list');
@@ -344,7 +417,35 @@ app.get('/api/tracking/list', requireAuth, async (req, res) => {
       filter.provider = req.query.provider;
     }
     if (req.query.status) {
-      filter.status = { $regex: req.query.status, $options: 'i' }; // Case-insensitive match
+      const statusQuery = req.query.status.toLowerCase();
+      if (statusQuery === 'delivered') {
+        filter.status = { $regex: '^delivered$', $options: 'i' };
+      } else if (statusQuery === 'out-for-delivery') {
+        filter.status = { $regex: 'out for delivery|scheduled for delivery', $options: 'i' };
+      } else if (statusQuery === 'exception') {
+        filter.status = { $regex: 'exception|delay|fail', $options: 'i' };
+      } else if (statusQuery === 'in-transit' || statusQuery === 'pending') {
+        // Match anything that is NOT delivered, out for delivery, or exception
+        filter.status = {
+          $not: { $regex: '^delivered$|out for delivery|scheduled for delivery|exception|delay|fail', $options: 'i' }
+        };
+      } else {
+        filter.status = { $regex: statusQuery, $options: 'i' };
+      }
+    }
+
+    // Date range filter
+    if (req.query.startDate || req.query.endDate) {
+      filter.createdAt = {};
+      if (req.query.startDate) {
+        filter.createdAt.$gte = new Date(req.query.startDate);
+      }
+      if (req.query.endDate) {
+        // Set to end of day
+        const endDate = new Date(req.query.endDate);
+        endDate.setHours(23, 59, 59, 999);
+        filter.createdAt.$lte = endDate;
+      }
     }
 
     const trackingList = await TrackingData.find(filter)
@@ -444,26 +545,51 @@ app.get('/api/tracking/:trackingId', async (req, res) => {
 // Add delete endpoint for tracking IDs
 /**
  * @swagger
- * /api/tracking/{trackingId}:
+ * /api/tracking/bulk-delete:
  *   delete:
- *     summary: Delete a tracking entry
+ *     summary: Delete multiple tracking entries
  *     tags: [Tracking]
  *     security:
  *       - cookieAuth: []
- *     parameters:
- *       - in: path
- *         name: trackingId
- *         required: true
- *         schema:
- *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - trackingIds
+ *             properties:
+ *               trackingIds:
+ *                 type: array
+ *                 items:
+ *                   type: string
  *     responses:
  *       200:
- *         description: Tracking ID deleted successfully
- *       404:
- *         description: Tracking ID not found
+ *         description: Items deleted successfully
+ *       400:
+ *         description: Bad request
  *       500:
  *         description: Internal server error
  */
+app.delete('/api/tracking/bulk-delete', requireAuth, async (req, res) => {
+  try {
+    const { trackingIds } = req.body;
+    if (!trackingIds || !Array.isArray(trackingIds)) {
+      return res.status(400).json({ error: 'trackingIds array is required' });
+    }
+
+    console.log(`🗑️ Bulk deleting ${trackingIds.length} tracking IDs`);
+    const result = await TrackingData.deleteMany({ trackingId: { $in: trackingIds } });
+
+    console.log(`✅ Successfully deleted ${result.deletedCount} items`);
+    res.json({ message: `Successfully deleted ${result.deletedCount} items`, count: result.deletedCount });
+  } catch (error) {
+    console.error('❌ Bulk delete error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 app.delete('/api/tracking/:trackingId', requireAuth, async (req, res) => {
   try {
     const { trackingId } = req.params;
@@ -487,18 +613,12 @@ app.delete('/api/tracking/:trackingId', requireAuth, async (req, res) => {
 // Add update status endpoint for tracking IDs
 /**
  * @swagger
- * /api/tracking/{trackingId}/status:
+ * /api/tracking/bulk-status:
  *   put:
- *     summary: Update tracking status
+ *     summary: Update status for multiple tracking entries
  *     tags: [Tracking]
  *     security:
  *       - cookieAuth: []
- *     parameters:
- *       - in: path
- *         name: trackingId
- *         required: true
- *         schema:
- *           type: string
  *     requestBody:
  *       required: true
  *       content:
@@ -506,18 +626,44 @@ app.delete('/api/tracking/:trackingId', requireAuth, async (req, res) => {
  *           schema:
  *             type: object
  *             required:
+ *               - trackingIds
  *               - status
  *             properties:
+ *               trackingIds:
+ *                 type: array
+ *                 items:
+ *                   type: string
  *               status:
  *                 type: string
  *     responses:
  *       200:
  *         description: Status updated successfully
- *       404:
- *         description: Tracking ID not found
+ *       400:
+ *         description: Bad request
  *       500:
  *         description: Internal server error
  */
+app.put('/api/tracking/bulk-status', requireAuth, async (req, res) => {
+  try {
+    const { trackingIds, status } = req.body;
+    if (!trackingIds || !Array.isArray(trackingIds) || !status) {
+      return res.status(400).json({ error: 'trackingIds array and status are required' });
+    }
+
+    console.log(`📝 Bulk updating status to "${status}" for ${trackingIds.length} tracking IDs`);
+    const result = await TrackingData.updateMany(
+      { trackingId: { $in: trackingIds } },
+      { $set: { status, lastUpdated: new Date() } }
+    );
+
+    console.log(`✅ Successfully updated ${result.modifiedCount} items`);
+    res.json({ message: `Successfully updated ${result.modifiedCount} items`, count: result.modifiedCount });
+  } catch (error) {
+    console.error('❌ Bulk status update error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 app.put('/api/tracking/:trackingId/status', requireAuth, async (req, res) => {
   try {
     const { trackingId } = req.params;
@@ -747,6 +893,98 @@ app.post('/api/logout', (req, res) => {
  *       500:
  *         description: Internal server error
  */
+app.post('/api/tracking/bulk', requireAuth, async (req, res) => {
+  try {
+    const { items, fileName, rawContent } = req.body;
+    if (!items || !Array.isArray(items)) {
+      return res.status(400).json({ error: 'Items array is required' });
+    }
+
+    console.log(`📦 Bulk tracking ID generation request: ${items.length} items from ${fileName || 'unknown file'}`);
+    const results = [];
+    const errors = [];
+
+    // Fetch supported providers and build a case-insensitive map
+    const configuredProviders = await Provider.find({}, 'name');
+    const providerMap = new Map(); // lowercase -> original casing
+    configuredProviders.forEach(p => providerMap.set(p.name.toLowerCase(), p.name));
+
+    for (const item of items) {
+      let { provider, originalTrackingId, manualTrackingId } = item;
+      if (!provider || !originalTrackingId) {
+        errors.push({ item, error: 'Provider and original tracking ID are required' });
+        continue;
+      }
+
+      // Check support case-insensitively and normalize casing
+      const normalizedProviderName = providerMap.get(provider.toLowerCase());
+      if (!normalizedProviderName) {
+        errors.push({ item, error: 'provider not supported' });
+        continue;
+      }
+      provider = normalizedProviderName; // Normalize to DB casing (e.g., 'fedex' -> 'FedEx')
+
+      let trackingId;
+      if (manualTrackingId) {
+        trackingId = manualTrackingId.trim();
+        const existing = await TrackingData.findOne({ trackingId });
+        if (existing) {
+          errors.push({ item, error: `Tracking ID ${trackingId} already exists` });
+          continue;
+        }
+      } else {
+        const randomNumber = Math.floor(100000 + Math.random() * 900000);
+        trackingId = `ak${randomNumber}lg`;
+      }
+
+      try {
+        const trackingData = new TrackingData({
+          trackingId,
+          originalTrackingId,
+          provider
+        });
+        await trackingData.save();
+        results.push(trackingId);
+      } catch (err) {
+        errors.push({ item, error: err.message });
+      }
+    }
+
+    // Determine status
+    let uploadStatus = 'success';
+    if (results.length === 0 && items.length > 0) uploadStatus = 'failed';
+    else if (errors.length > 0) uploadStatus = 'partial';
+
+    // Save logs to DB
+    try {
+      await BulkUpload.create({
+        fileName: fileName || 'bulk_upload.csv',
+        uploadedBy: req.session.user.username,
+        status: uploadStatus,
+        totalItems: items.length,
+        successCount: results.length,
+        failCount: errors.length,
+        uploadErrors: errors,
+        rawContent: rawContent
+      });
+      console.log('✅ Bulk upload logs saved to database');
+    } catch (logErr) {
+      console.error('❌ Error saving bulk upload logs:', logErr);
+      // Don't fail the request if logging fails, but it's good to know
+    }
+
+    console.log(`✅ Bulk generation complete. Success: ${results.length}, Errors: ${errors.length}`);
+    res.json({
+      success: true,
+      count: results.length,
+      errors: errors.length > 0 ? errors : undefined
+    });
+  } catch (error) {
+    console.error('❌ Bulk generation error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 app.post('/api/tracking/generate', requireAuth, async (req, res) => {
   try {
     const { provider, originalTrackingId, manualTrackingId } = req.body;

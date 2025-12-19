@@ -74,7 +74,7 @@ const trackingSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    default: 'In transit'
+    default: 'In Transit'
   },
   location: String,
   estimatedDelivery: Date,
@@ -91,6 +91,10 @@ const trackingSchema = new mongoose.Schema({
     },
     description: String
   }],
+  lastUpdated: {
+    type: Date,
+    default: Date.now
+  },
   lastFetched: {
     type: Date,
     default: null
