@@ -12,7 +12,7 @@ const User = require('./models/User');
 const Provider = require('./models/Provider');
 const BulkUpload = require('./models/BulkUpload');
 const trackingService = require('./services/trackingService');
-const cron = require('node-cron');
+// const cron = require('node-cron');
 const swaggerUi = require('swagger-ui-express');
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerOptions = require('./swaggerConfig');
@@ -1292,7 +1292,14 @@ app.delete('/api/providers/:id', requireAuth, async (req, res) => {
   }
 });
 
-// Error handling middleware
+// Scheduled Tasks (Cron Jobs)
+// Only run if ENABLE_CRON is set to 'true'. This prevents duplication in multi-instance deployments.
+// if (process.env.ENABLE_CRON === 'true') {
+//   console.log('⏰ Cron jobs enabled for this instance.');
+
+// Cron logic removed
+
+// Global error handling middleware
 app.use((err, req, res, next) => {
   console.error('❌ Global error:', err);
   res.status(500).json({ error: 'Internal server error' });
