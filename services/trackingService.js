@@ -81,12 +81,26 @@ class TrackingService {
       // Check if package is already delivered - if so, ignore all future updates
       if (trackingEntry.status && trackingEntry.status.toLowerCase().includes('deliver')) {
         console.log(`📦 Package already delivered, skipping update for: ${trackingId}`);
-        return trackingEntry;
+        return {
+          trackingData: trackingEntry,
+          log: {
+            trackingId,
+            provider: provider.name,
+            message: 'Package already delivered, no update needed'
+          }
+        };
       }
 
       if (!provider.apiConfig || !provider.apiConfig.endpoint) {
         console.log(`⚠️ No API configuration for provider: ${provider.name}`);
-        return trackingEntry;
+        return {
+          trackingData: trackingEntry,
+          log: {
+            trackingId,
+            provider: provider.name,
+            message: 'No API configuration available'
+          }
+        };
       }
 
       // Fetch data from provider API

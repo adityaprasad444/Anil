@@ -221,15 +221,33 @@ class ApiClient {
             if (statuses.length > 0) {
                 const latest = statuses[0];
 
-                trackingData.status = this.normalizeStatus(latest.statusDescription || latest.status || 'In Transit');
-                trackingData.location = latest.actBranchCode || latest.location || '';
+                // Use statusDescription, status, or remarks as fallback
+                const statusStr = latest.statusDescription || latest.status || (latest.remarks ? latest.remarks.replace(/<[^>]*>?/gm, '').trim() : 'In Transit');
+                trackingData.status = this.normalizeStatus(statusStr);
 
-                trackingData.history = statuses.map(s => ({
-                    timestamp: this.parseISTDate(s.statusTimestamp || s.date),
-                    status: this.cleanText(s.statusDescription || s.status),
-                    location: this.cleanText(s.actBranchCode || s.location || ''),
-                    description: this.cleanText(s.remarks || s.statusDescription || '')
-                }));
+                // Use branch name/city as location fallback
+                trackingData.location = latest.actBranchName || latest.actBranchCode || latest.actCityName || latest.location || '';
+
+                trackingData.history = statuses.map(s => {
+                    // Extract clean status text
+                    let sText = s.statusDescription || s.status;
+                    if (!sText && s.remarks) {
+                        sText = this.cleanText(s.remarks);
+                        // If it's still empty or just too long, use a default
+                        if (!sText || sText.length > 100) sText = "Update";
+                    }
+                    if (!sText) sText = "In Transit";
+
+                    // Extract location
+                    const locText = s.actBranchName || s.actBranchCode || s.actCityName || s.location || '';
+
+                    return {
+                        timestamp: this.parseISTDate(s.statusTimestamp || s.date),
+                        status: this.cleanText(sText),
+                        location: this.cleanText(locText),
+                        description: this.cleanText(s.remarks || s.statusDescription || sText)
+                    };
+                });
             } else {
                 trackingData.status = apiResponse.statusDescription || 'No tracking info';
                 trackingData.location = 'Unknown';
