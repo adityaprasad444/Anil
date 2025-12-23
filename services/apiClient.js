@@ -186,22 +186,48 @@ class ApiClient {
 
             const shipment = apiResponse.data[0];
             const statusObj = shipment.status || {};
-            const scans = shipment.scans || [];
 
-            trackingData.status = this.normalizeStatus(statusObj.status || "In Transit");
-            trackingData.location = statusObj.statusLocation || "Unknown";
+            // Extract scans from either top-level or trackingStates (Unified Tracking API format)
+            let scans = shipment.scans || [];
+            if ((!scans || scans.length === 0) && shipment.trackingStates) {
+                // Flatten scans from all tracking states
+                scans = shipment.trackingStates.flatMap(state => state.scans || []);
+            }
+
+            // Normalize and determine latest status
+            trackingData.status = this.normalizeStatus(statusObj.status || shipment.hqStatus || "In Transit");
+
+            // Origin and Destination
             trackingData.origin = shipment.origin || "";
             trackingData.destination = shipment.destination || "";
-            // Use deliveryDate_v1 or expectedDeliveryDate if available
-            trackingData.estimatedDelivery = shipment.deliveryDate_v1 || shipment.expectedDeliveryDate || null;
+
+            // Deliver Date
+            trackingData.estimatedDelivery = shipment.promiseDeliveryDate || shipment.expectedDeliveryDate || null;
 
             // Map history
             trackingData.history = scans.map(scan => ({
-                timestamp: this.parseISTDate(scan.scanDateTime),
-                status: this.cleanText(scan.scan || scan.scanType),
-                location: this.cleanText(scan.scannedLocation || scan.scanLocation || ""),
-                description: this.cleanText(scan.instructions || scan.message || "")
+                timestamp: this.parseISTDate(scan.scanDateTime || scan.scanDate),
+                status: this.cleanText(scan.scan || scan.scanType || "Update"),
+                location: this.cleanText(scan.scannedLocation || scan.scanLocation || scan.cityLocation || ""),
+                description: this.cleanText(scan.instructions || scan.message || scan.scanNslRemark || "")
             }));
+
+            // Sort history by timestamp descending and remove duplicates based on status + timestamp
+            trackingData.history.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+            // Filter duplicates (some items might appear in multiple states)
+            trackingData.history = trackingData.history.filter((item, index, self) =>
+                index === self.findIndex((t) => (
+                    t.timestamp.toString() === item.timestamp.toString() && t.status === item.status
+                ))
+            );
+
+            // Update current location from the latest scan if not already set
+            if (trackingData.history.length > 0) {
+                trackingData.location = trackingData.history[0].location || statusObj.statusLocation || "Unknown";
+            } else {
+                trackingData.location = statusObj.statusLocation || "Unknown";
+            }
 
             return trackingData;
         } catch (err) {
