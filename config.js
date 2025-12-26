@@ -58,13 +58,13 @@ module.exports = {
       name: 'ICL Domestic',
       trackingUrl: 'https://www.iclexpress.in/tracking',
       apiConfig: {
-        endpoint: 'https://eztrackwebapi159.softpal.in/V1/TrackingApiCommon_Softpal',
+        endpoint: 'https://eztrackwebapi159.softpal.in/V1/TrackingApiCommon_Softpal?ShipmentNo={trackingId}&HostId=3',
         method: 'GET',
         headers: {
           'Accept': 'application/json',
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
         },
-        requestBodyTemplate: 'ShipmentNo={trackingId}&HostId=3'
+        requestBodyTemplate: ''
       }
     },
     {

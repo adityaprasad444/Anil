@@ -305,18 +305,33 @@ class ApiClient {
             const consignment = apiResponse.ConsignmentDetails_Traking || {};
             const history = apiResponse.Sheet_History || [];
 
-            trackingData.status = this.normalizeStatus(consignment.current_status_name || "In Transit");
-            trackingData.location = consignment.current_location_name || "Unknown";
-            trackingData.estimatedDelivery = consignment.ExpectedDeliveryDate || null;
-            trackingData.origin = consignment.origin_name || "";
-            trackingData.destination = consignment.dest_name || "";
-
+            // Map and sort history first
             trackingData.history = history.map(item => ({
                 timestamp: this.parseISTDate(item.status_date),
                 status: this.cleanText(item.status || "Update"),
                 location: this.cleanText(item.dispatch_location_name || ""),
                 description: this.cleanText(item.Remarks || item.status || "")
             })).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+            let currentStatus = consignment.current_status_name || "In Transit";
+
+            // If current status is "Pod Uploaded", fall back to the most recent useful history status
+            if (currentStatus.toLowerCase().includes('pod upload') || currentStatus.toLowerCase().includes('pod update')) {
+                const usefulHistory = trackingData.history.find(h =>
+                    h.status &&
+                    !h.status.toLowerCase().includes('pod upload') &&
+                    !h.status.toLowerCase().includes('pod update')
+                );
+                if (usefulHistory) {
+                    currentStatus = usefulHistory.status;
+                }
+            }
+
+            trackingData.status = this.normalizeStatus(currentStatus);
+            trackingData.location = consignment.current_location_name || "Unknown";
+            trackingData.estimatedDelivery = consignment.ExpectedDeliveryDate || null;
+            trackingData.origin = consignment.origin_name || "";
+            trackingData.destination = consignment.dest_name || "";
 
             trackingData.additionalInfo = {
                 consignmentNo: consignment.consignment_no,
@@ -474,11 +489,14 @@ class ApiClient {
     normalizeStatus(status) {
         if (!status) return 'In Transit';
         const s = status.toLowerCase().trim();
+
+        // Exact matches or very clear patterns
         if (s.includes('delivered')) return 'Delivered';
-        if (s.includes('transit')) return 'In Transit';
-        if (s.includes('out for delivery')) return 'Out for Delivery';
+        if (s.includes('out for delivery') || s.includes('out_delivery')) return 'Out for Delivery';
+        if (s.includes('transit') || s.includes('shipped') || s.includes('dispatched')) return 'In Transit';
         if (s.includes('pickup') || s.includes('booked') || s.includes('pending')) return 'Pending';
         if (s.includes('exception') || s.includes('delay') || s.includes('failed') || s.includes('issue')) return 'Exception';
+
         // Capitalize for display if no match
         return this.toTitleCase(status);
     }

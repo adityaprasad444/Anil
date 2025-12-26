@@ -59,7 +59,7 @@ class TrackingService {
    * @param {string} trackingId - Tracking ID to fetch
    * @returns {Promise<Object>} - Updated tracking data
    */
-  async fetchAndStoreTrackingData(trackingId) {
+  async fetchAndStoreTrackingData(trackingId, force = false) {
     try {
       // Get tracking entry from database (Case Insensitive)
       const escapedId = trackingId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -79,14 +79,22 @@ class TrackingService {
       }
 
       // Check if package is already delivered - if so, ignore all future updates
-      if (trackingEntry.status && trackingEntry.status.toLowerCase().includes('deliver')) {
-        console.log(`📦 Package already delivered, skipping update for: ${trackingId}`);
+      // EXCEPTION: "Out for Delivery", "Scheduled for Delivery", "Delivery Attempted" are NOT final states
+      // If force is true, we ignore this check and fetch fresh data anyway
+      const currentStatus = trackingEntry.status ? trackingEntry.status.toLowerCase() : '';
+      const isTerminalState = currentStatus.includes('delivered') &&
+        !currentStatus.includes('out for') &&
+        !currentStatus.includes('scheduled') &&
+        !currentStatus.includes('attempt');
+
+      if (isTerminalState && !force) {
+        console.log(`📦 Package already delivered (Status: ${trackingEntry.status}), skipping update for: ${trackingId}`);
         return {
           trackingData: trackingEntry,
           log: {
             trackingId,
             provider: provider.name,
-            message: 'Package already delivered, no update needed'
+            message: `Package already delivered (${trackingEntry.status}), no update needed`
           }
         };
       }
@@ -214,13 +222,13 @@ class TrackingService {
    */
   // In services/trackingService.js, update the updateAllTrackingData method:
 
-  async updateAllTrackingData() {
+  async updateAllTrackingData(force = false) {
     const startTime = Date.now();
     try {
-      console.log('🔄 Starting bulk update of all tracking data...');
+      console.log(`🔄 Starting bulk update of ${force ? 'ALL' : 'active'} tracking data...`);
 
-      // Get all tracking entries that are not delivered
-      const activeEntries = await TrackingData.find({
+      // If force is true, get ALL entries. Otherwise, get only entries that are not delivered.
+      const query = force ? {} : {
         status: {
           $not: {
             $in: [
@@ -231,9 +239,11 @@ class TrackingService {
             ]
           }
         }
-      });
+      };
 
-      console.log(`📦 Found ${activeEntries.length} active tracking entries to update`);
+      const activeEntries = await TrackingData.find(query);
+
+      console.log(`📦 Found ${activeEntries.length} tracking entries to update`);
 
       const results = {
         total: activeEntries.length,
@@ -246,7 +256,7 @@ class TrackingService {
       // Update each entry
       for (const entry of activeEntries) {
         try {
-          const result = await this.fetchAndStoreTrackingData(entry.trackingId);
+          const result = await this.fetchAndStoreTrackingData(entry.trackingId, force);
           results.updated++;
           if (result.log) results.logs.push(result.log);
         } catch (error) {
@@ -341,7 +351,8 @@ class TrackingService {
    */
   async refreshTrackingData(trackingId) {
     console.log(`🔄 Manual refresh requested for: ${trackingId}`);
-    const result = await this.fetchAndStoreTrackingData(trackingId);
+    // Manual refresh always forces a fresh fetch from the API
+    const result = await this.fetchAndStoreTrackingData(trackingId, true);
     // If we return the whole result, the caller might be confused if they expect checking properties directly.
     // However, looking at previous usage, caller might expect the trackingData object.
     return result.trackingData ? result.trackingData : result;

@@ -752,15 +752,16 @@ app.post('/api/tracking/:trackingId/refresh', requireAuth, async (req, res) => {
  */
 app.post('/api/tracking/refresh-all', requireAuth, async (req, res) => {
   try {
-    console.log('🔄 Bulk refresh requested for all tracking data');
+    const force = req.query.force === 'true';
+    console.log(`🔄 Bulk refresh requested for all tracking data (Force: ${force})`);
 
     // Run the update and wait for it to complete (required for Vercel/Serverless)
-    const results = await trackingService.updateAllTrackingData();
+    const results = await trackingService.updateAllTrackingData(force);
     console.log('✅ Bulk refresh completed:', results);
 
     // Respond with results
     res.json({
-      message: 'Bulk refresh completed',
+      message: force ? 'Full bulk refresh completed' : 'Bulk refresh completed',
       results: results
     });
   } catch (error) {
