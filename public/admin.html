@@ -28,6 +28,24 @@
             --radius: 0.75rem;
         }
 
+        [data-theme="dark"] {
+            --primary-color: #6366f1;
+            --primary-hover: #4f46e5;
+            --primary-light: #312e81;
+            --secondary-color: #94a3b8;
+            --success-color: #10b981;
+            --danger-color: #f87171;
+            --warning-color: #fbbf24;
+            --bg-body: #0f172a;
+            --bg-card: #1e293b;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border-color: #334155;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -40,6 +58,7 @@
             color: var(--text-primary);
             line-height: 1.6;
             min-height: 100vh;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
 
         .header {
@@ -159,14 +178,14 @@
             border-radius: 0.5rem;
             font-size: 0.95rem;
             transition: all 0.2s;
-            background-color: #f9fafb;
+            background-color: var(--bg-card);
+            color: var(--text-primary);
         }
 
         .form-input:focus {
             outline: none;
             border-color: var(--primary-color);
             box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
-            background-color: #fff;
         }
 
         .btn {
@@ -195,28 +214,30 @@
         }
 
         .btn-danger {
-            background-color: white;
+            background-color: var(--bg-card);
             color: var(--danger-color);
             border: 1px solid var(--danger-color);
         }
 
         .btn-danger:hover {
-            background-color: #fef2f2;
+            background-color: var(--danger-color);
+            color: white;
         }
 
         .btn-success {
-            background-color: white;
+            background-color: var(--bg-card);
             color: var(--success-color);
             border: 1px solid var(--success-color);
         }
 
         .btn-success:hover {
-            background-color: #f0fdf4;
+            background-color: var(--success-color);
+            color: white;
         }
 
         .btn-secondary {
-            background-color: white;
-            color: var(--text-secondary);
+            background-color: var(--bg-card);
+            color: var(--text-primary);
             border: 1px solid var(--border-color);
         }
 
@@ -226,8 +247,8 @@
         }
 
         .btn-secondary:not(:disabled):hover {
-            background-color: #f9fafb;
-            color: var(--text-primary);
+            background-color: var(--bg-body);
+            border-color: var(--text-secondary);
         }
 
         /* Filter Controls */
@@ -235,11 +256,11 @@
             display: flex;
             flex-direction: column;
             gap: 1.25rem;
-            background: #f8fafc;
+            background: var(--bg-card);
             padding: 1.25rem;
             border-radius: var(--radius);
             margin-bottom: 2rem;
-            border: 1px solid #e2e8f0;
+            border: 1px solid var(--border-color);
         }
 
         .filter-controls {
@@ -290,7 +311,7 @@
             align-items: center;
             gap: 0.5rem;
             margin-right: 0.5rem;
-            background: #cbd5e1;
+            background: var(--border-color);
             padding: 0.4rem 0.8rem;
             border-radius: 0.4rem;
             height: 42px;
@@ -349,7 +370,7 @@
             justify-content: space-between;
             align-items: center;
             padding: 1.25rem;
-            background-color: white;
+            background-color: var(--bg-card);
             border: 1px solid var(--border-color);
             border-radius: var(--radius);
             transition: all 0.2s;
@@ -362,6 +383,15 @@
 
         .tracking-info {
             flex: 1;
+        }
+
+        .tracking-detail-label {
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 0.25rem;
+            text-transform: uppercase;
+            font-size: 0.7rem;
+            letter-spacing: 0.05em;
         }
 
         .tracking-id {
@@ -406,7 +436,7 @@
             font-size: 0.75rem;
             text-transform: uppercase;
             letter-spacing: 0.05em;
-            color: #94a3b8;
+            color: var(--text-secondary);
             margin-bottom: 0.125rem;
         }
 
@@ -422,39 +452,38 @@
         }
 
         /* Status Badges */
-        .status-badge {
-            display: inline-flex;
-            align-items: center;
-            padding: 0.25rem 0.75rem;
-            border-radius: 2rem;
-            font-size: 0.8rem;
+        .status {
+            padding: 0.35rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.75rem;
             font-weight: 600;
-            text-transform: capitalize;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
         }
 
-        .status-delivered {
-            background-color: #d1fae5;
-            color: #047857;
+        .status.delivered {
+            background-color: rgba(16, 185, 129, 0.15);
+            color: var(--success-color);
         }
 
-        .status-in-transit {
-            background-color: #e0e7ff;
-            color: #4338ca;
+        .status.in-transit {
+            background-color: rgba(79, 70, 229, 0.15);
+            color: var(--primary-color);
         }
 
-        .status-pending {
-            background-color: #fef3c7;
-            color: #b45309;
+        .status.out-for-delivery {
+            background-color: rgba(245, 158, 11, 0.15);
+            color: var(--warning-color);
         }
 
-        .status-out-for-delivery {
-            background-color: #fef3c7;
-            color: #b45309;
+        .status.pending {
+            background-color: rgba(245, 158, 11, 0.15);
+            color: var(--warning-color);
         }
 
-        .status-exception {
-            background-color: #fee2e2;
-            color: #b91c1c;
+        .status.exception {
+            background-color: rgba(239, 68, 68, 0.15);
+            color: var(--danger-color);
         }
 
         /* Notifications */
@@ -480,15 +509,157 @@
         }
 
         .message.success {
-            background-color: #ecfdf5;
-            color: #047857;
-            border: 1px solid #a7f3d0;
+            background-color: rgba(16, 185, 129, 0.15);
+            color: var(--success-color);
+            border: 1px solid var(--success-color);
         }
 
         .message.error {
-            background-color: #fef2f2;
-            color: #b91c1c;
-            border: 1px solid #fecaca;
+            background-color: rgba(239, 68, 68, 0.15);
+            color: var(--danger-color);
+            border: 1px solid var(--danger-color);
+        }
+
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            max-width: 400px;
+        }
+
+        .toast {
+            background: var(--bg-card);
+            border-radius: 0.5rem;
+            padding: 1rem 1.25rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            min-width: 300px;
+            animation: slideIn 0.3s ease-out;
+            border-left: 4px solid;
+        }
+
+        .toast.success {
+            border-left-color: var(--success-color);
+        }
+
+        .toast.error {
+            border-left-color: var(--danger-color);
+        }
+
+        .toast.info {
+            border-left-color: var(--primary-color);
+        }
+
+        .toast-icon {
+            flex-shrink: 0;
+            width: 24px;
+            height: 24px;
+        }
+
+        .toast-content {
+            flex: 1;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .toast-close {
+            flex-shrink: 0;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 0;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.2s;
+        }
+
+        .toast-close:hover {
+            color: var(--text-primary);
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+
+        .toast.removing {
+            animation: slideOut 0.3s ease-out forwards;
+        }
+
+        @media (max-width: 768px) {
+            .toast-container {
+                right: 10px;
+                left: 10px;
+                max-width: none;
+            }
+            .toast {
+                min-width: auto;
+            }
+        }
+
+        /* Theme Toggle Button */
+        #bulkActionsToolbar {
+            background: var(--bg-body);
+            border: 1px solid var(--border-color);
+        }
+        .theme-toggle {
+            background: none;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            padding: 0.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+            margin-left: 1rem;
+        }
+
+        .theme-toggle:hover {
+            background-color: var(--bg-body);
+            transform: scale(1.05);
+        }
+
+        .theme-toggle svg {
+            width: 20px;
+            height: 20px;
+            transition: transform 0.3s ease;
+        }
+
+        .theme-toggle:hover svg {
+            transform: rotate(20deg);
         }
 
         /* Mobile Menu Button */
@@ -513,7 +684,7 @@
                 top: 70px;
                 left: 0;
                 right: 0;
-                background-color: white;
+                background-color: var(--bg-card);
                 padding: 1rem;
                 flex-direction: column;
                 box-shadow: var(--shadow);
@@ -575,11 +746,28 @@
             </a>
             <ul class="nav-menu">
                 <li><a href="/admin" class="nav-link active">Dashboard</a></li>
+                <li><a href="/tools" class="nav-link">Manage</a></li>
                 <li><a href="/config" class="nav-link">Configuration</a></li>
                 <li><button class="nav-link" onclick="handleLogout()"
                         style="background: none; border: none; cursor: pointer; display: block; width: 100%; text-align: left;">Logout</button>
                 </li>
             </ul>
+            <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme" title="Toggle dark/light mode">
+                <svg id="theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="5"></circle>
+                    <line x1="12" y1="1" x2="12" y2="3"></line>
+                    <line x1="12" y1="21" x2="12" y2="23"></line>
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                    <line x1="1" y1="12" x2="3" y2="12"></line>
+                    <line x1="21" y1="12" x2="23" y2="12"></line>
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                </svg>
+                <svg id="theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                </svg>
+            </button>
             <button class="mobile-menu-btn" aria-label="Toggle menu">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                     stroke-linecap="round" stroke-linejoin="round">
@@ -591,143 +779,56 @@
         </nav>
     </header>
 
+    <!-- Toast Notification Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
     <div class="container">
         <div class="message" id="message"></div>
 
         <!-- Stats Grid -->
         <div
             style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
-            <div class="card"
-                style="margin-bottom: 0; padding: 1.5rem; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
-                <span style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Total
-                    Shipments</span>
+            <button class="card stat-card" onclick="filterByStatus('')"
+                aria-label="Show all shipments"
+                style="margin-bottom: 0; padding: 1.5rem; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; cursor: pointer; transition: all 0.2s; border: 1px solid var(--border-color); background: var(--bg-card); width: 100%;">
+                <span style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.5rem; font-weight: 500;">Total Shipments</span>
                 <span id="stat-total" style="font-size: 2rem; font-weight: 700; color: var(--primary-color)">0</span>
-            </div>
-            <div class="card"
-                style="margin-bottom: 0; padding: 1.5rem; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
-                <span style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Delivered</span>
-                <span id="stat-delivered"
-                    style="font-size: 2rem; font-weight: 700; color: var(--success-color)">0</span>
-            </div>
-            <div class="card"
-                style="margin-bottom: 0; padding: 1.5rem; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
-                <span style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Out for
-                    Delivery</span>
-                <span id="stat-outfordelivery" style="font-size: 2rem; font-weight: 700; color: #f59e0b">0</span>
-            </div>
-            <div class="card"
-                style="margin-bottom: 0; padding: 1.5rem; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
-                <span style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.5rem;">In Transit</span>
+            </button>
+            <button class="card stat-card" onclick="filterByStatus('delivered')"
+                aria-label="Filter by delivered status"
+                style="margin-bottom: 0; padding: 1.5rem; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; cursor: pointer; transition: all 0.2s; border: 1px solid var(--border-color); background: var(--bg-card); width: 100%;">
+                <span style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.5rem; font-weight: 500;">Delivered</span>
+                <span id="stat-delivered" style="font-size: 2rem; font-weight: 700; color: var(--success-color)">0</span>
+            </button>
+            <button class="card stat-card" onclick="filterByStatus('out-for-delivery')"
+                aria-label="Filter by out for delivery status"
+                style="margin-bottom: 0; padding: 1.5rem; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; cursor: pointer; transition: all 0.2s; border: 1px solid var(--border-color); background: var(--bg-card); width: 100%;">
+                <span style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.5rem; font-weight: 500;">Out for Delivery</span>
+                <span id="stat-outfordelivery" style="font-size: 2rem; font-weight: 700; color: var(--warning-color)">0</span>
+            </button>
+            <button class="card stat-card" onclick="filterByStatus('in-transit')"
+                aria-label="Filter by in transit status"
+                style="margin-bottom: 0; padding: 1.5rem; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; cursor: pointer; transition: all 0.2s; border: 1px solid var(--border-color); background: var(--bg-card); width: 100%;">
+                <span style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.5rem; font-weight: 500;">In Transit</span>
                 <span id="stat-transit" style="font-size: 2rem; font-weight: 700; color: var(--primary-color)">0</span>
-            </div>
-            <div class="card"
-                style="margin-bottom: 0; padding: 1.5rem; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
-                <span style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Exceptions</span>
+            </button>
+            <button class="card stat-card" onclick="filterByStatus('exception')"
+                aria-label="Filter by exception status"
+                style="margin-bottom: 0; padding: 1.5rem; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; cursor: pointer; transition: all 0.2s; border: 1px solid var(--border-color); background: var(--bg-card); width: 100%;">
+                <span style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.5rem; font-weight: 500;">Exceptions</span>
                 <span id="stat-exception" style="font-size: 2rem; font-weight: 700; color: var(--danger-color)">0</span>
-            </div>
+            </button>
         </div>
 
-        <div class="card">
-            <div class="card-header">
-                <h2 class="card-title">Generate New Tracking</h2>
-            </div>
-            <div class="card-body">
-                <form id="trackingForm" onsubmit="generateTrackingId(event)">
-                    <!-- ID Generation Type Selection -->
-                    <fieldset style="border: none; padding: 0; margin: 0;">
-                        <legend class="form-label" style="float: left; margin-bottom: 0.5rem; width: 100%;">Tracking ID
-                            Type</legend>
-                        <div style="display: flex; gap: 1.5rem; clear: both;">
-                            <label style="display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-                                <input type="radio" name="idType" value="system" checked onchange="toggleManualInput()">
-                                <span>System Generated</span>
-                            </label>
-                            <label style="display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-                                <input type="radio" name="idType" value="manual" onchange="toggleManualInput()">
-                                <span>Manual Entry</span>
-                            </label>
-                        </div>
-                    </fieldset>
+        <style>
+            .stat-card:hover {
+                transform: translateY(-3px);
+                box-shadow: var(--shadow-lg);
+                border-color: var(--primary-color);
+            }
+        </style>
 
-                    <div
-                        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; align-items: end;">
 
-                        <!-- Manual ID Input (Hidden by default) -->
-                        <div class="form-group" id="manualIdGroup" style="display: none; margin-bottom: 0;">
-                            <label class="form-label" for="manualTrackingId">Custom Tracking ID</label>
-                            <input type="text" id="manualTrackingId" class="form-input" placeholder="e.g. CUSTOM123">
-                        </div>
-
-                        <div class="form-group" style="margin-bottom: 0;">
-                            <label class="form-label" for="originalTrackingId">Original Tracking ID</label>
-                            <input type="text" id="originalTrackingId" class="form-input"
-                                placeholder="e.g. UPS123456789" required>
-                        </div>
-                        <div class="form-group" style="margin-bottom: 0;">
-                            <label class="form-label" for="provider">Provider</label>
-                            <select id="provider" class="form-input" required>
-                                <option value="">Select Provider...</option>
-                            </select>
-                        </div>
-                        <button type="submit" class="btn btn-primary" style="height: 46px;">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <line x1="12" y1="5" x2="12" y2="19"></line>
-                                <line x1="5" y1="12" x2="19" y2="12"></line>
-                            </svg>
-                            Generate ID
-                        </button>
-                    </div>
-                </form>
-
-                <script>
-                    function toggleManualInput() {
-                        const idType = document.querySelector('input[name="idType"]:checked').value;
-                        const manualGroup = document.getElementById('manualIdGroup');
-                        const manualInput = document.getElementById('manualTrackingId');
-
-                        if (idType === 'manual') {
-                            manualGroup.style.display = 'block';
-                            manualInput.required = true;
-                        } else {
-                            manualGroup.style.display = 'none';
-                            manualInput.required = false;
-                            manualInput.value = '';
-                        }
-                    }
-                </script>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
-                <h2 class="card-title">Bulk Upload Tracking IDs</h2>
-                <button onclick="downloadSampleCsv(event)" class="btn btn-secondary btn-sm"
-                    style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">
-                    Download Sample
-                </button>
-            </div>
-            <div class="card-body">
-                <form id="bulkUploadForm" onsubmit="handleBulkUpload(event)">
-                    <div style="display: grid; grid-template-columns: 1fr auto; gap: 1.5rem; align-items: end;">
-                        <div class="form-group" style="margin-bottom: 0;">
-                            <label class="form-label" for="bulkCsv">CSV File (Format: originalTrackingId, provider,
-                                manualTrackingId [optional])</label>
-                            <input type="file" id="bulkFileInput" class="form-input" accept=".csv" required>
-                        </div>
-                        <button type="submit" class="btn btn-success" id="bulkUploadBtn" style="height: 46px;">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                <polyline points="17 8 12 3 7 8"></polyline>
-                                <line x1="12" y1="3" x2="12" y2="15"></line>
-                            </svg>
-                            Upload CSV
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
 
         <div class="card">
             <div class="card-header">
@@ -759,7 +860,7 @@
             <div class="card-body">
                 <!-- Bulk Actions Toolbar (Hidden by default) -->
                 <div id="bulkActionsToolbar"
-                    style="display: none; background: #f1f5f9; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; align-items: center; gap: 1rem; border: 1px solid #cbd5e1;">
+                    style="display: none; background: var(--bg-body); padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; align-items: center; gap: 1rem; border: 1px solid var(--border-color);">
                     <span style="font-weight: 600; font-size: 0.9rem;" id="selectedCountDisplay">0 items selected</span>
                     <div style="flex: 1;"></div>
                     <button onclick="handleBulkMarkDelivered()" class="btn btn-success"
@@ -797,10 +898,18 @@
                     </div>
                     <div class="pagination-controls">
                         <div class="pagination-info-group">
+                            <button onclick="resetFilters()" class="btn btn-secondary" title="Reset Filters" style="height: 38px; white-space: nowrap; margin-right: 1rem;">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                                    <path d="M3 3v5h5"></path>
+                                </svg>
+                                Reset
+                            </button>
                             <select id="pageSize" class="form-input" style="width: auto; margin-right: 0.5rem;">
                                 <option value="10">10 / page</option>
                                 <option value="25">25 / page</option>
                                 <option value="50">50 / page</option>
+                                <option value="100">100 / page</option>
                             </select>
                             <span id="pageInfo">Page 1 of 1</span>
                             <span id="totalCount">Total: 0 entries</span>
@@ -830,6 +939,39 @@
     </div>
 
     <script>
+        // Theme Management
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            updateThemeIcon(savedTheme);
+        }
+
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeIcon(newTheme);
+            showToast(`Switched to ${newTheme} mode`, 'info', 2000);
+        }
+
+        function updateThemeIcon(theme) {
+            const sunIcon = document.getElementById('theme-icon-sun');
+            const moonIcon = document.getElementById('theme-icon-moon');
+            
+            if (theme === 'dark') {
+                sunIcon.style.display = 'none';
+                moonIcon.style.display = 'block';
+            } else {
+                sunIcon.style.display = 'block';
+                moonIcon.style.display = 'none';
+            }
+        }
+
+        // Initialize theme on page load
+        initTheme();
+
         // Keep existing JS logic
 
         // Mobile menu functionality
@@ -891,19 +1033,10 @@
             }
         }
 
-        async function loadProviders() {
+        async function loadProvidersForFilter() {
             try {
                 const response = await fetch('/api/providers', { credentials: 'include' });
                 const providers = await response.json();
-
-                const generateProviderSelect = document.getElementById('provider');
-                generateProviderSelect.innerHTML = '<option value="">Select Provider...</option>';
-                providers.forEach(provider => {
-                    const option = document.createElement('option');
-                    option.value = provider.name;
-                    option.textContent = provider.name;
-                    generateProviderSelect.appendChild(option);
-                });
 
                 const filterProviderSelect = document.getElementById('filterProvider');
                 filterProviderSelect.innerHTML = '<option value="">All Providers</option>';
@@ -913,12 +1046,8 @@
                     option.textContent = provider.name;
                     filterProviderSelect.appendChild(option);
                 });
-
-                supportedProviders = providers.map(p => p.name);
-
             } catch (error) {
                 console.error('Provider load error:', error);
-                showMessage('Error loading providers', 'error');
             }
         }
 
@@ -961,12 +1090,13 @@
                     document.body.appendChild(a);
                     a.click();
                     a.remove();
+                    showToast(`Exported ${data.entries.length} entries successfully`, 'success');
                 } else {
-                    showMessage('No data found to export', 'error');
+                    showToast('No data found to export', 'error');
                 }
             } catch (error) {
                 console.error('Export error:', error);
-                showMessage(`Export failed: ${error.message || 'Unknown error'}`, 'error');
+                showToast(`Export failed: ${error.message || 'Unknown error'}`, 'error');
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = originalText;
@@ -1139,15 +1269,15 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    showMessage(data.message || 'Sync completed successfully', 'success');
+                    showToast(data.message || 'Sync completed successfully', 'success');
                     loadTrackingList();
                     loadStats();
                 } else {
-                    showMessage(data.error || 'Error during sync', 'error');
+                    showToast(data.error || 'Error during sync', 'error');
                 }
             } catch (error) {
                 console.error('Sync error:', error);
-                showMessage(`Sync failed: ${error.message || 'Unknown error'}`, 'error');
+                showToast(`Sync failed: ${error.message || 'Unknown error'}`, 'error');
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = originalText;
@@ -1173,15 +1303,15 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    showMessage(data.message || 'Full re-sync completed successfully', 'success');
+                    showToast(data.message || 'Full re-sync completed successfully', 'success');
                     loadTrackingList();
                     loadStats();
                 } else {
-                    showMessage(data.error || 'Error during full sync', 'error');
+                    showToast(data.error || 'Error during full sync', 'error');
                 }
             } catch (error) {
                 console.error('Full sync error:', error);
-                showMessage(`Full sync failed: ${error.message || 'Unknown error'}`, 'error');
+                showToast(`Full sync failed: ${error.message || 'Unknown error'}`, 'error');
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = originalText;
@@ -1236,7 +1366,7 @@
                 }
 
                 if (data.entries.length === 0) {
-                    list.innerHTML = '<li style="text-align: center; padding: 2rem; color: #6b7280;">No tracking entries found.</li>';
+                    list.innerHTML = '<li style="text-align: center; padding: 2rem; color: var(--text-secondary);">No tracking entries found.</li>';
                     document.getElementById('pageInfo').textContent = 'Page 0 of 0';
                     document.getElementById('totalCount').textContent = 'Total: 0 entries';
                     document.getElementById('prevPage').disabled = true;
@@ -1340,16 +1470,16 @@
                 });
 
                 if (response.ok) {
-                    showMessage(`Successfully deleted ${trackingIds.length} items`, 'success');
+                    showToast(`Successfully deleted ${trackingIds.length} items`, 'success');
                     loadTrackingList();
                     loadStats();
                 } else {
                     const data = await response.json();
-                    showMessage(data.error || 'Bulk delete failed', 'error');
+                    showToast(data.error || 'Bulk delete failed', 'error');
                 }
             } catch (error) {
                 console.error('Bulk delete error:', error);
-                showMessage('Bulk delete failed', 'error');
+                showToast('Bulk delete failed', 'error');
             }
         }
 
@@ -1368,16 +1498,16 @@
                 });
 
                 if (response.ok) {
-                    showMessage(`Successfully updated ${trackingIds.length} items`, 'success');
+                    showToast(`Successfully updated ${trackingIds.length} items`, 'success');
                     loadTrackingList();
                     loadStats();
                 } else {
                     const data = await response.json();
-                    showMessage(data.error || 'Bulk update failed', 'error');
+                    showToast(data.error || 'Bulk update failed', 'error');
                 }
             } catch (error) {
                 console.error('Bulk update error:', error);
-                showMessage('Bulk update failed', 'error');
+                showToast('Bulk update failed', 'error');
             }
         }
 
@@ -1401,16 +1531,16 @@
                 });
 
                 if (response.ok) {
-                    showMessage(`Refreshed ${trackingId}`, 'success');
+                    showToast(`Refreshed ${trackingId}`, 'success');
                     loadTrackingList();
                     loadStats();
                 } else {
                     const data = await response.json();
-                    showMessage(data.error || 'Refresh failed', 'error');
+                    showToast(data.error || 'Refresh failed', 'error');
                 }
             } catch (error) {
                 console.error('Refresh error:', error);
-                showMessage('Refresh failed', 'error');
+                showToast('Refresh failed', 'error');
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = originalIcon;
@@ -1431,11 +1561,11 @@
                     throw new Error(error.error || 'Failed to delete tracking ID');
                 }
 
-                showMessage('Tracking ID deleted successfully', 'success');
+                showToast('Tracking ID deleted successfully', 'success');
                 loadTrackingList();
                 loadStats();
             } catch (error) {
-                showMessage(error.message || 'Failed to delete tracking ID', 'error');
+                showToast(error.message || 'Failed to delete tracking ID', 'error');
             }
         }
 
@@ -1469,6 +1599,42 @@
             setTimeout(() => { message.style.display = 'none'; }, 5000);
         }
 
+        // Toast notification system
+        function showToast(message, type = 'info', duration = 4000) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            
+            // Icon based on type
+            let iconSvg = '';
+            if (type === 'success') {
+                iconSvg = '<svg class="toast-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>';
+            } else if (type === 'error') {
+                iconSvg = '<svg class="toast-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>';
+            } else {
+                iconSvg = '<svg class="toast-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>';
+            }
+            
+            toast.innerHTML = `
+                ${iconSvg}
+                <div class="toast-content">${message}</div>
+                <button class="toast-close" onclick="this.parentElement.remove()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            `;
+            
+            container.appendChild(toast);
+            
+            // Auto remove after duration
+            setTimeout(() => {
+                toast.classList.add('removing');
+                setTimeout(() => toast.remove(), 300);
+            }, duration);
+        }
+
         async function handleLogout() {
             try {
                 const response = await fetch('/api/logout', { method: 'POST', credentials: 'include' });
@@ -1484,7 +1650,7 @@
             try {
                 await checkAuth();
                 await Promise.all([
-                    loadProviders(),
+                    loadProvidersForFilter(),
                     loadTrackingList(),
                     loadStats()
                 ]);
@@ -1551,12 +1717,40 @@
             updateBulkActionsToolbar();
         });
 
+        function filterByStatus(status) {
+            filterStatus = status;
+            document.getElementById('filterStatus').value = status;
+            currentPage = 1;
+            loadTrackingList();
+        }
+
         function getStatusClass(status = '') {
             const statusLower = status.toLowerCase();
             if (statusLower === 'delivered') return 'delivered';
             if (statusLower.includes('out for delivery') || statusLower.includes('scheduled for delivery')) return 'out-for-delivery';
             if (statusLower.includes('delay') || statusLower.includes('exception')) return 'exception';
             return 'in-transit';
+        }
+
+        function resetFilters() {
+            // Reset variables
+            filterTrackingId = '';
+            filterProvider = '';
+            filterStatus = '';
+            startDate = '';
+            endDate = '';
+            currentPage = 1;
+
+            // Clear DOM inputs
+            document.getElementById('filterTrackingId').value = '';
+            document.getElementById('filterProvider').value = '';
+            document.getElementById('filterStatus').value = '';
+            document.getElementById('startDate').value = '';
+            document.getElementById('endDate').value = '';
+
+            // Reload list
+            loadTrackingList();
+            showToast('Filters cleared', 'success');
         }
 
         function viewOnProviderWebsite(trackingId) {

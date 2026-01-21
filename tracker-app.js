@@ -183,6 +183,10 @@ app.get('/admin', requireAuth, (req, res) => {
   res.sendFile(path.join(publicPath, 'admin.html'));
 });
 
+app.get('/tools', requireAuth, (req, res) => {
+  res.sendFile(path.join(publicPath, 'tools.html'));
+});
+
 /**
  * @swagger
  * components:

@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Management Tools - Package Tracking</title>
+    <link rel="icon" type="image/jpeg" href="/Logos/logo.jpeg">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --primary-hover: #4338ca;
+            --primary-light: #e0e7ff;
+            --secondary-color: #64748b;
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+            --warning-color: #f59e0b;
+            --bg-body: #f3f4f6;
+            --bg-card: #ffffff;
+            --text-primary: #1f2937;
+            --text-secondary: #6b7280;
+            --border-color: #e5e7eb;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --radius: 0.75rem;
+        }
+
+        [data-theme="dark"] {
+            --primary-color: #6366f1;
+            --primary-hover: #4f46e5;
+            --primary-light: #312e81;
+            --secondary-color: #94a3b8;
+            --success-color: #10b981;
+            --danger-color: #f87171;
+            --warning-color: #fbbf24;
+            --bg-body: #0f172a;
+            --bg-card: #1e293b;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border-color: #334155;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .header {
+            background-color: var(--bg-card);
+            box-shadow: var(--shadow-sm);
+            padding: 0 2rem;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            height: 70px;
+            display: flex;
+            align-items: center;
+        }
+
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            color: var(--text-primary);
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .logo-small {
+            height: 32px;
+            width: 32px;
+            border-radius: 6px;
+        }
+
+        .nav-menu {
+            display: flex;
+            gap: 1rem;
+            list-style: none;
+        }
+
+        .nav-link {
+            text-decoration: none;
+            color: var(--text-secondary);
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+        }
+
+        .nav-link:hover {
+            color: var(--primary-color);
+            background-color: var(--primary-light);
+        }
+
+        .nav-link.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 6rem auto 2rem;
+            padding: 0 1.5rem;
+        }
+
+        .card {
+            background-color: var(--bg-card);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .card-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.625rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+            background-color: var(--bg-card);
+            color: var(--text-primary);
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.625rem 1.25rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+            box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn-success {
+            background-color: var(--bg-card);
+            color: var(--success-color);
+            border: 1px solid var(--success-color);
+        }
+
+        .btn-success:hover {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .btn-secondary {
+            background-color: var(--bg-card);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .message {
+            padding: 1rem;
+            border-radius: var(--radius);
+            margin-bottom: 1.5rem;
+            display: none;
+            font-weight: 500;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.success {
+            background-color: rgba(16, 185, 129, 0.15);
+            color: var(--success-color);
+            border: 1px solid var(--success-color);
+        }
+
+        .message.error {
+            background-color: rgba(239, 68, 68, 0.15);
+            color: var(--danger-color);
+            border: 1px solid var(--danger-color);
+        }
+
+        .theme-toggle {
+            background: none;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            padding: 0.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+            margin-left: 1rem;
+        }
+
+        .theme-toggle:hover {
+            background-color: var(--bg-body);
+            transform: scale(1.05);
+        }
+
+        .theme-toggle svg {
+            width: 20px;
+            height: 20px;
+            transition: transform 0.3s ease;
+        }
+
+        .theme-toggle:hover svg {
+            transform: rotate(20deg);
+        }
+
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            max-width: 400px;
+        }
+
+        .toast {
+            background: var(--bg-card);
+            border-radius: 0.5rem;
+            padding: 1rem 1.25rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            min-width: 300px;
+            animation: slideIn 0.3s ease-out;
+            border-left: 4px solid;
+        }
+
+        .toast.success {
+            border-left-color: var(--success-color);
+        }
+
+        .toast.error {
+            border-left-color: var(--danger-color);
+        }
+
+        .toast.info {
+            border-left-color: var(--primary-color);
+        }
+
+        .toast-icon {
+            flex-shrink: 0;
+            width: 24px;
+            height: 24px;
+        }
+
+        .toast-content {
+            flex: 1;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .toast-close {
+            flex-shrink: 0;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 0;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.2s;
+        }
+
+        .toast-close:hover {
+            color: var(--text-primary);
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+
+        .toast.removing {
+            animation: slideOut 0.3s ease-out forwards;
+        }
+
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        @media (max-width: 768px) {
+            .nav-menu {
+                display: none;
+                position: fixed;
+                top: 70px;
+                left: 0;
+                right: 0;
+                background-color: var(--bg-card);
+                padding: 1rem;
+                flex-direction: column;
+                box-shadow: var(--shadow);
+            }
+            .nav-menu.active { display: flex; }
+            .mobile-menu-btn { display: block; }
+        }
+    </style>
+</head>
+
+<body>
+    <header class="header">
+        <nav class="nav-container">
+            <a href="/admin" class="logo-container">
+                <img src="/Logos/logo.jpeg" alt="Logo" class="logo-small">
+                <span>Management Tools</span>
+            </a>
+            <ul class="nav-menu">
+                <li><a href="/admin" class="nav-link">Dashboard</a></li>
+                <li><a href="/tools" class="nav-link active">Managememt</a></li>
+                <li><a href="/config" class="nav-link">Configuration</a></li>
+                <li><button class="nav-link" onclick="handleLogout()"
+                        style="background: none; border: none; cursor: pointer; display: block; width: 100%; text-align: left;">Logout</button>
+                </li>
+            </ul>
+            <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme" title="Toggle dark/light mode">
+                <svg id="theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="5"></circle>
+                    <line x1="12" y1="1" x2="12" y2="3"></line>
+                    <line x1="12" y1="21" x2="12" y2="23"></line>
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                    <line x1="1" y1="12" x2="3" y2="12"></line>
+                    <line x1="21" y1="12" x2="23" y2="12"></line>
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                </svg>
+                <svg id="theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                </svg>
+            </button>
+            <button class="mobile-menu-btn" aria-label="Toggle menu">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+            </button>
+        </nav>
+    </header>
+
+    <!-- Toast Notification Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <div class="container">
+        <div class="message" id="message"></div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Generate New Tracking</h2>
+            </div>
+            <div class="card-body">
+                <form id="trackingForm" onsubmit="generateTrackingId(event)">
+                    <fieldset style="border: none; padding: 0; margin: 0;">
+                        <legend class="form-label" style="float: left; margin-bottom: 0.5rem; width: 100%;">Tracking ID Type</legend>
+                        <div style="display: flex; gap: 1.5rem; clear: both; margin-bottom: 1rem;">
+                            <label style="display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                <input type="radio" name="idType" value="system" checked onchange="toggleManualInput()">
+                                <span>System Generated</span>
+                            </label>
+                            <label style="display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                <input type="radio" name="idType" value="manual" onchange="toggleManualInput()">
+                                <span>Manual Entry</span>
+                            </label>
+                        </div>
+                    </fieldset>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; align-items: end;">
+                        <div class="form-group" id="manualIdGroup" style="display: none; margin-bottom: 0;">
+                            <label class="form-label" for="manualTrackingId">Custom Tracking ID</label>
+                            <input type="text" id="manualTrackingId" class="form-input" placeholder="e.g. CUSTOM123">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label" for="originalTrackingId">Original Tracking ID</label>
+                            <input type="text" id="originalTrackingId" class="form-input" placeholder="e.g. UPS123456789" required>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label" for="provider">Provider</label>
+                            <select id="provider" class="form-input" required>
+                                <option value="">Select Provider...</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="height: 46px;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                            Generate ID
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <h2 class="card-title">Bulk Upload Tracking IDs</h2>
+                <button onclick="downloadSampleCsv(event)" class="btn btn-secondary btn-sm" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">
+                    Download Sample
+                </button>
+            </div>
+            <div class="card-body">
+                <form id="bulkUploadForm" onsubmit="handleBulkUpload(event)">
+                    <div style="display: grid; grid-template-columns: 1fr auto; gap: 1.5rem; align-items: end;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label" for="bulkCsv">CSV File (originalTrackingId, provider, manualTrackingId)</label>
+                            <input type="file" id="bulkFileInput" class="form-input" accept=".csv" required>
+                        </div>
+                        <button type="submit" class="btn btn-success" id="bulkUploadBtn" style="height: 46px;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="17 8 12 3 7 8"></polyline>
+                                <line x1="12" y1="3" x2="12" y2="15"></line>
+                            </svg>
+                            Upload CSV
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Theme Management
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            updateThemeIcon(savedTheme);
+        }
+
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeIcon(newTheme);
+            showToast(`Switched to ${newTheme} mode`, 'info', 2000);
+        }
+
+        function updateThemeIcon(theme) {
+            const sunIcon = document.getElementById('theme-icon-sun');
+            const moonIcon = document.getElementById('theme-icon-moon');
+            if (theme === 'dark') {
+                sunIcon.style.display = 'none';
+                moonIcon.style.display = 'block';
+            } else {
+                sunIcon.style.display = 'block';
+                moonIcon.style.display = 'none';
+            }
+        }
+
+        initTheme();
+
+        let supportedProviders = [];
+
+        async function checkAuth() {
+            try {
+                const response = await fetch('/api/login/check', { credentials: 'include' });
+                if (!response.ok) window.location.href = '/login';
+            } catch (error) { window.location.href = '/login'; }
+        }
+
+        async function loadProviders() {
+            try {
+                const response = await fetch('/api/providers', { credentials: 'include' });
+                const providers = await response.json();
+                const select = document.getElementById('provider');
+                select.innerHTML = '<option value="">Select Provider...</option>';
+                providers.forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p.name;
+                    opt.textContent = p.name;
+                    select.appendChild(opt);
+                });
+                supportedProviders = providers.map(p => p.name);
+            } catch (error) { showMessage('Error loading providers', 'error'); }
+        }
+
+        function toggleManualInput() {
+            const idType = document.querySelector('input[name="idType"]:checked').value;
+            const group = document.getElementById('manualIdGroup');
+            const input = document.getElementById('manualTrackingId');
+            group.style.display = idType === 'manual' ? 'block' : 'none';
+            input.required = idType === 'manual';
+        }
+
+        async function generateTrackingId(event) {
+            event.preventDefault();
+            const originalTrackingId = document.getElementById('originalTrackingId').value;
+            const provider = document.getElementById('provider').value;
+            const idType = document.querySelector('input[name="idType"]:checked').value;
+            const manualTrackingId = idType === 'manual' ? document.getElementById('manualTrackingId').value.trim() : null;
+
+            try {
+                const response = await fetch('/api/tracking/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ originalTrackingId, provider, manualTrackingId })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    showMessage(`Generated: ${data.trackingId}`, 'success');
+                    document.getElementById('trackingForm').reset();
+                    toggleManualInput();
+                } else { showMessage(data.error || 'Error', 'error'); }
+            } catch (error) { showMessage('Error generating ID', 'error'); }
+        }
+
+        async function handleBulkUpload(event) {
+            event.preventDefault();
+            const fileInput = document.getElementById('bulkFileInput');
+            const btn = document.getElementById('bulkUploadBtn');
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            try {
+                const text = await file.text();
+                const lines = text.split('\n');
+                const items = [];
+                const startIdx = lines[0].toLowerCase().includes('tracking') ? 1 : 0;
+
+                for (let i = startIdx; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    if (!line) continue;
+                    let [orig, prov, manual] = line.split(',').map(s => s.trim());
+                    if (orig && prov) items.push({ originalTrackingId: orig, provider: prov, manualTrackingId: manual });
+                }
+
+                btn.disabled = true;
+                btn.innerHTML = 'Uploading...';
+                const response = await fetch('/api/tracking/bulk', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ items, fileName: file.name, rawContent: text })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    showMessage(`Uploaded ${data.count} IDs`, 'success');
+                    fileInput.value = '';
+                } else { showMessage(data.error || 'Error', 'error'); }
+            } catch (error) { showMessage('Bulk upload failed', 'error'); }
+            finally { btn.disabled = false; btn.innerHTML = 'Upload CSV'; }
+        }
+
+        function downloadSampleCsv(event) {
+            event.preventDefault();
+            const csv = "originalTrackingId,provider,manualTrackingId\nTRK100,UPS,\nTRK101,FedEx,CUSTOM_ID";
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'sample_tracking.csv';
+            a.click();
+        }
+
+        function showToast(message, type = 'info', duration = 4000) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            
+            let iconSvg = '';
+            if (type === 'success') {
+                iconSvg = '<svg class="toast-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>';
+            } else if (type === 'error') {
+                iconSvg = '<svg class="toast-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>';
+            } else {
+                iconSvg = '<svg class="toast-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>';
+            }
+            
+            toast.innerHTML = `
+                ${iconSvg}
+                <div class="toast-content">${message}</div>
+                <button class="toast-close" onclick="this.parentElement.remove()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            `;
+            
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.add('removing');
+                setTimeout(() => toast.remove(), 300);
+            }, duration);
+        }
+
+        function showMessage(text, type) {
+            const m = document.getElementById('message');
+            m.textContent = text;
+            m.className = `message ${type}`;
+            m.style.display = 'block';
+            setTimeout(() => m.style.display = 'none', 5000);
+        }
+
+        async function handleLogout() {
+            const r = await fetch('/api/logout', { method: 'POST', credentials: 'include' });
+            if (r.ok) window.location.href = '/';
+        }
+
+        async function initialize() {
+            await checkAuth();
+            await loadProviders();
+        }
+        initialize();
+
+        const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+        const navMenu = document.querySelector('.nav-menu');
+        mobileMenuBtn.addEventListener('click', () => navMenu.classList.toggle('active'));
+    </script>
+</body>
+</html>

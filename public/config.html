@@ -28,6 +28,24 @@
             --radius: 0.75rem;
         }
 
+        [data-theme="dark"] {
+            --primary-color: #6366f1;
+            --primary-hover: #4f46e5;
+            --primary-light: #312e81;
+            --secondary-color: #94a3b8;
+            --success-color: #10b981;
+            --danger-color: #f87171;
+            --warning-color: #fbbf24;
+            --bg-body: #0f172a;
+            --bg-card: #1e293b;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border-color: #334155;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -40,6 +58,7 @@
             color: var(--text-primary);
             line-height: 1.6;
             min-height: 100vh;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
 
         .header {
@@ -159,14 +178,14 @@
             border-radius: 0.5rem;
             font-size: 0.95rem;
             transition: all 0.2s;
-            background-color: #f9fafb;
+            background-color: var(--bg-card);
+            color: var(--text-primary);
         }
 
         .form-input:focus {
             outline: none;
             border-color: var(--primary-color);
             box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
-            background-color: #fff;
         }
 
         textarea.form-input {
@@ -201,23 +220,24 @@
         }
 
         .btn-danger {
-            background-color: white;
+            background-color: var(--bg-card);
             color: var(--danger-color);
             border: 1px solid var(--danger-color);
         }
 
         .btn-danger:hover {
-            background-color: #fef2f2;
+            background-color: var(--danger-color);
+            color: white;
         }
 
         .btn-secondary {
-            background-color: white;
-            color: var(--text-secondary);
+            background-color: var(--bg-card);
+            color: var(--text-primary);
             border: 1px solid var(--border-color);
         }
 
         .btn-secondary:hover {
-            background-color: #f9fafb;
+            background-color: var(--bg-body);
             color: var(--text-primary);
         }
 
@@ -232,7 +252,7 @@
             justify-content: space-between;
             align-items: center;
             padding: 1.25rem;
-            background-color: white;
+            background-color: var(--bg-card);
             border: 1px solid var(--border-color);
             border-radius: var(--radius);
             transition: all 0.2s;
@@ -258,10 +278,11 @@
             color: var(--text-secondary);
             font-size: 0.85rem;
             font-family: monospace;
-            background: #f1f5f9;
-            padding: 0.1rem 0.4rem;
+            background: var(--bg-body);
+            padding: 0.2rem 0.5rem;
             border-radius: 4px;
             display: inline-block;
+            border: 1px solid var(--border-color);
         }
 
         .provider-actions {
@@ -280,17 +301,16 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            cursor: pointer;
             padding: 1rem;
-            background-color: #f8fafc;
-            border-radius: 0.5rem;
-            margin-bottom: 1rem;
-            transition: background-color 0.2s;
+            cursor: pointer;
+            background-color: var(--bg-body);
             border: 1px solid var(--border-color);
+            border-radius: 0.5rem 0.5rem 0 0;
+            transition: background-color 0.2s;
         }
 
         .collapsible-header:hover {
-            background-color: #f1f5f9;
+            background-color: var(--bg-hover);
         }
 
         .collapsible-header h3 {
@@ -356,15 +376,141 @@
         }
 
         .message.success {
-            background-color: #ecfdf5;
-            color: #047857;
-            border: 1px solid #a7f3d0;
+            background-color: rgba(16, 185, 129, 0.15);
+            color: var(--success-color);
+            border: 1px solid var(--success-color);
         }
 
         .message.error {
-            background-color: #fef2f2;
-            color: #b91c1c;
-            border: 1px solid #fecaca;
+            background-color: rgba(239, 68, 68, 0.15);
+            color: var(--danger-color);
+            border: 1px solid var(--danger-color);
+        }
+
+        .theme-toggle {
+            background: none;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            padding: 0.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+            margin-left: 1rem;
+        }
+
+        .theme-toggle:hover {
+            background-color: var(--bg-body);
+            transform: scale(1.05);
+        }
+
+        .theme-toggle svg {
+            width: 20px;
+            height: 20px;
+            transition: transform 0.3s ease;
+        }
+
+        .theme-toggle:hover svg {
+            transform: rotate(20deg);
+        }
+
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            max-width: 400px;
+        }
+
+        .toast {
+            background: var(--bg-card);
+            border-radius: 0.5rem;
+            padding: 1rem 1.25rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            min-width: 300px;
+            animation: slideIn 0.3s ease-out;
+            border-left: 4px solid;
+        }
+
+        .toast.success {
+            border-left-color: var(--success-color);
+        }
+
+        .toast.error {
+            border-left-color: var(--danger-color);
+        }
+
+        .toast.info {
+            border-left-color: var(--primary-color);
+        }
+
+        .toast-icon {
+            flex-shrink: 0;
+            width: 24px;
+            height: 24px;
+        }
+
+        .toast-content {
+            flex: 1;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .toast-close {
+            flex-shrink: 0;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 0;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.2s;
+        }
+
+        .toast-close:hover {
+            color: var(--text-primary);
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+
+        .toast.removing {
+            animation: slideOut 0.3s ease-out forwards;
         }
 
         /* Mobile Menu Button */
@@ -389,7 +535,7 @@
                 top: 70px;
                 left: 0;
                 right: 0;
-                background-color: white;
+                background-color: var(--bg-card);
                 padding: 1rem;
                 flex-direction: column;
                 box-shadow: var(--shadow);
@@ -434,9 +580,28 @@
             </a>
             <ul class="nav-menu">
                 <li><a href="/admin" class="nav-link">Dashboard</a></li>
+                <li><a href="/tools" class="nav-link">Manage</a></li>
                 <li><a href="/config" class="nav-link active">Configuration</a></li>
-                <li><a href="#" class="nav-link" onclick="handleLogout()">Logout</a></li>
+                <li><button class="nav-link" onclick="handleLogout()"
+                        style="background: none; border: none; cursor: pointer; display: block; width: 100%; text-align: left;">Logout</button>
+                </li>
             </ul>
+            <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme" title="Toggle dark/light mode">
+                <svg id="theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="5"></circle>
+                    <line x1="12" y1="1" x2="12" y2="3"></line>
+                    <line x1="12" y1="21" x2="12" y2="23"></line>
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                    <line x1="1" y1="12" x2="3" y2="12"></line>
+                    <line x1="21" y1="12" x2="23" y2="12"></line>
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                </svg>
+                <svg id="theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                </svg>
+            </button>
             <button class="mobile-menu-btn" aria-label="Toggle menu">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                     stroke-linecap="round" stroke-linejoin="round">
@@ -448,93 +613,128 @@
         </nav>
     </header>
 
+    <!-- Toast Notification Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
     <div class="container">
         <div class="message" id="message"></div>
 
         <div class="card">
             <div class="card-header">
-                <h2 class="card-title">Tracking Providers</h2>
+                <h2 class="card-title">Add / Edit Provider</h2>
+            </div>
+            <div class="card-body">
+                <form id="providerForm" onsubmit="return handleFormSubmit(event)">
+                    <div class="form-group">
+                        <label class="form-label" for="providerId">Provider ID</label>
+                        <input type="text" id="providerId" class="form-input" readonly placeholder="Auto-generated"
+                            style="background-color: var(--bg-body); cursor: not-allowed;">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="providerName">Provider Name</label>
+                        <input type="text" id="providerName" class="form-input" required
+                            placeholder="Enter provider name" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="trackingUrl">Tracking URL Template</label>
+                        <input type="text" id="trackingUrl" class="form-input" required
+                            placeholder="e.g. https://www.ups.com/track?loc=en_US&tracknum={trackingId}" />
+                        <div class="help-text">Use <code>{trackingId}</code> as a placeholder for the tracking
+                            number.</div>
+                    </div>
+
+                    <!-- API Configuration Section -->
+                    <div class="api-config-section">
+                        <button type="button" class="collapsible-header" onclick="toggleApiConfig()" style="width: 100%; border: 1px solid var(--border-color); text-align: left;">
+                            <h3>API Configuration (Optional)</h3>
+                            <span class="collapse-icon" id="collapseIcon">▼</span>
+                        </button>
+                        <div class="collapsible-content" id="apiConfigContent">
+                            <div class="form-group">
+                                <label class="form-label" for="apiEndpoint">API Endpoint</label>
+                                <input type="text" id="apiEndpoint" class="form-input"
+                                    placeholder="https://api.provider.com/track" />
+                                <div class="help-text">The API endpoint URL for tracking requests</div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="apiMethod">HTTP Method</label>
+                                <select id="apiMethod" class="form-input">
+                                    <option value="POST">POST</option>
+                                    <option value="GET">GET</option>
+                                    <option value="PUT">PUT</option>
+                                    <option value="PATCH">PATCH</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="apiHeaders">Request Headers (JSON)</label>
+                                <textarea id="apiHeaders" class="form-input"
+                                    placeholder='{"Content-Type": "application/json", "Authorization": "Bearer token"}'></textarea>
+                                <div class="help-text">Enter headers as a JSON object</div>
+                                <div class="json-error" id="headersError">Invalid JSON format</div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="apiRequestBody">Request Body Template (JSON)</label>
+                                <textarea id="apiRequestBody" class="form-input"
+                                    placeholder='{"trackNumber": "{trackingId}"}'></textarea>
+                                <div class="help-text">Use <code>{trackingId}</code> as a placeholder for the
+                                    tracking number</div>
+                                <div class="json-error" id="bodyError">Invalid JSON format</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 1.5rem;">
+                        <button type="submit" class="btn btn-primary">Add Provider</button>
+                        <button type="button" class="btn btn-secondary" onclick="resetForm()"
+                            style="margin-left: 0.5rem;">Reset</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Configured Providers</h2>
             </div>
             <div class="card-body">
                 <div class="provider-list" id="providerList">
                     <!-- Provider items will be added here dynamically -->
-                </div>
-
-                <div style="margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--border-color);">
-                    <h3 style="margin-bottom: 1.5rem; font-size: 1.1rem; color: var(--text-primary);">Add / Edit
-                        Provider</h3>
-
-                    <form id="providerForm" onsubmit="return handleFormSubmit(event)">
-                        <div class="form-group">
-                            <label class="form-label" for="providerId">Provider ID</label>
-                            <input type="text" id="providerId" class="form-input" readonly placeholder="Auto-generated"
-                                style="background-color: #f1f5f9; cursor: not-allowed;">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label" for="providerName">Provider Name</label>
-                            <input type="text" id="providerName" class="form-input" required
-                                placeholder="Enter provider name" />
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label" for="trackingUrl">Tracking URL Template</label>
-                            <input type="text" id="trackingUrl" class="form-input" required
-                                placeholder="e.g. https://www.ups.com/track?loc=en_US&tracknum={trackingId}" />
-                            <div class="help-text">Use <code>{trackingId}</code> as a placeholder for the tracking
-                                number.</div>
-                        </div>
-
-                        <!-- API Configuration Section -->
-                        <div class="api-config-section">
-                            <div class="collapsible-header" onclick="toggleApiConfig()">
-                                <h3>API Configuration (Optional)</h3>
-                                <span class="collapse-icon" id="collapseIcon">▼</span>
-                            </div>
-                            <div class="collapsible-content" id="apiConfigContent">
-                                <div class="form-group">
-                                    <label class="form-label" for="apiEndpoint">API Endpoint</label>
-                                    <input type="text" id="apiEndpoint" class="form-input"
-                                        placeholder="https://api.provider.com/track" />
-                                    <div class="help-text">The API endpoint URL for tracking requests</div>
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label" for="apiMethod">HTTP Method</label>
-                                    <select id="apiMethod" class="form-input">
-                                        <option value="POST">POST</option>
-                                        <option value="GET">GET</option>
-                                        <option value="PUT">PUT</option>
-                                        <option value="PATCH">PATCH</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label" for="apiHeaders">Request Headers (JSON)</label>
-                                    <textarea id="apiHeaders" class="form-input"
-                                        placeholder='{"Content-Type": "application/json", "Authorization": "Bearer token"}'></textarea>
-                                    <div class="help-text">Enter headers as a JSON object</div>
-                                    <div class="json-error" id="headersError">Invalid JSON format</div>
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label" for="apiRequestBody">Request Body Template (JSON)</label>
-                                    <textarea id="apiRequestBody" class="form-input"
-                                        placeholder='{"trackNumber": "{trackingId}"}'></textarea>
-                                    <div class="help-text">Use <code>{trackingId}</code> as a placeholder for the
-                                        tracking number</div>
-                                    <div class="json-error" id="bodyError">Invalid JSON format</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div style="margin-top: 1.5rem;">
-                            <button type="submit" class="btn btn-primary">Add Provider</button>
-                            <button type="button" class="btn btn-secondary" onclick="resetForm()"
-                                style="margin-left: 0.5rem;">Reset</button>
-                        </div>
-                    </form>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
+        // Theme Management
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            updateThemeIcon(savedTheme);
+        }
+
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeIcon(newTheme);
+            showToast(`Switched to ${newTheme} mode`, 'info', 2000);
+        }
+
+        function updateThemeIcon(theme) {
+            const sunIcon = document.getElementById('theme-icon-sun');
+            const moonIcon = document.getElementById('theme-icon-moon');
+            if (theme === 'dark') {
+                sunIcon.style.display = 'none';
+                moonIcon.style.display = 'block';
+            } else {
+                sunIcon.style.display = 'block';
+                moonIcon.style.display = 'none';
+            }
+        }
+
+        initTheme();
+
         // Load providers on page load
         window.onload = loadProviders;
 
@@ -803,6 +1003,39 @@
             } catch (error) {
                 console.error('Logout error:', error);
             }
+        }
+
+        function showToast(message, type = 'info', duration = 4000) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            
+            let iconSvg = '';
+            if (type === 'success') {
+                iconSvg = '<svg class="toast-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>';
+            } else if (type === 'error') {
+                iconSvg = '<svg class="toast-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>';
+            } else {
+                iconSvg = '<svg class="toast-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>';
+            }
+            
+            toast.innerHTML = `
+                ${iconSvg}
+                <div class="toast-content">${message}</div>
+                <button class="toast-close" onclick="this.parentElement.remove()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            `;
+            
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.add('removing');
+                setTimeout(() => toast.remove(), 300);
+            }, duration);
         }
 
         // Mobile menu functionality
