@@ -82,7 +82,7 @@ class TrackingService {
       // EXCEPTION: "Out for Delivery", "Scheduled for Delivery", "Delivery Attempted" are NOT final states
       // If force is true, we ignore this check and fetch fresh data anyway
       const currentStatus = trackingEntry.status ? trackingEntry.status.toLowerCase() : '';
-      const isTerminalState = currentStatus.includes('delivered') &&
+      const isTerminalState = /\bdelivered\b/i.test(currentStatus) &&
         !currentStatus.includes('out for') &&
         !currentStatus.includes('scheduled') &&
         !currentStatus.includes('attempt');
@@ -124,6 +124,29 @@ class TrackingService {
 
       // Parse API response
       const parsedData = apiClient.parseResponse(apiResponse, provider, originalTrackingId);
+
+      // FIX: If package is already delivered, ignore "No data found" updates
+      // This prevents overwriting valid delivery data with API errors/expirations
+      if (trackingEntry.status && 
+          trackingEntry.status.toLowerCase().includes('delivered') && 
+          !trackingEntry.status.toLowerCase().includes('out for') &&
+          !trackingEntry.status.toLowerCase().includes('scheduled') &&
+          !trackingEntry.status.toLowerCase().includes('attempt') &&
+          !trackingEntry.status.toLowerCase().includes('pod uploaded')) {
+          
+          const newStatus = parsedData.status ? parsedData.status.toLowerCase() : '';
+          if (newStatus === 'no data found' || newStatus === 'unknown' || !newStatus) {
+              console.log(`🛡️ Preventing 'Delivered' overwrite with '${parsedData.status}' for ${trackingId}`);
+              return {
+                  trackingData: trackingEntry,
+                  log: {
+                      trackingId,
+                      provider: provider.name,
+                      message: `Ignored update: '${parsedData.status}' received for Delivered package`
+                  }
+              };
+          }
+      }
 
       // Default 'Unknown' status to 'In Transit'
       if (parsedData.status && parsedData.status.toLowerCase() === 'unknown') {
@@ -232,10 +255,10 @@ class TrackingService {
         status: {
           $not: {
             $in: [
-              /delivered/i,
+              /\bdelivered\b/i,
               /delivery.*complete/i,
-              /delivered.*successfully/i,
-              /completed/i
+              /\bdelivered.*successfully\b/i,
+              /\bcompleted\b/i
             ]
           }
         }
@@ -311,7 +334,7 @@ class TrackingService {
 
     // If package is delivered, never refresh
     if (trackingData.status &&
-      trackingData.status.toLowerCase().includes('deliver') &&
+      /\bdelivered\b/i.test(trackingData.status) &&
       !trackingData.status.toLowerCase().includes('out for')) {
       return false;
     }
