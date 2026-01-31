@@ -346,7 +346,7 @@ class ApiClient {
 
         } catch (err) {
             console.error("❌ Error parsing ICL:", err);
-            trackingData.status = "Error parsing ICL response";
+            trackingData.status = "In Transit";
             return trackingData;
         }
     }
@@ -422,7 +422,7 @@ class ApiClient {
 
         } catch (err) {
             console.error("❌ Error parsing ICL International:", err);
-            trackingData.status = "Error parsing ICL International response";
+            trackingData.status = "In Transit";
             return trackingData;
         }
     }
