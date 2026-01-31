@@ -618,19 +618,71 @@
                             style="text-align: center;">
                         <button type="submit" style="width: 100%;">Track Now</button>
                     </form>
+
+                    <!-- Recent Searches Section -->
+                    <div id="recentSearches" style="margin-top: 1.5rem; text-align: left; display: none;">
+                        <h4 style="font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                            Recent Searches
+                        </h4>
+                        <div id="recentList" style="display: flex; flex-direction: column; gap: 0.5rem;">
+                            <!-- Items will be injected here -->
+                        </div>
+                    </div>
                 </div>
 
             </div>
     </section>
 
     <script>
+        const RECENT_SEARCHES_KEY = 'ak_recent_tracking_ids';
+
         async function handleTrackingSubmit(event) {
             event.preventDefault();
-            const trackingId = document.getElementById('trackingId').value.trim();
-            if (trackingId) {
-                window.location.href = `/tracking.html?id=${encodeURIComponent(trackingId)}`;
+            const trackingIdText = document.getElementById('trackingId').value.trim();
+            if (trackingIdText) {
+                saveRecentSearch(trackingIdText);
+                window.location.href = `/tracking.html?id=${encodeURIComponent(trackingIdText)}`;
             }
         }
+
+        function saveRecentSearch(id) {
+            let recent = JSON.parse(localStorage.getItem(RECENT_SEARCHES_KEY) || '[]');
+            // Remove if already exists (to move to top)
+            recent = recent.filter(item => item !== id);
+            // Add to front
+            recent.unshift(id);
+            // Limit to 5
+            recent = recent.slice(0, 5);
+            localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(recent));
+        }
+
+        function loadRecentSearches() {
+            const recent = JSON.parse(localStorage.getItem(RECENT_SEARCHES_KEY) || '[]');
+            const container = document.getElementById('recentSearches');
+            const list = document.getElementById('recentList');
+
+            if (recent.length > 0) {
+                container.style.display = 'block';
+                list.innerHTML = recent.map(id => `
+                    <div style="display: flex; align-items: center; justify-content: space-between; background: #f9fafb; padding: 0.5rem 0.75rem; border-radius: 0.5rem; border: 1px solid var(--border-color); font-size: 0.85rem;">
+                        <a href="/tracking.html?id=${encodeURIComponent(id)}" style="color: var(--primary-color); text-decoration: none; font-weight: 600; font-family: monospace;">${id}</a>
+                        <button onclick="removeRecent('${id}')" style="background: none; border: none; color: var(--text-secondary); cursor: pointer; padding: 0.2rem; box-shadow: none; font-size: 0.75rem;">✕</button>
+                    </div>
+                `).join('');
+            } else {
+                container.style.display = 'none';
+            }
+        }
+
+        function removeRecent(id) {
+            let recent = JSON.parse(localStorage.getItem(RECENT_SEARCHES_KEY) || '[]');
+            recent = recent.filter(item => item !== id);
+            localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(recent));
+            loadRecentSearches();
+        }
+
+        // Initialize recents on load
+        window.addEventListener('DOMContentLoaded', loadRecentSearches);
 
         // Mobile menu functionality
         const mobileMenuBtn = document.querySelector('.mobile-menu-btn');

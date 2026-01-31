@@ -2,6 +2,7 @@ const { TrackingData } = require('../db');
 const Provider = require('../models/Provider');
 const CronLog = require('../models/CronLog');
 const apiClient = require('./apiClient');
+const emailService = require('./emailService');
 
 class TrackingService {
   constructor() {
@@ -122,6 +123,13 @@ class TrackingService {
         statusCode: apiResult.responseStatus
       };
 
+      // Check if response is explicitly 'null' string (common in some APIs like ICL)
+      if (apiResponse === null || apiResponse === 'null') {
+          console.warn(`⚠️ Received 'null' response from ${provider.name} for ${trackingId}`);
+          // We'll return early and the error will be caught by the caller to log it in results
+          throw new Error('API returned null response');
+      }
+
       // Parse API response
       const parsedData = apiClient.parseResponse(apiResponse, provider, originalTrackingId);
 
@@ -220,6 +228,19 @@ class TrackingService {
 
       console.log(`✅ Updated tracking data for: ${trackingId}`);
 
+      // Check for Delivery Notification
+      // Only send if the new status is 'Delivered' AND the previous status was NOT 'Delivered'
+      if (updatedData.status && 
+          updatedData.status.toLowerCase().includes('delivered') && 
+          !(trackingEntry.status && trackingEntry.status.toLowerCase().includes('delivered')) &&
+          !updatedData.status.toLowerCase().includes('out for') &&
+          !updatedData.status.toLowerCase().includes('scheduled') &&
+          !updatedData.status.toLowerCase().includes('attempt')) {
+          
+          console.log(`📢 Package ${trackingId} delivered! Sending notification...`);
+          await emailService.sendDeliveryNotification(updatedData);
+      }
+
       // Return enhanced result with log info
       return {
         trackingData: updatedData,
@@ -228,6 +249,7 @@ class TrackingService {
           provider: provider.name,
           requestUrl: requestDetails.url,
           responseStatus: requestDetails.statusCode,
+          newStatus: updatedData.status,
           response: JSON.stringify(apiResponse).substring(0, 500) // Truncate response for log
         }
       };
@@ -247,6 +269,14 @@ class TrackingService {
 
   async updateAllTrackingData(force = false) {
     const startTime = Date.now();
+    let results = {
+        total: 0,
+        updated: 0,
+        failed: 0,
+        skipped: 0,
+        logs: []
+    };
+    
     try {
       console.log(`🔄 Starting bulk update of ${force ? 'ALL' : 'active'} tracking data...`);
 
@@ -267,14 +297,8 @@ class TrackingService {
       const activeEntries = await TrackingData.find(query);
 
       console.log(`📦 Found ${activeEntries.length} tracking entries to update`);
-
-      const results = {
-        total: activeEntries.length,
-        updated: 0,
-        failed: 0,
-        skipped: 0,
-        logs: []
-      };
+      
+      results.total = activeEntries.length;
 
       // Update each entry
       for (const entry of activeEntries) {
@@ -297,6 +321,9 @@ class TrackingService {
 
       console.log(`✅ Bulk update completed:`, results);
 
+      // Always send the detailed table report to admin
+      await emailService.sendBulkUpdateReport(results);
+
       // Log success to DB
       await CronLog.create({
         level: 'info',
@@ -317,6 +344,11 @@ class TrackingService {
         details: { error: error.message, stack: error.stack },
         durationMs: Date.now() - startTime
       });
+
+      // Still try to send whatever results we had before the crash
+      if (results && results.logs && results.logs.length > 0) {
+          await emailService.sendBulkUpdateReport(results);
+      }
 
       throw error;
     }

@@ -11,6 +11,8 @@ const { connectDB, TrackingData } = require('./db');
 const User = require('./models/User');
 const Provider = require('./models/Provider');
 const BulkUpload = require('./models/BulkUpload');
+const EmailConfig = require('./models/EmailConfig');
+const EmailLog = require('./models/EmailLog');
 const trackingService = require('./services/trackingService');
 // const cron = require('node-cron');
 const swaggerUi = require('swagger-ui-express');
@@ -1298,6 +1300,85 @@ app.delete('/api/providers/:id', requireAuth, async (req, res) => {
     } else {
       res.status(500).json({ error: 'Internal server error' });
     }
+  }
+});
+
+// Email Configuration API
+app.get('/api/config/email', requireAuth, async (req, res) => {
+  try {
+    let emailConfig = await EmailConfig.findOne();
+    
+    // If none exists, return a default template (but don't save yet)
+    if (!emailConfig) {
+      emailConfig = {
+        host: 'smtp.gmail.com',
+        port: 587,
+        secure: false,
+        user: '',
+        pass: '',
+        adminEmail: '',
+        fromName: 'AK Logistics Tracking System',
+        isEnabled: false
+      };
+    }
+    
+    // Mask password for security
+    const result = emailConfig.toObject ? emailConfig.toObject() : { ...emailConfig };
+    if (result.pass) result.pass = '********';
+    
+    res.json(result);
+  } catch (error) {
+    console.error('❌ Error fetching email config:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.put('/api/config/email', requireAuth, async (req, res) => {
+  try {
+    let { host, port, secure, user, pass, adminEmail, fromName, isEnabled } = req.body;
+    
+    let emailConfig = await EmailConfig.findOne();
+    
+    // Convert adminEmail string to array if needed
+    if (typeof adminEmail === 'string') {
+      adminEmail = adminEmail.split(',').map(e => e.trim()).filter(e => e);
+    }
+
+    const updateData = {
+      host,
+      port: parseInt(port),
+      secure: secure === true || secure === 'true',
+      user,
+      adminEmail: Array.isArray(adminEmail) ? adminEmail : [],
+      fromName,
+      isEnabled: isEnabled === true || isEnabled === 'true'
+    };
+
+    // Only update password if a new one is provided (not masked)
+    if (pass && pass !== '********') {
+      updateData.pass = pass;
+    }
+
+    if (emailConfig) {
+      emailConfig = await EmailConfig.findByIdAndUpdate(
+        emailConfig._id,
+        { $set: updateData },
+        { new: true }
+      );
+    } else {
+      emailConfig = new EmailConfig(updateData);
+      await emailConfig.save();
+    }
+
+    console.log('✅ Email configuration updated successfully');
+    
+    // Mask password in response
+    const result = emailConfig.toObject();
+    result.pass = '********';
+    res.json(result);
+  } catch (error) {
+    console.error('❌ Error updating email config:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
