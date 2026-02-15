@@ -734,6 +734,69 @@
                 grid-template-columns: 1fr 1fr;
             }
         }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .modal-content {
+            background-color: var(--bg-card);
+            margin: 10% auto;
+            padding: 2rem;
+            border: 1px solid var(--border-color);
+            width: 90%;
+            max-width: 500px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            position: relative;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .close-modal {
+            color: var(--text-secondary);
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .close-modal:hover {
+            color: var(--text-primary);
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
     </style>
 </head>
 
@@ -745,9 +808,10 @@
                 <span>Admin Dashboard</span>
             </a>
             <ul class="nav-menu">
-                <li><a href="/admin" class="nav-link active">Dashboard</a></li>
+                <li><a href="/admin" class="nav-link active" id="nav-dashboard" onclick="switchTab('dashboard')">Dashboard</a></li>
                 <li><a href="/tools" class="nav-link">Manage</a></li>
                 <li><a href="/config" class="nav-link">Configuration</a></li>
+                <li><a href="#" class="nav-link" id="nav-reports" onclick="switchTab('reports')">Reports</a></li>
                 <li><button class="nav-link" onclick="handleLogout()"
                         style="background: none; border: none; cursor: pointer; display: block; width: 100%; text-align: left;">Logout</button>
                 </li>
@@ -830,7 +894,7 @@
 
 
 
-        <div class="card">
+        <div class="card" id="trackingManagementCard">
             <div class="card-header">
                 <h2 class="card-title">Tracking Management</h2>
                 <button onclick="syncAllTrackingData()" class="btn btn-primary" id="syncBtn">
@@ -936,7 +1000,79 @@
                 </ul>
             </div>
         </div>
+
+        <!-- Reports Section -->
+        <div id="reportsSection" style="display: none;">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Custom Reports</h2>
+                </div>
+                <div class="card-body">
+                        <div id="reportsTableContainer" style="margin-bottom: 2rem;">
+                            <!-- Reports table will be loaded here -->
+                        </div>
+                        <div class="filter-controls" style="margin-bottom: 2rem; border-top: 1px solid var(--border-color); padding-top: 2rem;">
+                            <select id="reportType" class="form-input" style="width: auto;">
+                                <option value="" disabled selected>Select a Report to Generate...</option>
+                            </select>
+                        <input type="date" id="reportStartDate" class="form-input" style="width: auto;" title="Start Date">
+                        <input type="date" id="reportEndDate" class="form-input" style="width: auto;" title="End Date">
+                        <select id="reportProvider" class="form-input" style="width: auto;">
+                            <option value="">All Providers</option>
+                        </select>
+                        <button onclick="generateReport()" class="btn btn-primary">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="18" y1="20" x2="18" y2="10"></line>
+                                <line x1="12" y1="20" x2="12" y2="4"></line>
+                                <line x1="6" y1="20" x2="6" y2="14"></line>
+                            </svg>
+                            Generate Report
+                        </button>
+                    </div>
+
+                    <div id="reportResult" class="report-container">
+                        <p style="text-align: center; color: var(--text-secondary); padding: 2rem;">Select parameters and click "Generate Report" to see results.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
+
+    <style>
+        .report-container {
+            margin-top: 1.5rem;
+            overflow-x: auto;
+        }
+        .report-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+        .report-table th, .report-table td {
+            text-align: left;
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .report-table th {
+            background-color: var(--bg-body);
+            color: var(--text-secondary);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+        }
+        .speed-bar {
+            height: 8px;
+            border-radius: 4px;
+            display: flex;
+            overflow: hidden;
+            width: 150px;
+            background: var(--border-color);
+        }
+        .speed-fast { background: var(--success-color); }
+        .speed-medium { background: var(--warning-color); }
+        .speed-slow { background: var(--danger-color); }
+    </style>
 
     <script>
         // Theme Management
@@ -1413,6 +1549,13 @@
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
                             </button>
 
+                            <button class="btn btn-secondary" onclick="openEditModal('${item.trackingId}', '${item.originalTrackingId}', '${item.provider}')" title="Edit Tracking">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                </svg>
+                            </button>
+
                             <button class="btn btn-danger" onclick="deleteTracking('${item.trackingId}')" title="Delete">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                             </button>
@@ -1645,6 +1788,108 @@
             }
         }
 
+        // Report Handling Functions
+        async function loadReportsList() {
+            try {
+                const response = await fetch('/api/reports/types', { credentials: 'include' });
+                const reports = await response.json();
+                
+                if (reports.error) throw new Error(reports.error);
+                
+                renderReportsTable(reports);
+                populateReportDropdown(reports);
+            } catch (error) {
+                console.error('Error loading reports:', error);
+                const container = document.getElementById('reportsTableContainer');
+                if (container) container.innerHTML = '<p class="message error">Failed to load reports list.</p>';
+            }
+        }
+
+        function renderReportsTable(reports) {
+            const container = document.getElementById('reportsTableContainer');
+            if (!container) return; // Guard clause
+            
+            if (!reports || reports.length === 0) {
+                container.innerHTML = '<p>No reports available.</p>';
+                return;
+            }
+
+            let html = `
+                <table class="report-table">
+                    <thead>
+                        <tr>
+                            <th>Report Name</th>
+                            <th>Category</th>
+                            <th>Last Refreshed</th>
+                            <th style="text-align: right;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            reports.forEach(report => {
+                const lastRun = report.lastRefreshed ? new Date(report.lastRefreshed).toLocaleString() : 'Never';
+                const statusColor = report.lastRefreshed ? 'var(--text-secondary)' : '#ef4444';
+                
+                html += `
+                    <tr>
+                        <td style="font-weight: 600;">${report.title}</td>
+                        <td><span class="status-badge" style="background: var(--bg-body); border: 1px solid var(--border-color);">${report.category}</span></td>
+                        <td style="color: ${statusColor}; font-size: 0.9rem;">${lastRun}</td>
+                        <td style="text-align: right;">
+                            <button class="btn btn-sm btn-secondary" onclick="preselectAndGenerate('${report.type}')" style="cursor: pointer; padding: 4px 12px; margin-right: 8px;">
+                                Generate
+                            </button>
+                            <button class="btn btn-sm btn-success" onclick="downloadReport('${report.type}')" style="cursor: pointer; padding: 4px 12px;" ${!report.lastRefreshed ? 'disabled title="Generate report first"' : ''}>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle;">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="7 10 12 15 17 10"></polyline>
+                                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                                </svg>
+                                Export
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function populateReportDropdown(reports) {
+            const select = document.getElementById('reportType');
+            if (!select) return;
+
+            // Keep the first option (placeholder)
+            select.innerHTML = '<option value="" disabled selected>Select a Report to Generate...</option>';
+            
+            const categories = {};
+            reports.forEach(r => {
+                if (!categories[r.category]) categories[r.category] = [];
+                categories[r.category].push(r);
+            });
+
+            Object.keys(categories).sort().forEach(cat => {
+                const group = document.createElement('optgroup');
+                group.label = cat;
+                categories[cat].forEach(r => {
+                    const option = document.createElement('option');
+                    option.value = r.type;
+                    option.textContent = r.title;
+                    group.appendChild(option);
+                });
+                select.appendChild(group);
+            });
+        }
+
+        function preselectAndGenerate(type) {
+            const select = document.getElementById('reportType');
+            select.value = type;
+            // Scroll to filter controls
+            document.querySelector('.filter-controls').scrollIntoView({ behavior: 'smooth' });
+        }
+
         // Initialize the page
         async function initialize() {
             try {
@@ -1652,11 +1897,681 @@
                 await Promise.all([
                     loadProvidersForFilter(),
                     loadTrackingList(),
-                    loadStats()
+                    loadStats(),
+                    loadReportsList()
                 ]);
+                
+                // Copy providers to report filter
+                setTimeout(() => {
+                    const filterProvider = document.getElementById('filterProvider');
+                    const reportProvider = document.getElementById('reportProvider');
+                    if (filterProvider && reportProvider) {
+                        reportProvider.innerHTML = filterProvider.innerHTML;
+                    }
+                }, 1000);
+
+                // Handle tab switching via URL param
+                const urlParams = new URLSearchParams(window.location.search);
+                const tab = urlParams.get('tab');
+                if (tab === 'reports') {
+                    switchTab('reports');
+                }
+
             } catch (error) {
                 console.error('Initialization error:', error);
             }
+        }
+
+        function switchTab(tab) {
+            const managementCard = document.getElementById('trackingManagementCard');
+            const statsGrid = document.querySelector('div[style*="grid-template-columns"]');
+            const filterControls = document.querySelector('.filter-pagination-controls');
+            const reportsSection = document.getElementById('reportsSection');
+            
+            const navDashboard = document.getElementById('nav-dashboard');
+            const navReports = document.getElementById('nav-reports');
+
+            if (tab === 'reports') {
+                managementCard.style.display = 'none';
+                statsGrid.style.display = 'none';
+                filterControls.style.display = 'none';
+                reportsSection.style.display = 'block';
+                
+                navDashboard.classList.remove('active');
+                navReports.classList.add('active');
+            } else {
+                managementCard.style.display = 'block';
+                statsGrid.style.display = 'grid';
+                filterControls.style.display = 'flex';
+                reportsSection.style.display = 'none';
+                
+                navDashboard.classList.add('active');
+                navReports.classList.remove('active');
+            }
+        }
+
+        async function generateReport() {
+            const type = document.getElementById('reportType').value;
+            const startDate = document.getElementById('reportStartDate').value;
+            const endDate = document.getElementById('reportEndDate').value;
+            const provider = document.getElementById('reportProvider').value;
+            const container = document.getElementById('reportResult');
+
+            container.innerHTML = '<div style="text-align: center; padding: 2rem;"><svg class="spinner" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary-color)"><path d="M21 12a9 9 0 1 1-6.21-8.58"></path></svg></div>';
+
+            try {
+                const params = new URLSearchParams({ type, startDate, endDate, provider });
+                const response = await fetch(`/api/reports/generate?${params.toString()}`, { credentials: 'include' });
+                const data = await response.json();
+
+                if (data.error) throw new Error(data.error);
+
+                if (type === 'delivery_performance') {
+                    renderPerformanceReport(data, container);
+                } else if (type === 'volume_by_provider') {
+                    renderVolumeReport(data, container);
+                } else if (type === 'status_distribution') {
+                    renderStatusReport(data, container);
+                } else if (type === 'stuck_shipments') {
+                    renderStuckShipments(data, container);
+                } else if (type === 'exception_rate') {
+                    renderExceptionRate(data, container);
+                } else if (type === 'data_health') {
+                    renderDataHealth(data, container);
+                } else if (type === 'delivery_attempts') {
+                    renderDeliveryAttempts(data, container);
+                } else if (type === 'notification_stats') {
+                    renderNotificationStats(data, container);
+                } else if (type === 'volume_trends') {
+                    renderVolumeTrends(data, container);
+                } else if (type === 'daily_trend') {
+                    renderDailyTrend(data, container);
+                } else if (type === 'same_day_delivery') {
+                    renderSameDayDelivery(data, container);
+                } else if (type === 'status_distribution_provider') {
+                    renderStatusDistributionProvider(data, container);
+                }
+                
+                // Reload reports list to update "Last Refreshed" timestamp
+                await loadReportsList();
+            } catch (error) {
+                container.innerHTML = `<div class="message error" style="display: block;">Error: ${error.message}</div>`;
+            }
+        }
+
+        async function downloadReport(reportType) {
+            try {
+                const response = await fetch('/api/reports/types', { credentials: 'include' });
+                const reports = await response.json();
+                
+                const report = reports.find(r => r.type === reportType);
+                if (!report || !report.lastData) {
+                    showMessage('No data available to download. Please generate the report first.', 'error');
+                    return;
+                }
+                
+                // Convert to CSV
+                const csvContent = convertToCSV(report.lastData, reportType);
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                const url = URL.createObjectURL(blob);
+                
+                link.setAttribute('href', url);
+                link.setAttribute('download', `${reportType}_${new Date().toISOString().split('T')[0]}.csv`);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                showMessage('Report downloaded successfully!', 'success');
+            } catch (error) {
+                console.error('Download error:', error);
+                showMessage('Failed to download report', 'error');
+            }
+        }
+        
+        function convertToCSV(data, reportType) {
+            if (!data || (Array.isArray(data) && data.length === 0)) {
+                return 'No data available';
+            }
+            
+            // Handle different data structures
+            if (Array.isArray(data)) {
+                // Get headers from first object
+                const headers = Object.keys(data[0]);
+                const csvRows = [headers.join(',')];
+                
+                data.forEach(row => {
+                    const values = headers.map(header => {
+                        const val = row[header];
+                        // Handle objects (like 'speed' in delivery_performance)
+                        if (typeof val === 'object' && val !== null) {
+                            return JSON.stringify(val).replace(/,/g, ';');
+                        }
+                        // Escape values with commas
+                        return typeof val === 'string' && val.includes(',') ? `"${val}"` : val;
+                    });
+                    csvRows.push(values.join(','));
+                });
+                
+                return csvRows.join('\n');
+            } else if (typeof data === 'object') {
+                // Handle nested object structure (like status_distribution_provider)
+                const csvRows = ['Provider,Status,Count'];
+                
+                Object.entries(data).forEach(([provider, statuses]) => {
+                    if (typeof statuses === 'object') {
+                        Object.entries(statuses).forEach(([status, count]) => {
+                            csvRows.push(`${provider},${status},${count}`);
+                        });
+                    }
+                });
+                
+                return csvRows.join('\n');
+            }
+            
+            return 'Unsupported data format';
+        }
+
+        function renderPerformanceReport(data, container) {
+            if (data.length === 0) {
+                container.innerHTML = '<p style="text-align: center; padding: 2rem;">No delivered packages found for the selected period.</p>';
+                return;
+            }
+
+            let html = `
+                <table class="report-table">
+                    <thead>
+                        <tr>
+                            <th>Provider</th>
+                            <th>Avg Days</th>
+                            <th>Min/Max</th>
+                            <th>Volume</th>
+                            <th>Speed Distribution</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            data.forEach(item => {
+                const total = item.speed.fast + item.speed.medium + item.speed.slow;
+                const fastPct = (item.speed.fast / total * 100);
+                const mediumPct = (item.speed.medium / total * 100);
+                const slowPct = (item.speed.slow / total * 100);
+
+                html += `
+                    <tr>
+                        <td style="font-weight: 600;">${item.provider}</td>
+                        <td><span style="font-size: 1.1rem; font-weight: 700; color: var(--primary-color)">${item.avgDays}</span> days</td>
+                        <td style="font-size: 0.8rem; color: var(--text-secondary)">${item.min} - ${item.max} days</td>
+                        <td>${item.count}</td>
+                        <td>
+                            <div style="display: flex; flex-direction: column; gap: 4px;">
+                                <div class="speed-bar">
+                                    <div class="speed-fast" style="width: ${fastPct}%" title="Fast (<=3 days): ${item.speed.fast}"></div>
+                                    <div class="speed-medium" style="width: ${mediumPct}%" title="Medium (3-7 days): ${item.speed.medium}"></div>
+                                    <div class="speed-slow" style="width: ${slowPct}%" title="Slow (>7 days): ${item.speed.slow}"></div>
+                                </div>
+                                <div style="display: flex; gap: 8px; font-size: 0.7rem; color: var(--text-secondary)">
+                                    <span style="color: var(--success-color)">● Fast</span>
+                                    <span style="color: var(--warning-color)">● Med</span>
+                                    <span style="color: var(--danger-color)">● Slow</span>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function renderVolumeReport(data, container) {
+            let html = '<table class="report-table"><thead><tr><th>Provider</th><th>Total Tracking IDs</th></tr></thead><tbody>';
+            data.forEach(item => {
+                html += `<tr><td style="font-weight: 600;">${item.provider}</td><td>${item.count}</td></tr>`;
+            });
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function renderStatusReport(data, container) {
+            if (data.length === 0) {
+                container.innerHTML = '<p style="text-align: center; padding: 2rem;">No data found for the selected period.</p>';
+                return;
+            }
+
+            let html = `
+                <table class="report-table">
+                    <thead>
+                        <tr>
+                            <th>Status</th>
+                            <th>Count</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            data.forEach(item => {
+                html += `
+                    <tr>
+                        <td style="font-weight: 600;">${item.status}</td>
+                        <td style="font-size: 1.1rem; font-weight: 700;">${item.count}</td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function renderStuckShipments(data, container) {
+            if (data.length === 0) {
+                container.innerHTML = '<p style="text-align: center; padding: 2rem;">No stuck shipments found.</p>';
+                return;
+            }
+
+            let html = `
+                <table class="report-table">
+                    <thead>
+                        <tr>
+                            <th>Tracking ID</th>
+                            <th>Provider</th>
+                            <th>Status</th>
+                            <th>Last Update</th>
+                            <th>Days Inactive</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            data.forEach(item => {
+                const dateStr = new Date(item.lastUpdated).toLocaleDateString();
+                const badgeColor = item.daysStuck > 10 ? '#ef4444' : (item.daysStuck > 7 ? '#f59e0b' : '#3b82f6');
+                html += `
+                    <tr>
+                        <td style="font-weight: 600;">${item.trackingId}</td>
+                        <td>${item.provider}</td>
+                        <td><span class="status-badge" style="background-color: var(--primary-light); color: var(--primary-color); padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.8rem;">${item.status}</span></td>
+                        <td>${dateStr}</td>
+                        <td><span style="font-weight: 700; color: ${badgeColor}">${item.daysStuck} days</span></td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function renderExceptionRate(data, container) {
+            if (data.length === 0) {
+                container.innerHTML = '<p style="text-align: center; padding: 2rem;">No data found for the selected period.</p>';
+                return;
+            }
+
+            let html = `
+                <table class="report-table">
+                    <thead>
+                        <tr>
+                            <th>Provider</th>
+                            <th>Total Shipments</th>
+                            <th>Exceptions</th>
+                            <th>Reliability</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            data.forEach(item => {
+                const reliability = (100 - parseFloat(item.rate)).toFixed(2);
+                const color = reliability > 95 ? '#10b981' : (reliability > 85 ? '#f59e0b' : '#ef4444');
+                html += `
+                    <tr>
+                        <td style="font-weight: 600;">${item.provider}</td>
+                        <td>${item.total}</td>
+                        <td style="color: #ef4444; font-weight: 600;">${item.exceptions}</td>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 0.5rem; width: 200px;">
+                                <div style="flex: 1; height: 8px; background: #eee; border-radius: 4px; overflow: hidden;">
+                                    <div style="width: ${reliability}%; height: 100%; background: ${color}"></div>
+                                </div>
+                                <span style="font-weight: 700; color: ${color}; min-width: 50px;">${reliability}%</span>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function renderDataHealth(data, container) {
+            if (data.length === 0) {
+                container.innerHTML = '<p style="text-align: center; padding: 2rem;">No data found.</p>';
+                return;
+            }
+
+            let html = `
+                <table class="report-table">
+                    <thead>
+                        <tr>
+                            <th>Provider</th>
+                            <th>Data Freshness</th>
+                            <th>Shipment Count</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            data.forEach(item => {
+                const color = item.freshness.includes('Fresh') ? '#10b981' : (item.freshness.includes('Stale') ? '#f59e0b' : '#ef4444');
+                html += `
+                    <tr>
+                        <td style="font-weight: 600;">${item.provider}</td>
+                        <td><span style="display:inline-block; width: 10px; height: 10px; border-radius: 50%; background: ${color}; margin-right: 5px;"></span> ${item.freshness}</td>
+                        <td style="font-weight: 600;">${item.count}</td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function renderDeliveryAttempts(data, container) {
+            if (data.length === 0) {
+                container.innerHTML = '<p style="text-align: center; padding: 2rem;">No data found.</p>';
+                return;
+            }
+
+            let html = `
+                <table class="report-table">
+                    <thead>
+                        <tr>
+                            <th>Provider</th>
+                            <th>Delivered Total</th>
+                            <th>First Try Success</th>
+                            <th>Success Rate</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            data.forEach(item => {
+                const color = item.rate > 90 ? '#10b981' : (item.rate > 70 ? '#f59e0b' : '#ef4444');
+                html += `
+                    <tr>
+                        <td style="font-weight: 600;">${item.provider}</td>
+                        <td>${item.total}</td>
+                        <td>${item.firstAttempt}</td>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 0.5rem; width: 200px;">
+                                <div style="flex: 1; height: 8px; background: #eee; border-radius: 4px; overflow: hidden;">
+                                    <div style="width: ${item.rate}%; height: 100%; background: ${color}"></div>
+                                </div>
+                                <span style="font-weight: 700; color: ${color}; min-width: 50px;">${item.rate}%</span>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function renderNotificationStats(data, container) {
+            if (data.length === 0) {
+                container.innerHTML = '<p style="text-align: center; padding: 2rem;">No notification logs found.</p>';
+                return;
+            }
+
+            let html = `
+                <table class="report-table">
+                    <thead>
+                        <tr>
+                            <th>Notification Type</th>
+                            <th>Total Sent</th>
+                            <th>Success / Failed</th>
+                            <th>Delivery Rate</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            data.forEach(item => {
+                const typePretty = item.type.replace(/_/g, ' ');
+                const color = item.rate > 95 ? '#10b981' : (item.rate > 85 ? '#f59e0b' : '#ef4444');
+                html += `
+                    <tr>
+                        <td style="font-weight: 600; text-transform: capitalize;">${typePretty.toLowerCase()}</td>
+                        <td>${item.total}</td>
+                        <td><span style="color: #10b981; font-weight: 600;">${item.success}</span> / <span style="color: #ef4444; font-weight: 600;">${item.failed}</span></td>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 0.5rem; width: 200px;">
+                                <div style="flex: 1; height: 8px; background: #eee; border-radius: 4px; overflow: hidden;">
+                                    <div style="width: ${item.rate}%; height: 100%; background: ${color}"></div>
+                                </div>
+                                <span style="font-weight: 700; color: ${color}; min-width: 50px;">${item.rate}%</span>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function renderVolumeTrends(data, container) {
+            if (data.length === 0) {
+                container.innerHTML = '<p style="text-align: center; padding: 2rem;">No data found for the selected period.</p>';
+                return;
+            }
+
+            let html = '<div style="margin-top: 1rem;">';
+            
+            const max = Math.max(...data.map(d => d.count), 1);
+            
+            html += `
+                <div style="display: flex; align-items: flex-end; gap: 12px; height: 200px; padding: 20px; background: var(--bg-body); border-radius: 12px; overflow-x: auto; border: 1px solid var(--border-color);">
+            `;
+
+            data.forEach(item => {
+                const height = (item.count / max * 100);
+                const day = item.date.split('-')[2];
+                html += `
+                    <div style="flex: 1; min-width: 40px; display: flex; flex-direction: column; align-items: center; gap: 8px; position: relative;" title="${item.date}: ${item.count}">
+                        <span style="font-size: 10px; font-weight: 700; color: var(--primary-color)">${item.count}</span>
+                        <div style="width: 100%; height: ${Math.max(4, height)}%; background: linear-gradient(to top, var(--primary-color), var(--primary-hover)); border-radius: 4px 4px 0 0;"></div>
+                        <span style="font-size: 10px; color: var(--text-secondary); writing-mode: vertical-rl; transform: rotate(180deg);">${item.date}</span>
+                    </div>
+                `;
+            });
+
+            html += '</div></div>';
+            
+            html += `
+                <table class="report-table" style="margin-top: 2rem;">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>New Tracking IDs</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            [...data].reverse().slice(0, 10).forEach(item => {
+                html += `
+                    <tr>
+                        <td style="font-weight: 600;">${item.date}</td>
+                        <td>${item.count}</td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function renderDailyTrend(data, container) {
+            if (data.length === 0) {
+                container.innerHTML = '<p style="text-align: center; padding: 2rem;">No data found for the selected period.</p>';
+                return;
+            }
+
+            let html = '<div style="margin-top: 1rem;">';
+            const max = Math.max(...data.map(d => Math.max(d.created, d.delivered)), 1);
+            
+            html += `
+                <div style="display: flex; align-items: flex-end; gap: 15px; height: 250px; padding: 25px; background: var(--bg-body); border-radius: 12px; overflow-x: auto; border: 1px solid var(--border-color); position: relative;">
+                    <!-- Legend -->
+                    <div style="position: absolute; top: 10px; right: 10px; display: flex; gap: 15px; font-size: 0.75rem; background: var(--card-bg); padding: 8px; border-radius: 6px; box-shadow: var(--shadow-sm); border: 1px solid var(--border-color);">
+                        <div style="display: flex; align-items: center; gap: 5px;"><span style="width: 12px; height: 12px; background: var(--primary-color); border-radius: 2px;"></span> Created</div>
+                        <div style="display: flex; align-items: center; gap: 5px;"><span style="width: 12px; height: 12px; background: #10b981; border-radius: 2px;"></span> Delivered</div>
+                    </div>
+            `;
+
+            data.forEach(item => {
+                const hCreated = (item.created / max * 100);
+                const hDelivered = (item.delivered / max * 100);
+                
+                html += `
+                    <div style="flex: 1; min-width: 60px; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end;">
+                        <div style="display: flex; gap: 4px; align-items: flex-end; width: 100%; height: 80%;">
+                            <div style="flex: 1; height: ${Math.max(2, hCreated)}%; background: var(--primary-color); border-radius: 3px 3px 0 0;" title="Created: ${item.created}"></div>
+                            <div style="flex: 1; height: ${Math.max(2, hDelivered)}%; background: #10b981; border-radius: 3px 3px 0 0;" title="Delivered: ${item.delivered}"></div>
+                        </div>
+                        <span style="font-size: 10px; color: var(--text-secondary); writing-mode: vertical-rl; transform: rotate(180deg); margin-top: 8px;">${item.date}</span>
+                    </div>
+                `;
+            });
+
+            html += '</div></div>';
+            
+            html += `
+                <table class="report-table" style="margin-top: 2rem;">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>New Creations</th>
+                            <th>Deliveries</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            [...data].reverse().forEach(item => {
+                html += `
+                    <tr>
+                        <td style="font-weight: 600;">${item.date}</td>
+                        <td style="color: var(--primary-color); font-weight: 700;">${item.created}</td>
+                        <td style="color: #10b981; font-weight: 700;">${item.delivered}</td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function renderSameDayDelivery(data, container) {
+            if (data.length === 0) {
+                container.innerHTML = '<p style="text-align: center; padding: 2rem;">No same-day deliveries found for the selected criteria.</p>';
+                return;
+            }
+
+            let html = `
+                <div style="margin-bottom: 1rem; padding: 1rem; background: #f0fdf4; border-radius: 8px; border: 1px solid #dcfce7; color: #166534; font-weight: 600;">
+                    Total Same-Day Deliveries: ${data.length}
+                </div>
+                <table class="report-table">
+                    <thead>
+                        <tr>
+                            <th>Tracking ID</th>
+                            <th>Provider</th>
+                            <th>Created At</th>
+                            <th>Delivered At</th>
+                            <th>Efficiency</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            data.forEach(item => {
+                const created = new Date(item.created).toLocaleString();
+                const delivered = new Date(item.delivered).toLocaleString();
+                html += `
+                    <tr>
+                        <td style="font-weight: 600;">${item.trackingId}</td>
+                        <td>${item.provider}</td>
+                        <td style="font-size: 0.85rem;">${created}</td>
+                        <td style="font-size: 0.85rem;">${delivered}</td>
+                        <td><span class="status-badge" style="background: #dcfce7; color: #166534; font-weight: 700;">${item.duration}</span></td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function renderStatusDistributionProvider(data, container) {
+            if (Object.keys(data).length === 0) {
+                container.innerHTML = '<p style="text-align: center; padding: 2rem;">No data found for the selected period.</p>';
+                return;
+            }
+
+            let html = '';
+            
+            for (const [provider, statuses] of Object.entries(data)) {
+                html += `
+                    <div style="margin-top: 2rem;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid var(--primary-light); margin-bottom: 1rem; padding-bottom: 0.5rem;">
+                            <h3 style="margin: 0; color: var(--primary-color);">${provider}</h3>
+                            <span class="status-badge" style="background: var(--bg-body); color: var(--text-secondary); border: 1px solid var(--border-color);">
+                                Total: ${Object.values(statuses).reduce((a, b) => a + b, 0)} packages
+                            </span>
+                        </div>
+                        <table class="report-table">
+                            <thead>
+                                <tr>
+                                    <th>Status</th>
+                                    <th>Count</th>
+                                    <th>Percentage</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+                
+                const total = Object.values(statuses).reduce((a, b) => a + b, 0);
+                const sortedStatuses = Object.entries(statuses).sort((a, b) => b[1] - a[1]);
+                
+                for (const [status, count] of sortedStatuses) {
+                    const percentage = ((count / total) * 100).toFixed(1);
+                    html += `
+                        <tr>
+                            <td><span class="status-badge" style="background-color: var(--primary-light); color: var(--primary-color); padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.8rem;">${status}</span></td>
+                            <td style="font-weight: 700;">${count}</td>
+                            <td>
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <div style="flex: 1; height: 6px; background: #eee; border-radius: 3px; overflow: hidden;">
+                                        <div style="width: ${percentage}%; height: 100%; background: var(--primary-color);"></div>
+                                    </div>
+                                    <span style="font-size: 0.8rem; color: var(--text-secondary); min-width: 40px;">${percentage}%</span>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }
+                
+                html += '</tbody></table></div>';
+            }
+            
+            container.innerHTML = html;
         }
 
         initialize();
@@ -1762,7 +2677,115 @@
                 updateStatus(trackingId, 'Delivered');
             }
         }
+
+        // Edit Modal Functions
+        function openEditModal(trackingId, originalTrackingId, provider) {
+            document.getElementById('editOriginalId').value = trackingId;
+            document.getElementById('editTrackingId').value = trackingId;
+            document.getElementById('editProviderTrackingId').value = originalTrackingId;
+            
+            // Populate providers in edit modal
+            const filterProvider = document.getElementById('filterProvider');
+            const editProvider = document.getElementById('editProvider');
+            editProvider.innerHTML = filterProvider.innerHTML;
+            // Remove "All Providers" option if it exists
+            const allOption = editProvider.querySelector('option[value=""]');
+            if (allOption) allOption.remove();
+            
+            editProvider.value = provider;
+            
+            document.getElementById('editModal').style.display = 'block';
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+        }
+
+        async function handleEditSubmit(event) {
+            event.preventDefault();
+            const originalId = document.getElementById('editOriginalId').value;
+            const newTrackingId = document.getElementById('editTrackingId').value;
+            const originalTrackingId = document.getElementById('editProviderTrackingId').value;
+            const provider = document.getElementById('editProvider').value;
+
+            const saveBtn = document.getElementById('saveEditBtn');
+            const originalBtnText = saveBtn.innerText;
+            saveBtn.disabled = true;
+            saveBtn.innerText = 'Saving...';
+
+            try {
+                const response = await fetch(`/api/tracking/${encodeURIComponent(originalId)}/edit`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        newTrackingId,
+                        originalTrackingId,
+                        provider
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showToast('Tracking updated and refresh triggered', 'success');
+                    closeEditModal();
+                    loadTrackingList();
+                    loadStats();
+                } else {
+                    showToast(data.error || 'Failed to update tracking', 'error');
+                }
+            } catch (error) {
+                console.error('Edit error:', error);
+                showToast('An error occurred while saving', 'error');
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.innerText = originalBtnText;
+            }
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('editModal');
+            if (event.target == modal) {
+                closeEditModal();
+            }
+        }
     </script>
+    <!-- Edit Tracking Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Edit Tracking Details</h2>
+                <span class="close-modal" onclick="closeEditModal()">&times;</span>
+            </div>
+            <form id="editTrackingForm" onsubmit="handleEditSubmit(event)">
+                <input type="hidden" id="editOriginalId">
+                <div class="form-group">
+                    <label class="form-label" for="editTrackingId">Current Tracking ID (App ID)</label>
+                    <input type="text" id="editTrackingId" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="editProviderTrackingId">Provider Tracking ID</label>
+                    <input type="text" id="editProviderTrackingId" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="editProvider">Provider</label>
+                    <select id="editProvider" class="form-input" required>
+                        <!-- Options will be populated -->
+                    </select>
+                </div>
+                <div style="margin-top: 1rem; font-size: 0.8rem; color: var(--text-secondary);">
+                    <p>Note: Editing will clear existing history and trigger a fresh tracking update.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="saveEditBtn">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Client-side Analytics Initialization -->
     <script src="/analytics.js"></script>
     <!-- Vercel Web Analytics -->

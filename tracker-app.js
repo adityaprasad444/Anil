@@ -13,8 +13,11 @@ const Provider = require('./models/Provider');
 const BulkUpload = require('./models/BulkUpload');
 const EmailConfig = require('./models/EmailConfig');
 const EmailLog = require('./models/EmailLog');
+const Report = require('./models/Report');
+const EmailTemplate = require('./models/EmailTemplate');
 const trackingService = require('./services/trackingService');
-// const cron = require('node-cron');
+const emailService = require('./services/emailService');
+const cron = require('node-cron');
 const swaggerUi = require('swagger-ui-express');
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerOptions = require('./swaggerConfig');
@@ -741,6 +744,634 @@ app.post('/api/tracking/:trackingId/refresh', requireAuth, async (req, res) => {
   }
 });
 
+// Edit tracking endpoint
+/**
+ * @swagger
+ * /api/tracking/{trackingId}/edit:
+ *   put:
+ *     summary: Edit an existing tracking entry
+ *     tags: [Tracking]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: trackingId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               newTrackingId:
+ *                 type: string
+ *               originalTrackingId:
+ *                 type: string
+ *               provider:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Tracking updated successfully
+ *       404:
+ *         description: Tracking ID not found
+ *       500:
+ *         description: Internal server error
+ */
+app.put('/api/tracking/:trackingId/edit', requireAuth, async (req, res) => {
+  try {
+    const { trackingId } = req.params;
+    const { newTrackingId, originalTrackingId, provider } = req.body;
+
+    console.log(`📝 Editing tracking ID: ${trackingId}`, { newTrackingId, originalTrackingId, provider });
+
+    const escapedId = trackingId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const existingEntry = await TrackingData.findOne({
+      trackingId: { $regex: new RegExp(`^${escapedId}$`, 'i') }
+    });
+
+    if (!existingEntry) {
+      return res.status(404).json({ error: 'Tracking ID not found' });
+    }
+
+    // Check if any changes are actually being made
+    const isTrackingIdSame = !newTrackingId || newTrackingId === existingEntry.trackingId;
+    const isOriginalIdSame = !originalTrackingId || originalTrackingId === existingEntry.originalTrackingId;
+    const isProviderSame = !provider || provider === existingEntry.provider;
+
+    if (isTrackingIdSame && isOriginalIdSame && isProviderSame) {
+      console.log(`⚠️ No changes detected for ${trackingId}. Aborting edit.`);
+      return res.status(400).json({ error: 'No changes detected. Current data matches new data. History preserved.' });
+    }
+
+    // Update fields
+    if (newTrackingId) existingEntry.trackingId = newTrackingId;
+    if (originalTrackingId) existingEntry.originalTrackingId = originalTrackingId;
+    if (provider) existingEntry.provider = provider;
+
+    // "on edit of any existing history is found then clear that"
+    if (existingEntry.history && existingEntry.history.length > 0) {
+      console.log(`🧹 Clearing history for ${trackingId} due to edit`);
+      existingEntry.history = [];
+    }
+    
+    // Reset status to Pending to trigger a fresh status fetch
+    existingEntry.status = 'Pending';
+    existingEntry.lastUpdated = new Date();
+
+    await existingEntry.save();
+
+    console.log(`✅ Tracking updated for ${trackingId}. Triggering auto-refresh...`);
+
+    // "auto trigger tracking so new tracking data history can be loaded into tracking"
+    // Use the new tracking ID for refresh if it was changed
+    const idToRefresh = newTrackingId || trackingId;
+    
+    // Trigger refresh in background or wait for it
+    try {
+      await trackingService.refreshTrackingData(idToRefresh);
+    } catch (refreshError) {
+      console.error(`⚠️ Auto-trigger refresh failed for ${idToRefresh}:`, refreshError.message);
+      // We don't fail the whole request because the update was successful
+    }
+
+    res.json({ 
+      message: 'Tracking updated successfully and refresh triggered',
+      trackingId: idToRefresh
+    });
+
+  } catch (error) {
+    console.error('❌ Error editing tracking:', error);
+    if (error.code === 11000) {
+      return res.status(400).json({ error: 'New Tracking ID already exists' });
+    }
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Reports API
+/**
+ * @swagger
+ * /api/reports/generate:
+ *   get:
+ *     summary: Generate custom tracking reports
+ *     tags: [Reports]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: type
+ *         schema:
+ *           type: string
+ *           enum: [delivery_performance, volume_by_provider, status_distribution]
+ *       - in: query
+ *         name: startDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *       - in: query
+ *         name: endDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *     responses:
+ *       200:
+ *         description: Report data
+ */
+app.get('/api/reports/types', requireAuth, async (req, res) => {
+  try {
+    const reports = await Report.find({}).sort({ category: 1, title: 1 });
+    if (reports.length === 0) {
+      await seedReports();
+      const newReports = await Report.find({}).sort({ category: 1, title: 1 });
+      return res.json(newReports);
+    }
+    res.json(reports);
+  } catch (error) {
+    console.error('Feature reports fetch error:', error);
+    res.status(500).json({ error: 'Failed to fetch report types' });
+  }
+});
+
+async function seedReports() {
+  const seedData = [
+    { type: 'delivery_performance', title: 'Delivery Performance (Speed)', category: 'Core Metrics' },
+    { type: 'volume_by_provider', title: 'Volume by Provider', category: 'Core Metrics' },
+    { type: 'status_distribution', title: 'Status Distribution', category: 'Core Metrics' },
+    { type: 'stuck_shipments', title: 'Stuck Shipments (Aging)', category: 'Reliability & Health' },
+    { type: 'exception_rate', title: 'Provider Exception Rate', category: 'Reliability & Health' },
+    { type: 'data_health', title: 'Data Sync Health', category: 'Reliability & Health' },
+    { type: 'delivery_attempts', title: 'First-Attempt Delivery Rate', category: 'Engagement & Quality' },
+    { type: 'notification_stats', title: 'Email Notification Success', category: 'Engagement & Quality' },
+    { type: 'daily_trend', title: 'New Creations vs Delivered', category: 'Engagement & Quality' },
+    { type: 'same_day_delivery', title: 'Same Day Delivery Success', category: 'Engagement & Quality' },
+    { type: 'status_distribution_provider', title: 'Status Distribution by Provider', category: 'Engagement & Quality' },
+    { type: 'volume_trends', title: 'Volume Peak Trends', category: 'Engagement & Quality' }
+  ];
+
+  for (const r of seedData) {
+    await Report.findOneAndUpdate(
+      { type: r.type },
+      { $setOnInsert: r },
+      { upsert: true, new: true }
+    );
+  }
+}
+
+async function seedEmailTemplates() {
+  const templates = [
+    {
+      name: 'daily_report',
+      subject: 'Daily Tracking Report - {{date}}',
+      description: 'Daily summary of packages created and delivered',
+      variables: ['date', 'createdCount', 'deliveredCount', 'pendingCount'],
+      textContent: `Daily Tracking Report
+
+Date: {{date}}
+
+Packages Created: {{createdCount}}
+Packages Delivered: {{deliveredCount}}
+Pending Delivery: {{pendingCount}}
+
+This is an automated daily report from AK Logistics Tracking System.`,
+      htmlContent: `
+<div style="font-family: Arial, sans-serif; padding: 20px; background-color: #f4f4f4;">
+  <div style="max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+    <h2 style="color: #4f46e5; margin-bottom: 20px;">📊 Daily Tracking Report</h2>
+    <p style="color: #666; font-size: 14px; margin-bottom: 20px;">Report Date: <strong>{{date}}</strong></p>
+    
+    <div style="background: #f8f9fa; padding: 20px; border-radius: 6px; margin-bottom: 20px;">
+      <table style="width: 100%; border-collapse: collapse;">
+        <tr>
+          <td style="padding: 12px; border-bottom: 1px solid #e0e0e0;">
+            <span style="color: #666; font-size: 14px;">📦 Packages Created</span>
+          </td>
+          <td style="padding: 12px; border-bottom: 1px solid #e0e0e0; text-align: right;">
+            <strong style="color: #4f46e5; font-size: 24px;">{{createdCount}}</strong>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding: 12px; border-bottom: 1px solid #e0e0e0;">
+            <span style="color: #666; font-size: 14px;">✅ Packages Delivered</span>
+          </td>
+          <td style="padding: 12px; border-bottom: 1px solid #e0e0e0; text-align: right;">
+            <strong style="color: #10b981; font-size: 24px;">{{deliveredCount}}</strong>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding: 12px;">
+            <span style="color: #666; font-size: 14px;">⏳ Pending Delivery</span>
+          </td>
+          <td style="padding: 12px; text-align: right;">
+            <strong style="color: #f59e0b; font-size: 24px;">{{pendingCount}}</strong>
+          </td>
+        </tr>
+      </table>
+    </div>
+    
+    <p style="color: #999; font-size: 12px; text-align: center; margin-top: 30px; border-top: 1px solid #e0e0e0; padding-top: 20px;">
+      This is an automated daily report from AK Logistics Tracking System
+    </p>
+  </div>
+</div>`,
+      isActive: true
+    },
+    {
+      name: 'delivery_notification',
+      subject: '📦 Package Delivered: {{trackingId}}',
+      description: 'Notification when a package is delivered',
+      variables: ['trackingId', 'originalTrackingId', 'provider', 'status', 'location', 'destination', 'lastUpdated'],
+      textContent: `Package Delivered!
+
+Shipment for {{trackingId}} has been successfully delivered.
+
+System ID: {{trackingId}}
+Provider ID: {{originalTrackingId}}
+Provider: {{provider}}
+Status: {{status}}
+Location: {{location}}
+Destination: {{destination}}
+Last Updated: {{lastUpdated}}
+
+AK Logistics Tracking System`,
+      htmlContent: `
+<div style="font-family: sans-serif; line-height: 1.6; color: #333; max-width: 600px; border: 1px solid #eee; border-radius: 10px; padding: 20px;">
+    <h2 style="color: #10b981; margin-top: 0;">Package Delivered!</h2>
+    <p>Shipment for <strong>{{trackingId}}</strong> has been successfully delivered.</p>
+    
+    <div style="background: #f9fafb; padding: 15px; border-radius: 8px; margin: 20px 0;">
+        <p style="margin: 5px 0;"><strong>System ID:</strong> {{trackingId}}</p>
+        <p style="margin: 5px 0;"><strong>Provider ID:</strong> {{originalTrackingId}}</p>
+        <p style="margin: 5px 0;"><strong>Provider:</strong> {{provider}}</p>
+        <p style="margin: 5px 0;"><strong>Status:</strong> <span style="color: #10b981; font-weight: bold;">{{status}}</span></p>
+        <p style="margin: 5px 0;"><strong>Location:</strong> {{location}}</p>
+        <p style="margin: 5px 0;"><strong>Destination:</strong> {{destination}}</p>
+    </div>
+
+    <p style="font-size: 0.9em; color: #666;">
+        Last Updated: {{lastUpdated}}
+    </p>
+    <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+    <p style="font-size: 0.8em; color: #999; text-align: center;">AK Logistics Tracking System</p>
+</div>`,
+      isActive: true
+    },
+    {
+      name: 'admin_alert',
+      subject: '🚨 [Tracking Alert] {{subject}}',
+      description: 'Generic admin notification template',
+      variables: ['subject', 'message'],
+      textContent: `Admin Alert
+
+{{message}}
+
+This is an automated notification from AK Logistics Tracking System.`,
+      htmlContent: `
+<div style="font-family: Arial, sans-serif; padding: 20px; background-color: #fef2f2;">
+  <div style="max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-left: 4px solid #ef4444;">
+    <h2 style="color: #ef4444; margin-top: 0;">🚨 Admin Alert</h2>
+    <div style="background: #f9fafb; padding: 20px; border-radius: 6px; margin: 20px 0;">
+      <p style="color: #333; line-height: 1.6; margin: 0;">{{message}}</p>
+    </div>
+    <p style="color: #999; font-size: 12px; text-align: center; margin-top: 30px; border-top: 1px solid #e0e0e0; padding-top: 20px;">
+      This is an automated notification from AK Logistics Tracking System
+    </p>
+  </div>
+</div>`,
+      isActive: true
+    }
+  ];
+
+  for (const template of templates) {
+    await EmailTemplate.findOneAndUpdate(
+      { name: template.name },
+      { $setOnInsert: template },
+      { upsert: true, new: true }
+    );
+  }
+  console.log('✅ Email templates seeded');
+}
+
+app.get('/api/reports/generate', requireAuth, async (req, res) => {
+  try {
+    const { type, startDate, endDate, provider } = req.query;
+    console.log(`📊 Generating report: ${type}`, { startDate, endDate, provider });
+
+    // Validate if report type exists in DB
+    const reportMeta = await Report.findOne({ type });
+    if (!reportMeta) {
+      await seedReports();
+      const retryMeta = await Report.findOne({ type });
+      if (!retryMeta) return res.status(400).json({ error: 'Invalid report type' });
+    }
+
+    const filter = {};
+    if (startDate || endDate) {
+      filter.createdAt = {};
+      if (startDate) filter.createdAt.$gte = new Date(startDate);
+      if (endDate) {
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        filter.createdAt.$lte = end;
+      }
+    }
+    if (provider) filter.provider = provider;
+
+    let result = null;
+
+    if (type === 'delivery_performance') {
+      const delivered = await TrackingData.find({
+        ...filter,
+        status: { $regex: /^delivered$/i }
+      });
+
+      result = delivered.map(d => {
+        const deliveredEvent = d.history.find(h => h.status && h.status.toLowerCase().includes('delivered'));
+        const deliveryDate = deliveredEvent ? new Date(deliveredEvent.timestamp) : new Date(d.lastUpdated);
+        const createdDate = new Date(d.createdAt);
+        const days = Math.round((deliveryDate - createdDate) / (1000 * 60 * 60 * 24));
+        return {
+          trackingId: d.trackingId,
+          provider: d.provider,
+          days: days > 0 ? days : 1, // Minimum 1 day
+          date: deliveryDate
+        };
+      });
+      // Stats calculation for this report is done client side previously or here?
+      // Wait, existing code returned aggregated stats: { provider, avgDays, count, min, max, speed... }
+      // AND raw data? No, existing code returned the AGGREGATED result.
+      // I must match existing logic.
+      // Re-reading existing code for delivery_performance...
+      // It did aggregation!
+      // Let me fix that.
+      
+      const stats = {};
+      delivered.forEach(pkg => {
+        const p = pkg.provider || 'Unknown';
+        if (!stats[p]) stats[p] = { totalDays: 0, count: 0, fast: 0, medium: 0, slow: 0, min: Infinity, max: 0 };
+        const deliveredEvent = pkg.history.find(h => h.status && h.status.toLowerCase().includes('delivered'));
+        const deliveryDate = deliveredEvent ? new Date(deliveredEvent.timestamp) : new Date(pkg.lastUpdated);
+        const createdDate = new Date(pkg.createdAt);
+        const diffMs = deliveryDate - createdDate;
+        const diffDays = Math.max(0.1, diffMs / (1000 * 60 * 60 * 24));
+        stats[p].totalDays += diffDays;
+        stats[p].count++;
+        stats[p].min = Math.min(stats[p].min, diffDays);
+        stats[p].max = Math.max(stats[p].max, diffDays);
+        if (diffDays <= 3) stats[p].fast++;
+        else if (diffDays <= 7) stats[p].medium++;
+        else stats[p].slow++;
+      });
+      result = Object.keys(stats).map(p => ({
+        provider: p,
+        avgDays: (stats[p].totalDays / stats[p].count).toFixed(2),
+        count: stats[p].count,
+        min: stats[p].min.toFixed(1),
+        max: stats[p].max.toFixed(1),
+        speed: { fast: stats[p].fast, medium: stats[p].medium, slow: stats[p].slow }
+      }));
+    }
+
+    if (type === 'volume_by_provider') {
+      const volume = await TrackingData.aggregate([
+        { $match: filter },
+        { $group: { _id: "$provider", count: { $sum: 1 } } },
+        { $sort: { count: -1 } }
+      ]);
+      result = volume.map(v => ({ provider: v._id || 'Unknown', count: v.count }));
+    }
+
+    if (type === 'status_distribution') {
+      const dist = await TrackingData.aggregate([
+        { $match: filter },
+        { $group: { _id: "$status", count: { $sum: 1 } } },
+        { $sort: { count: -1 } }
+      ]);
+      result = dist.map(d => ({ status: d._id || 'Unknown', count: d.count }));
+    }
+
+    if (type === 'stuck_shipments') {
+      const thresholdDays = 5;
+      const thresholdDate = new Date();
+      thresholdDate.setDate(thresholdDate.getDate() - thresholdDays);
+      const stuck = await TrackingData.find({
+        ...filter,
+        status: { $nin: [/delivered/i, /cancelled/i, /returned/i] },
+        lastUpdated: { $lte: thresholdDate }
+      }).sort({ lastUpdated: 1 });
+      result = stuck.map(s => ({
+        trackingId: s.trackingId,
+        provider: s.provider,
+        status: s.status,
+        lastUpdated: s.lastUpdated,
+        daysStuck: Math.floor((new Date() - s.lastUpdated) / (1000 * 60 * 60 * 24))
+      }));
+    }
+
+    if (type === 'exception_rate') {
+      const exceptions = await TrackingData.aggregate([
+        { $match: filter },
+        { 
+          $project: {
+            provider: 1,
+            isException: { 
+              $cond: [
+                { $or: [
+                  { $regexMatch: { input: "$status", regex: /failed/i } },
+                  { $regexMatch: { input: "$status", regex: /delay/i } },
+                  { $regexMatch: { input: "$status", regex: /hold/i } },
+                  { $regexMatch: { input: "$status", regex: /return/i } }
+                ]}, 1, 0
+              ]
+            }
+          }
+        },
+        { $group: { _id: "$provider", total: { $sum: 1 }, exceptions: { $sum: "$isException" } } },
+        { $project: { provider: "$_id", total: 1, exceptions: 1, rate: { $multiply: [{ $divide: ["$exceptions", { $max: ["$total", 1] }] }, 100] } } },
+        { $sort: { rate: -1 } }
+      ]);
+      result = exceptions.map(e => ({ ...e, rate: e.rate.toFixed(1) }));
+    }
+
+    if (type === 'volume_trends') {
+      const trends = await TrackingData.aggregate([
+        { $match: filter },
+        { 
+          $group: { 
+            _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }, 
+            count: { $sum: 1 } 
+          } 
+        },
+        { $sort: { _id: 1 } }
+      ]);
+      result = trends.map(t => ({ date: t._id, count: t.count }));
+    }
+
+    if (type === 'data_health') {
+      const now = new Date();
+      const oneDayAgo = new Date(now - 24 * 60 * 60 * 1000);
+      const twoDaysAgo = new Date(now - 48 * 60 * 60 * 1000);
+      const health = await TrackingData.aggregate([
+        { $match: filter },
+        { 
+          $project: {
+            provider: 1,
+            freshness: {
+              $cond: [
+                { $gt: ["$lastUpdated", oneDayAgo] }, "Fresh (<24h)",
+                { $cond: [{ $gt: ["$lastUpdated", twoDaysAgo] }, "Stale (24-48h)", "Critical (>48h)"] }
+              ]
+            }
+          }
+        },
+        { $group: { _id: { provider: "$provider", freshness: "$freshness" }, count: { $sum: 1 } } },
+        { $sort: { "_id.provider": 1, "_id.freshness": 1 } }
+      ]);
+      result = health.map(h => ({ 
+        provider: h._id.provider || 'Unknown', 
+        freshness: h._id.freshness, 
+        count: h.count 
+      }));
+    }
+
+    if (type === 'delivery_attempts') {
+      const delivered = await TrackingData.find({
+        ...filter,
+        status: { $regex: /^delivered$/i }
+      });
+      const stats = {};
+      delivered.forEach(pkg => {
+        const p = pkg.provider || 'Unknown';
+        if (!stats[p]) stats[p] = { total: 0, firstAttempt: 0 };
+        stats[p].total++;
+        const attempts = pkg.history.filter(h => h.status && h.status.toLowerCase().includes('out for delivery')).length;
+        if (attempts <= 1) stats[p].firstAttempt++;
+      });
+      result = Object.entries(stats).map(([k, v]) => ({
+        provider: k,
+        total: v.total,
+        firstAttempt: v.firstAttempt,
+        rate: v.total > 0 ? ((v.firstAttempt / v.total) * 100).toFixed(1) : 0
+      }));
+    }
+
+    if (type === 'notification_stats') {
+      const logs = await EmailLog.aggregate([
+        { 
+          $match: { 
+            ...(startDate || endDate ? { timestamp: filter.createdAt } : {})
+          } 
+        },
+        { $group: { _id: { type: "$type", status: "$status" }, count: { $sum: 1 } } }
+      ]);
+      const emailStats = {};
+      logs.forEach(l => {
+        const t = l._id.type;
+        if (!emailStats[t]) emailStats[t] = { success: 0, failed: 0 };
+        if (l._id.status === 'SUCCESS') emailStats[t].success += l.count;
+        else emailStats[t].failed += l.count;
+      });
+      result = Object.entries(emailStats).map(([k, v]) => ({
+        type: k,
+        success: v.success,
+        failed: v.failed,
+        rate: (v.success + v.failed) > 0 ? ((v.success / (v.success + v.failed)) * 100).toFixed(1) : 0
+      }));
+    }
+
+    if (type === 'daily_trend') {
+      const creations = await TrackingData.aggregate([
+        { $match: filter },
+        { 
+          $group: { 
+            _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }, 
+            created: { $sum: 1 } 
+          } 
+        }
+      ]);
+      const allDelivered = await TrackingData.find({
+        ...filter,
+        status: { $regex: /^delivered$/i }
+      });
+      const deliveryCounts = {};
+      allDelivered.forEach(pkg => {
+        const deliveredEvent = pkg.history.find(h => h.status && h.status.toLowerCase().includes('delivered'));
+        const date = deliveredEvent ? 
+          new Date(deliveredEvent.timestamp).toISOString().split('T')[0] : 
+          new Date(pkg.lastUpdated).toISOString().split('T')[0];
+        deliveryCounts[date] = (deliveryCounts[date] || 0) + 1;
+      });
+      const dates = new Set([...creations.map(c => c._id), ...Object.keys(deliveryCounts)]);
+      result = Array.from(dates).map(date => ({
+        date,
+        created: creations.find(c => c._id === date)?.created || 0,
+        delivered: deliveryCounts[date] || 0
+      })).sort((a, b) => a.date.localeCompare(b.date));
+    }
+
+    if (type === 'same_day_delivery') {
+      const delivered = await TrackingData.find({
+        ...filter,
+        status: { $regex: /^delivered$/i }
+      });
+      result = [];
+      delivered.forEach(pkg => {
+        const deliveredEvent = pkg.history.find(h => h.status && h.status.toLowerCase().includes('delivered'));
+        const deliveryDate = deliveredEvent ? new Date(deliveredEvent.timestamp) : new Date(pkg.lastUpdated);
+        const createdDate = new Date(pkg.createdAt);
+        const sameDay = deliveryDate.toDateString() === createdDate.toDateString();
+        if (sameDay) {
+          result.push({
+            trackingId: pkg.trackingId,
+            provider: pkg.provider,
+            created: pkg.createdAt,
+            delivered: deliveryDate,
+            duration: ((deliveryDate - createdDate) / (1000 * 60 * 60)).toFixed(1) + ' hrs'
+          });
+        }
+      });
+    }
+
+    if (type === 'status_distribution_provider') {
+      const dist = await TrackingData.aggregate([
+        { $match: filter },
+        { 
+          $group: { 
+            _id: { provider: "$provider", status: "$status" }, 
+            count: { $sum: 1 } 
+          } 
+        },
+        { $sort: { "_id.provider": 1, "_id.status": 1 } }
+      ]);
+      result = {};
+      dist.forEach(item => {
+        const p = item._id.provider || 'Unknown';
+        if (!result[p]) result[p] = {};
+        result[p][item._id.status] = item.count;
+      });
+    }
+
+    if (result) {
+      await Report.updateOne(
+        { type }, 
+        { 
+          $set: { 
+            lastRefreshed: new Date(),
+            lastData: result
+          }
+        }
+      );
+      return res.json(result);
+    }
+
+    res.status(400).json({ error: 'Invalid report type' });
+  } catch (error) {
+    console.error('❌ Report generation error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
 // Bulk refresh endpoint - refresh all active tracking data
 /**
  * @swagger
@@ -1400,6 +2031,9 @@ const startServer = async () => {
   try {
     // Connect to MongoDB
     await connectDB();
+    
+    // Seed email templates
+    await seedEmailTemplates();
 
     const PORT = config.server.port || 3001;
     app.listen(PORT, () => {
@@ -1409,6 +2043,74 @@ const startServer = async () => {
       console.log(`🌐 URL: http://localhost:${PORT}`);
       console.log(`⏰ Started at: ${new Date().toISOString()}\n`);
     });
+
+    // Setup daily report email cron job (runs at 8:00 AM every day)
+    cron.schedule('0 8 * * *', async () => {
+      console.log('📊 Running scheduled daily report email...');
+      try {
+        // Generate daily trend report (created vs delivered)
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        yesterday.setHours(0, 0, 0, 0);
+        
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        const startDate = yesterday.toISOString().split('T')[0];
+        const endDate = today.toISOString().split('T')[0];
+        
+        console.log(`📅 Generating daily report for ${startDate}`);
+        
+        // Fetch data for daily trend report
+        const createdCount = await TrackingData.countDocuments({
+          createdAt: {
+            $gte: yesterday,
+            $lt: today
+          }
+        });
+        
+        const deliveredCount = await TrackingData.countDocuments({
+          status: 'Delivered',
+          updatedAt: {
+            $gte: yesterday,
+            $lt: today
+          }
+        });
+        
+        const reportData = {
+          date: startDate,
+          created: createdCount,
+          delivered: deliveredCount,
+          pending: createdCount - deliveredCount
+        };
+        
+        // Update Report collection with latest data
+        await Report.updateOne(
+          { type: 'daily_trend' },
+          {
+            $set: {
+              lastRefreshed: new Date(),
+              lastData: [reportData]
+            }
+          }
+        );
+        
+        // Send email using template with parameters
+        await emailService.sendFromTemplate('daily_report', {
+          date: startDate,
+          createdCount: createdCount.toString(),
+          deliveredCount: deliveredCount.toString(),
+          pendingCount: reportData.pending.toString()
+        });
+        
+        console.log('✅ Daily report email sent successfully');
+        
+      } catch (error) {
+        console.error('❌ Error sending daily report email:', error);
+      }
+    });
+    
+    console.log('⏰ Daily report email cron job scheduled (runs at 8:00 AM)');
   } catch (error) {
     console.error('❌ Failed to start server:', error);
     process.exit(1);

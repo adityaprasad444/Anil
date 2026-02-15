@@ -2,6 +2,7 @@ const nodemailer = require('nodemailer');
 const config = require('../config');
 const EmailConfig = require('../models/EmailConfig');
 const EmailLog = require('../models/EmailLog');
+const EmailTemplate = require('../models/EmailTemplate');
 
 class EmailService {
     constructor() {
@@ -75,27 +76,14 @@ class EmailService {
         console.log(`📧 Attempting to send Admin Notification to: ${this.config.adminEmail.join(', ')}`);
 
         try {
-            console.log('📝 Preparing admin notification options...');
-            const mailOptions = {
-                from: `"${this.config.fromName}" <${this.config.user}>`,
-                to: this.config.adminEmail.join(', '),
-                subject: `🚨 [Tracking Alert] ${subject}`,
-                text: text,
-                html: html || `<p>${text}</p>`
+            // Send using template
+            const params = {
+                subject: subject,
+                message: html || text
             };
 
-            console.log('🚀 Sending admin notification email now...');
-            const info = await this.transporter.sendMail(mailOptions);
+            const info = await this.sendFromTemplate('admin_alert', params);
             console.log('✅ Admin notification email sent:', info.messageId);
-            
-            await this.logEmail(
-                'ADMIN_NOTIFICATION', 
-                this.config.adminEmail, 
-                mailOptions.subject, 
-                'SUCCESS', 
-                null, 
-                { messageId: info.messageId }
-            );
             
             return info;
         } catch (error) {
@@ -108,6 +96,79 @@ class EmailService {
                 'FAILED', 
                 error
             );
+        }
+    }
+
+    renderTemplate(templateContent, params) {
+        // Replace {{variableName}} with actual values from params object
+        let rendered = templateContent;
+        for (const [key, value] of Object.entries(params)) {
+            const regex = new RegExp(`{{${key}}}`, 'g');
+            rendered = rendered.replace(regex, value);
+        }
+        return rendered;
+    }
+
+    async sendFromTemplate(templateName, params, recipientOverride = null) {
+        if (!await this.ensureTransporter()) {
+            console.log('⚠️ Cannot send email: No valid email configuration found.');
+            return;
+        }
+
+        try {
+            // Fetch template from database
+            const template = await EmailTemplate.findOne({ name: templateName, isActive: true });
+            if (!template) {
+                throw new Error(`Template "${templateName}" not found or inactive`);
+            }
+
+            console.log(`📧 Using template: ${templateName}`);
+
+            // Render template with parameters
+            const subject = this.renderTemplate(template.subject, params);
+            const textContent = this.renderTemplate(template.textContent, params);
+            const htmlContent = this.renderTemplate(template.htmlContent, params);
+
+            // Determine recipients
+            const recipients = recipientOverride || this.config.adminEmail;
+            if (!recipients || (Array.isArray(recipients) && recipients.length === 0)) {
+                console.log('⚠️ Cannot send email: No recipients specified.');
+                return;
+            }
+
+            const mailOptions = {
+                from: `"${this.config.fromName}" <${this.config.user}>`,
+                to: Array.isArray(recipients) ? recipients.join(', ') : recipients,
+                subject: subject,
+                text: textContent,
+                html: htmlContent
+            };
+
+            console.log(`🚀 Sending email to: ${mailOptions.to}`);
+            const info = await this.transporter.sendMail(mailOptions);
+            console.log('✅ Email sent:', info.messageId);
+
+            await this.logEmail(
+                templateName.toUpperCase(),
+                Array.isArray(recipients) ? recipients : [recipients],
+                subject,
+                'SUCCESS',
+                null,
+                { messageId: info.messageId, template: templateName }
+            );
+
+            return info;
+        } catch (error) {
+            console.error('❌ Failed to send template email:', error);
+
+            await this.logEmail(
+                templateName.toUpperCase(),
+                recipientOverride || this.config.adminEmail,
+                `Template: ${templateName}`,
+                'FAILED',
+                error
+            );
+            throw error;
         }
     }
 
@@ -125,50 +186,21 @@ class EmailService {
         console.log(`📧 Attempting to send Delivery Notification for ${trackingData.trackingId} to: ${this.config.adminEmail.join(', ')}`);
 
         try {
-            console.log('📝 Preparing delivery notification content...');
-            const subject = `📦 Package Delivered: ${trackingData.trackingId}`;
-            const html = `
-                <div style="font-family: sans-serif; line-height: 1.6; color: #333; max-width: 600px; border: 1px solid #eee; border-radius: 10px; padding: 20px;">
-                    <h2 style="color: #10b981; margin-top: 0;">Package Delivered!</h2>
-                    <p>Shipment for <strong>${trackingData.trackingId}</strong> has been successfully delivered.</p>
-                    
-                    <div style="background: #f9fafb; padding: 15px; border-radius: 8px; margin: 20px 0;">
-                        <p style="margin: 5px 0;"><strong>System ID:</strong> ${trackingData.trackingId}</p>
-                        <p style="margin: 5px 0;"><strong>Provider ID:</strong> ${trackingData.originalTrackingId}</p>
-                        <p style="margin: 5px 0;"><strong>Provider:</strong> ${trackingData.provider}</p>
-                        <p style="margin: 5px 0;"><strong>Status:</strong> <span style="color: #10b981; font-weight: bold;">${trackingData.status}</span></p>
-                        ${trackingData.location ? `<p style="margin: 5px 0;"><strong>Location:</strong> ${trackingData.location}</p>` : ''}
-                        ${trackingData.destination ? `<p style="margin: 5px 0;"><strong>Destination:</strong> ${trackingData.destination}</p>` : ''}
-                    </div>
+            // Send using template
+            const params = {
+                trackingId: trackingData.trackingId || '',
+                originalTrackingId: trackingData.originalTrackingId || '',
+                provider: trackingData.provider || '',
+                status: trackingData.status || '',
+                location: trackingData.location || 'N/A',
+                destination: trackingData.destination || 'N/A',
+                lastUpdated: trackingData.lastUpdated ? 
+                    new Date(trackingData.lastUpdated).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }) : 
+                    'N/A'
+            };
 
-                    <p style="font-size: 0.9em; color: #666;">
-                        Last Updated: ${new Date(trackingData.lastUpdated).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}
-                    </p>
-                    <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
-                    <p style="font-size: 0.8em; color: #999; text-align: center;">AK Logistics Tracking System</p>
-                </div>
-            `;
-
-            console.log('🚀 Sending delivery notification email now...');
-            const info = await this.transporter.sendMail({
-                from: `"${this.config.fromName}" <${this.config.user}>`,
-                to: this.config.adminEmail.join(', '),
-                subject: subject,
-                html: html
-            });
+            const info = await this.sendFromTemplate('delivery_notification', params);
             console.log('✅ Delivery notification sent to admin:', trackingData.trackingId);
-            
-            await this.logEmail(
-                'DELIVERY_NOTIFICATION', 
-                this.config.adminEmail, 
-                subject, 
-                'SUCCESS', 
-                null, 
-                { 
-                    trackingId: trackingData.trackingId,
-                    messageId: info.messageId 
-                }
-            );
             
             return info;
         } catch (error) {
