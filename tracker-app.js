@@ -2015,10 +2015,86 @@ app.put('/api/config/email', requireAuth, async (req, res) => {
 
 // Scheduled Tasks (Cron Jobs)
 // Only run if ENABLE_CRON is set to 'true'. This prevents duplication in multi-instance deployments.
-// if (process.env.ENABLE_CRON === 'true') {
-//   console.log('⏰ Cron jobs enabled for this instance.');
+const isCronEnabled = process.env.ENABLE_CRON === 'true' || process.env.NODE_ENV === 'development';
 
-// Cron logic removed
+if (isCronEnabled) {
+  console.log('⏰ Cron jobs initialization requested.');
+}
+
+/**
+ * @swagger
+ * /api/cron/daily-report:
+ *   get:
+ *     summary: Trigger daily report email (used by scheduled jobs)
+ *     tags: [System]
+ *     responses:
+ *       200:
+ *         description: Daily report triggered
+ */
+app.get('/api/cron/daily-report', async (req, res) => {
+  console.log('📊 Manual trigger for daily report email...');
+  try {
+    const reportResults = await sendDailyReport();
+    res.json({ success: true, ...reportResults });
+  } catch (error) {
+    console.error('❌ Manual daily report failed:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+async function sendDailyReport() {
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  yesterday.setHours(0, 0, 0, 0);
+  
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const startDate = yesterday.toLocaleDateString('en-CA'); // YYYY-MM-DD format
+  console.log(`📅 Generating daily report for ${startDate}`);
+  
+  const createdCount = await TrackingData.countDocuments({
+    createdAt: {
+      $gte: yesterday,
+      $lt: today
+    }
+  });
+  
+  const deliveredCount = await TrackingData.countDocuments({
+    status: 'Delivered',
+    updatedAt: {
+      $gte: yesterday,
+      $lt: today
+    }
+  });
+  
+  const reportData = {
+    date: startDate,
+    created: createdCount,
+    delivered: deliveredCount,
+    pending: createdCount - deliveredCount
+  };
+  
+  await Report.updateOne(
+    { type: 'daily_trend' },
+    {
+      $set: {
+        lastRefreshed: new Date(),
+        lastData: [reportData]
+      }
+    },
+    { upsert: true }
+  );
+  
+  await emailService.sendFromTemplate('daily_report', {
+    date: startDate,
+    createdCount: createdCount.toString(),
+    deliveredCount: deliveredCount.toString(),
+    pendingCount: reportData.pending.toString()
+  });
+  
+  return reportData;
+}
 
 // Global error handling middleware
 app.use((err, req, res, next) => {
@@ -2045,72 +2121,18 @@ const startServer = async () => {
     });
 
     // Setup daily report email cron job (runs at 8:00 AM every day)
-    cron.schedule('0 8 * * *', async () => {
-      console.log('📊 Running scheduled daily report email...');
-      try {
-        // Generate daily trend report (created vs delivered)
-        const yesterday = new Date();
-        yesterday.setDate(yesterday.getDate() - 1);
-        yesterday.setHours(0, 0, 0, 0);
-        
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        
-        const startDate = yesterday.toISOString().split('T')[0];
-        const endDate = today.toISOString().split('T')[0];
-        
-        console.log(`📅 Generating daily report for ${startDate}`);
-        
-        // Fetch data for daily trend report
-        const createdCount = await TrackingData.countDocuments({
-          createdAt: {
-            $gte: yesterday,
-            $lt: today
-          }
-        });
-        
-        const deliveredCount = await TrackingData.countDocuments({
-          status: 'Delivered',
-          updatedAt: {
-            $gte: yesterday,
-            $lt: today
-          }
-        });
-        
-        const reportData = {
-          date: startDate,
-          created: createdCount,
-          delivered: deliveredCount,
-          pending: createdCount - deliveredCount
-        };
-        
-        // Update Report collection with latest data
-        await Report.updateOne(
-          { type: 'daily_trend' },
-          {
-            $set: {
-              lastRefreshed: new Date(),
-              lastData: [reportData]
-            }
-          }
-        );
-        
-        // Send email using template with parameters
-        await emailService.sendFromTemplate('daily_report', {
-          date: startDate,
-          createdCount: createdCount.toString(),
-          deliveredCount: deliveredCount.toString(),
-          pendingCount: reportData.pending.toString()
-        });
-        
-        console.log('✅ Daily report email sent successfully');
-        
-      } catch (error) {
-        console.error('❌ Error sending daily report email:', error);
-      }
-    });
-    
-    console.log('⏰ Daily report email cron job scheduled (runs at 8:00 AM)');
+    if (isCronEnabled) {
+      cron.schedule('0 8 * * *', async () => {
+        console.log('📊 Running scheduled daily report email...');
+        try {
+          await sendDailyReport();
+          console.log('✅ Daily report email sent successfully');
+        } catch (error) {
+          console.error('❌ Error sending daily report email:', error);
+        }
+      });
+      console.log('⏰ Daily report email cron job scheduled (runs at 8:00 AM)');
+    }
   } catch (error) {
     console.error('❌ Failed to start server:', error);
     process.exit(1);

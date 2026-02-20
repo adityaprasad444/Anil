@@ -15,7 +15,7 @@ const emailLogSchema = new mongoose.Schema({
     },
     type: {
         type: String,
-        enum: ['ADMIN_NOTIFICATION', 'DELIVERY_NOTIFICATION', 'BULK_REPORT'],
+        enum: ['ADMIN_NOTIFICATION', 'DELIVERY_NOTIFICATION', 'BULK_REPORT', 'DAILY_REPORT'],
         default: 'ADMIN_NOTIFICATION'
     },
     status: {

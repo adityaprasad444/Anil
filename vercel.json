@@ -16,5 +16,11 @@
             "source": "/(.*)",
             "destination": "/tracker-app.js"
         }
+    ],
+    "crons": [
+        {
+            "path": "/api/cron/daily-report",
+            "schedule": "0 8 * * *"
+        }
     ]
 }
