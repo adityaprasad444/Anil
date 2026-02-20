@@ -27,7 +27,9 @@ const emailLogSchema = new mongoose.Schema({
     metadata: {
         type: mongoose.Schema.Types.Mixed
     },
-    error: String
+    error: String,
+    htmlContent: String
+
 }, {
     timestamps: true
 });

@@ -812,6 +812,7 @@
                 <li><a href="/tools" class="nav-link">Manage</a></li>
                 <li><a href="/config" class="nav-link">Configuration</a></li>
                 <li><a href="#" class="nav-link" id="nav-reports" onclick="switchTab('reports')">Reports</a></li>
+                <li><a href="#" class="nav-link" id="nav-emails" onclick="switchTab('emails')">Emails</a></li>
                 <li><button class="nav-link" onclick="handleLogout()"
                         style="background: none; border: none; cursor: pointer; display: block; width: 100%; text-align: left;">Logout</button>
                 </li>
@@ -1036,6 +1037,97 @@
                 </div>
             </div>
         </div>
+
+        <!-- Emails Section -->
+        <div id="emailsSection" style="display: none;">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">📧 Email Logs</h2>
+                    <button onclick="loadEmailLogs(1)" class="btn btn-secondary" id="refreshEmailsBtn">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                        Refresh
+                    </button>
+                </div>
+                <div class="card-body">
+                    <!-- Email Stats Cards -->
+                    <div class="email-stats-row">
+                        <div class="email-stat-card">
+                            <span class="email-stat-value" id="emailStatTotal">0</span>
+                            <span class="email-stat-label">Total Emails</span>
+                        </div>
+                        <div class="email-stat-card success">
+                            <span class="email-stat-value" id="emailStatSuccess">0</span>
+                            <span class="email-stat-label">Delivered</span>
+                        </div>
+                        <div class="email-stat-card failed">
+                            <span class="email-stat-value" id="emailStatFailed">0</span>
+                            <span class="email-stat-label">Failed</span>
+                        </div>
+                    </div>
+
+                    <!-- Email Filters -->
+                    <div class="email-filters">
+                        <select id="emailFilterType" class="form-input" onchange="loadEmailLogs(1)">
+                            <option value="">All Types</option>
+                            <option value="DAILY_REPORT">Daily Report</option>
+                            <option value="ADMIN_NOTIFICATION">Admin Notification</option>
+                            <option value="DELIVERY_NOTIFICATION">Delivery Notification</option>
+                            <option value="BULK_REPORT">Bulk Report</option>
+                        </select>
+                        <select id="emailFilterStatus" class="form-input" onchange="loadEmailLogs(1)">
+                            <option value="">All Statuses</option>
+                            <option value="SUCCESS">Success</option>
+                            <option value="FAILED">Failed</option>
+                        </select>
+                    </div>
+
+                    <!-- Email Logs Table -->
+                    <div class="email-table-container">
+                        <table class="email-table" id="emailLogTable">
+                            <thead>
+                                <tr>
+                                    <th>Date / Time</th>
+                                    <th>Type</th>
+                                    <th>Subject</th>
+                                    <th>Recipients</th>
+                                    <th>Status</th>
+                                    <th style="text-align: center;">Preview</th>
+                                </tr>
+                            </thead>
+                            <tbody id="emailLogBody">
+                                <tr><td colspan="6" style="text-align: center; padding: 2rem; color: var(--text-secondary);">Loading email logs...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Email Logs Pagination -->
+                    <div class="email-pagination">
+                        <span id="emailPageInfo" style="font-size: 0.9rem; color: var(--text-secondary);">Page 1 of 1</span>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button id="emailPrevPage" class="btn btn-secondary" onclick="changeEmailPage(-1)" disabled>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                            </button>
+                            <button id="emailNextPage" class="btn btn-secondary" onclick="changeEmailPage(1)" disabled>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Email Preview Modal -->
+    <div id="emailPreviewModal" class="modal">
+        <div class="modal-content" style="max-width: 750px; width: 95%; margin: 4% auto;">
+            <div class="modal-header">
+                <h2 class="modal-title" id="emailPreviewTitle">Email Preview</h2>
+                <span class="close-modal" onclick="closeEmailPreview()">&times;</span>
+            </div>
+            <div id="emailPreviewBody" style="background: #fff; border-radius: 0.5rem; overflow: hidden; min-height: 200px;">
+                <p style="text-align: center; padding: 3rem; color: #999;">Loading preview...</p>
+            </div>
+        </div>
     </div>
 
     <style>
@@ -1072,6 +1164,155 @@
         .speed-fast { background: var(--success-color); }
         .speed-medium { background: var(--warning-color); }
         .speed-slow { background: var(--danger-color); }
+
+        /* ── Email Logs Styles ── */
+        .email-stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .email-stat-card {
+            background: var(--bg-body);
+            border: 1px solid var(--border-color);
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+            text-align: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .email-stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+        .email-stat-card.success { border-left: 4px solid var(--success-color); }
+        .email-stat-card.failed  { border-left: 4px solid var(--danger-color); }
+        .email-stat-value {
+            display: block;
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        .email-stat-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 600;
+        }
+        .email-filters {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+        .email-filters .form-input {
+            width: auto;
+            min-width: 180px;
+        }
+        .email-table-container {
+            overflow-x: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+        }
+        .email-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.88rem;
+        }
+        .email-table th {
+            background: var(--bg-body);
+            color: var(--text-secondary);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.72rem;
+            letter-spacing: 0.05em;
+            padding: 0.85rem 1rem;
+            text-align: left;
+            border-bottom: 2px solid var(--border-color);
+            white-space: nowrap;
+        }
+        .email-table td {
+            padding: 0.85rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: middle;
+        }
+        .email-table tbody tr {
+            transition: background 0.15s;
+        }
+        .email-table tbody tr:hover {
+            background: var(--bg-body);
+        }
+        .email-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+        .email-type-badge {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 0.3rem;
+            font-size: 0.72rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            white-space: nowrap;
+        }
+        .email-type-badge.daily    { background: rgba(99,102,241,0.12); color: #6366f1; }
+        .email-type-badge.admin    { background: rgba(245,158,11,0.12); color: #f59e0b; }
+        .email-type-badge.delivery { background: rgba(16,185,129,0.12); color: #10b981; }
+        .email-type-badge.bulk     { background: rgba(139,92,246,0.12); color: #8b5cf6; }
+        .email-status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.25rem 0.65rem;
+            border-radius: 1rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .email-status-badge.success {
+            background: rgba(16,185,129,0.12);
+            color: var(--success-color);
+        }
+        .email-status-badge.failed {
+            background: rgba(239,68,68,0.12);
+            color: var(--danger-color);
+        }
+        .email-preview-btn {
+            background: none;
+            border: 1px solid var(--border-color);
+            border-radius: 0.4rem;
+            padding: 0.35rem 0.65rem;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        .email-preview-btn:hover {
+            color: var(--primary-color);
+            border-color: var(--primary-color);
+            background: var(--primary-light);
+        }
+        .email-preview-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        .email-pagination {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 1.25rem;
+            padding-top: 1rem;
+            border-top: 1px dashed var(--border-color);
+        }
+        @media (max-width: 768px) {
+            .email-filters { flex-direction: column; }
+            .email-filters .form-input { width: 100%; }
+            .email-table { font-size: 0.8rem; }
+            .email-table th, .email-table td { padding: 0.6rem 0.5rem; }
+        }
     </style>
 
     <script>
@@ -1913,8 +2154,8 @@
                 // Handle tab switching via URL param
                 const urlParams = new URLSearchParams(window.location.search);
                 const tab = urlParams.get('tab');
-                if (tab === 'reports') {
-                    switchTab('reports');
+                if (tab === 'reports' || tab === 'emails') {
+                    switchTab(tab);
                 }
 
             } catch (error) {
@@ -1927,26 +2168,36 @@
             const statsGrid = document.querySelector('div[style*="grid-template-columns"]');
             const filterControls = document.querySelector('.filter-pagination-controls');
             const reportsSection = document.getElementById('reportsSection');
+            const emailsSection  = document.getElementById('emailsSection');
             
             const navDashboard = document.getElementById('nav-dashboard');
-            const navReports = document.getElementById('nav-reports');
+            const navReports   = document.getElementById('nav-reports');
+            const navEmails    = document.getElementById('nav-emails');
+
+            // Hide all sections
+            managementCard.style.display = 'none';
+            statsGrid.style.display = 'none';
+            filterControls.style.display = 'none';
+            reportsSection.style.display = 'none';
+            emailsSection.style.display  = 'none';
+
+            // Deactivate all nav links
+            navDashboard.classList.remove('active');
+            navReports.classList.remove('active');
+            navEmails.classList.remove('active');
 
             if (tab === 'reports') {
-                managementCard.style.display = 'none';
-                statsGrid.style.display = 'none';
-                filterControls.style.display = 'none';
                 reportsSection.style.display = 'block';
-                
-                navDashboard.classList.remove('active');
                 navReports.classList.add('active');
+            } else if (tab === 'emails') {
+                emailsSection.style.display = 'block';
+                navEmails.classList.add('active');
+                loadEmailLogs(1);
             } else {
                 managementCard.style.display = 'block';
                 statsGrid.style.display = 'grid';
                 filterControls.style.display = 'flex';
-                reportsSection.style.display = 'none';
-                
                 navDashboard.classList.add('active');
-                navReports.classList.remove('active');
             }
         }
 
@@ -2744,11 +2995,161 @@
             }
         }
 
+        // ── Email Logs Functions ──────────────────────────────────────
+        let emailLogPage = 1;
+        const emailLogLimit = 15;
+
+        async function loadEmailLogs(page = 1) {
+            emailLogPage = page;
+            const type   = document.getElementById('emailFilterType').value;
+            const status = document.getElementById('emailFilterStatus').value;
+            const tbody  = document.getElementById('emailLogBody');
+
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 2rem; color: var(--text-secondary);"><svg class="spinner" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.21-8.58"></path></svg></td></tr>';
+
+            try {
+                const params = new URLSearchParams({ page, limit: emailLogLimit });
+                if (type)   params.set('type', type);
+                if (status) params.set('status', status);
+
+                const response = await fetch(`/api/email-logs?${params}`, { credentials: 'include' });
+                const data = await response.json();
+                if (data.error) throw new Error(data.error);
+
+                renderEmailLogs(data);
+                updateEmailStats();
+            } catch (error) {
+                console.error('Error loading email logs:', error);
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 2rem; color: var(--danger-color);">Failed to load email logs</td></tr>`;
+            }
+        }
+
+        async function updateEmailStats() {
+            try {
+                const [totalRes, successRes, failedRes] = await Promise.all([
+                    fetch('/api/email-logs?limit=1', { credentials: 'include' }).then(r => r.json()),
+                    fetch('/api/email-logs?limit=1&status=SUCCESS', { credentials: 'include' }).then(r => r.json()),
+                    fetch('/api/email-logs?limit=1&status=FAILED', { credentials: 'include' }).then(r => r.json())
+                ]);
+                document.getElementById('emailStatTotal').textContent = totalRes.total || 0;
+                document.getElementById('emailStatSuccess').textContent = successRes.total || 0;
+                document.getElementById('emailStatFailed').textContent = failedRes.total || 0;
+            } catch (e) {
+                console.error('Stats update failed:', e);
+            }
+        }
+
+        function renderEmailLogs(data) {
+            const tbody = document.getElementById('emailLogBody');
+            const totalPages = Math.ceil(data.total / emailLogLimit);
+
+            if (!data.logs || data.logs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 2rem; color: var(--text-secondary);">No email logs found.</td></tr>';
+                document.getElementById('emailPageInfo').textContent = 'Page 0 of 0';
+                document.getElementById('emailPrevPage').disabled = true;
+                document.getElementById('emailNextPage').disabled = true;
+                return;
+            }
+
+            tbody.innerHTML = data.logs.map(log => {
+                const date = formatDateSafe(log.createdAt);
+                const typeBadge = getEmailTypeBadge(log.type);
+                const statusBadge = log.status === 'SUCCESS'
+                    ? '<span class="email-status-badge success"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>Sent</span>'
+                    : '<span class="email-status-badge failed"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>Failed</span>';
+                const recipients = (log.recipients || []).join(', ');
+                const hasPreview = true; // We'll check server-side
+                const errorTooltip = log.error ? ` title="Error: ${log.error.replace(/"/g, '&quot;')}"` : '';
+
+                return `<tr${errorTooltip}>
+                    <td style="white-space: nowrap; font-size: 0.82rem;">${date}</td>
+                    <td>${typeBadge}</td>
+                    <td style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${(log.subject || '').replace(/"/g, '&quot;')}">${log.subject || '—'}</td>
+                    <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.82rem; color: var(--text-secondary);" title="${recipients}">${recipients || '—'}</td>
+                    <td>${statusBadge}</td>
+                    <td style="text-align: center;">
+                        <button class="email-preview-btn" onclick="openEmailPreview('${log._id}')" title="Preview email content">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                            View
+                        </button>
+                    </td>
+                </tr>`;
+            }).join('');
+
+            document.getElementById('emailPageInfo').textContent = `Page ${data.page} of ${totalPages} · ${data.total} total`;
+            document.getElementById('emailPrevPage').disabled = data.page <= 1;
+            document.getElementById('emailNextPage').disabled = data.page >= totalPages;
+        }
+
+        function getEmailTypeBadge(type) {
+            const map = {
+                'DAILY_REPORT':          '<span class="email-type-badge daily">Daily Report</span>',
+                'ADMIN_NOTIFICATION':    '<span class="email-type-badge admin">Admin</span>',
+                'DELIVERY_NOTIFICATION': '<span class="email-type-badge delivery">Delivery</span>',
+                'BULK_REPORT':           '<span class="email-type-badge bulk">Bulk Report</span>'
+            };
+            return map[type] || `<span class="email-type-badge">${type}</span>`;
+        }
+
+        function changeEmailPage(delta) {
+            loadEmailLogs(emailLogPage + delta);
+        }
+
+        async function openEmailPreview(logId) {
+            const modal = document.getElementById('emailPreviewModal');
+            const body  = document.getElementById('emailPreviewBody');
+            const title = document.getElementById('emailPreviewTitle');
+            modal.style.display = 'block';
+            body.innerHTML = '<p style="text-align: center; padding: 3rem; color: #999;"><svg class="spinner" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.21-8.58"></path></svg></p>';
+
+            try {
+                const response = await fetch(`/api/email-logs/${logId}/preview`, { credentials: 'include' });
+                const data = await response.json();
+
+                title.textContent = data.subject || 'Email Preview';
+
+                if (data.htmlContent) {
+                    // Render in a sandboxed iframe for security
+                    const iframe = document.createElement('iframe');
+                    iframe.sandbox = 'allow-same-origin';
+                    iframe.style.cssText = 'width: 100%; border: none; min-height: 400px; border-radius: 0.5rem; background: #fff;';
+                    body.innerHTML = '';
+                    body.appendChild(iframe);
+
+                    const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                    iframeDoc.open();
+                    iframeDoc.write(data.htmlContent);
+                    iframeDoc.close();
+
+                    // Auto-resize iframe to fit content
+                    setTimeout(() => {
+                        try {
+                            const contentHeight = iframeDoc.documentElement.scrollHeight;
+                            iframe.style.height = Math.min(contentHeight + 20, 600) + 'px';
+                        } catch(e) { iframe.style.height = '500px'; }
+                    }, 200);
+                } else {
+                    body.innerHTML = '<div style="text-align: center; padding: 3rem; color: var(--text-secondary);"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 1rem; opacity: 0.4;"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg><p style="font-weight: 600; margin-bottom: 0.5rem;">No Preview Available</p><p style="font-size: 0.85rem;">This email was sent before preview storage was enabled,<br>or the HTML content was not captured.</p></div>';
+                }
+            } catch (error) {
+                body.innerHTML = `<p style="text-align: center; padding: 2rem; color: var(--danger-color);">Failed to load preview: ${error.message}</p>`;
+            }
+        }
+
+        function closeEmailPreview() {
+            document.getElementById('emailPreviewModal').style.display = 'none';
+            document.getElementById('emailPreviewBody').innerHTML = '';
+        }
+
         // Close modal when clicking outside
         window.onclick = function(event) {
-            const modal = document.getElementById('editModal');
-            if (event.target == modal) {
+            const editModal = document.getElementById('editModal');
+            const emailModal = document.getElementById('emailPreviewModal');
+            if (event.target == editModal) {
                 closeEditModal();
+            }
+            if (event.target == emailModal) {
+                closeEmailPreview();
             }
         }
     </script>

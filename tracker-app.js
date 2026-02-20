@@ -2013,7 +2013,58 @@ app.put('/api/config/email', requireAuth, async (req, res) => {
   }
 });
 
+
+// ── Email Logs API ──────────────────────────────────────────────────
+/**
+ * GET /api/email-logs
+ * Returns paginated email log entries with optional filtering.
+ * Query params: page, limit, type, status
+ */
+app.get('/api/email-logs', requireAuth, async (req, res) => {
+  try {
+    const page   = Math.max(1, parseInt(req.query.page)  || 1);
+    const limit  = Math.min(100, parseInt(req.query.limit) || 20);
+    const filter = {};
+    if (req.query.type)   filter.type   = req.query.type.toUpperCase();
+    if (req.query.status) filter.status = req.query.status.toUpperCase();
+
+    const [logs, total] = await Promise.all([
+      EmailLog.find(filter)
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .select('-htmlContent'), // Exclude heavy field from list view
+      EmailLog.countDocuments(filter)
+    ]);
+
+    res.json({ logs, total, page, limit });
+  } catch (error) {
+    console.error('Error fetching email logs:', error);
+    res.status(500).json({ error: 'Failed to fetch email logs' });
+  }
+});
+
+/**
+ * GET /api/email-logs/:id/preview
+ * Returns the stored HTML content of a specific email log entry.
+ */
+app.get('/api/email-logs/:id/preview', requireAuth, async (req, res) => {
+  try {
+    const log = await EmailLog.findById(req.params.id).select('htmlContent subject type createdAt');
+    if (!log) return res.status(404).json({ error: 'Log not found' });
+
+    if (!log.htmlContent) {
+      return res.json({ htmlContent: null, subject: log.subject });
+    }
+
+    res.json({ htmlContent: log.htmlContent, subject: log.subject });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch email preview' });
+  }
+});
+
 // Scheduled Tasks (Cron Jobs)
+
 // Only run if ENABLE_CRON is set to 'true'. This prevents duplication in multi-instance deployments.
 const isCronEnabled = process.env.ENABLE_CRON === 'true' || process.env.NODE_ENV === 'development';
 

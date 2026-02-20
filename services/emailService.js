@@ -47,7 +47,7 @@ class EmailService {
         return await this.refreshConfig();
     }
 
-    async logEmail(type, recipients, subject, status, error = null, metadata = null) {
+    async logEmail(type, recipients, subject, status, error = null, metadata = null, htmlContent = null) {
         try {
             await EmailLog.create({
                 recipients: Array.isArray(recipients) ? recipients : [recipients],
@@ -55,7 +55,8 @@ class EmailService {
                 type,
                 status,
                 error: error ? error.message || String(error) : null,
-                metadata
+                metadata,
+                htmlContent
             });
         } catch (logError) {
             console.error('❌ Failed to save email log:', logError);
@@ -154,7 +155,8 @@ class EmailService {
                 subject,
                 'SUCCESS',
                 null,
-                { messageId: info.messageId, template: templateName }
+                { messageId: info.messageId, template: templateName },
+                htmlContent
             );
 
             return info;
