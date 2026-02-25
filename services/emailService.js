@@ -89,14 +89,7 @@ class EmailService {
             return info;
         } catch (error) {
             console.error('❌ Failed to send admin notification email:', error);
-            
-            await this.logEmail(
-                'ADMIN_NOTIFICATION', 
-                this.config.adminEmail, 
-                `🚨 [Tracking Alert] ${subject}`, 
-                'FAILED', 
-                error
-            );
+            // Already logged by sendFromTemplate
         }
     }
 
@@ -116,6 +109,9 @@ class EmailService {
             return;
         }
 
+        let subject = `Template: ${templateName}`;
+        let htmlContent = null;
+
         try {
             // Fetch template from database
             const template = await EmailTemplate.findOne({ name: templateName, isActive: true });
@@ -126,9 +122,9 @@ class EmailService {
             console.log(`📧 Using template: ${templateName}`);
 
             // Render template with parameters
-            const subject = this.renderTemplate(template.subject, params);
+            subject = this.renderTemplate(template.subject, params);
             const textContent = this.renderTemplate(template.textContent, params);
-            const htmlContent = this.renderTemplate(template.htmlContent, params);
+            htmlContent = this.renderTemplate(template.htmlContent, params);
 
             // Determine recipients
             const recipients = recipientOverride || this.config.adminEmail;
@@ -163,12 +159,15 @@ class EmailService {
         } catch (error) {
             console.error('❌ Failed to send template email:', error);
 
+            const recipients = recipientOverride || (this.config ? this.config.adminEmail : []);
             await this.logEmail(
                 templateName.toUpperCase(),
-                recipientOverride || this.config.adminEmail,
-                `Template: ${templateName}`,
+                Array.isArray(recipients) ? recipients : [recipients],
+                subject,
                 'FAILED',
-                error
+                error,
+                { template: templateName, params },
+                htmlContent
             );
             throw error;
         }
@@ -207,15 +206,7 @@ class EmailService {
             return info;
         } catch (error) {
             console.error('❌ Failed to send delivery notification:', error);
-            
-            await this.logEmail(
-                'DELIVERY_NOTIFICATION', 
-                this.config.adminEmail, 
-                `📦 Package Delivered: ${trackingData.trackingId}`, 
-                'FAILED', 
-                error,
-                { trackingId: trackingData.trackingId }
-            );
+            // Already logged by sendFromTemplate
         }
     }
 
@@ -359,7 +350,8 @@ class EmailService {
                     updated: results.updated,
                     failed: results.failed,
                     messageId: info.messageId
-                }
+                },
+                html
             );
 
             return info;

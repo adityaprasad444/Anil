@@ -2050,14 +2050,17 @@ app.get('/api/email-logs', requireAuth, async (req, res) => {
  */
 app.get('/api/email-logs/:id/preview', requireAuth, async (req, res) => {
   try {
-    const log = await EmailLog.findById(req.params.id).select('htmlContent subject type createdAt');
+    const log = await EmailLog.findById(req.params.id).select('htmlContent subject type createdAt error metadata');
     if (!log) return res.status(404).json({ error: 'Log not found' });
 
-    if (!log.htmlContent) {
-      return res.json({ htmlContent: null, subject: log.subject });
-    }
-
-    res.json({ htmlContent: log.htmlContent, subject: log.subject });
+    res.json({ 
+      htmlContent: log.htmlContent, 
+      subject: log.subject,
+      error: log.error,
+      metadata: log.metadata,
+      type: log.type,
+      createdAt: log.createdAt
+    });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch email preview' });
   }

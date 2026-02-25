@@ -905,13 +905,13 @@
                     </svg>
                     Sync All
                 </button>
-                <button onclick="syncAllTrackingDataForce()" class="btn btn-danger" id="syncForceBtn" style="margin-left: 0.5rem;">
+                <!-- <button onclick="syncAllTrackingDataForce()" class="btn btn-danger" id="syncForceBtn" style="margin-left: 0.5rem;">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                         stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.5rem;">
                         <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.3" />
                     </svg>
                     Full Re-sync
-                </button>
+                </button> -->
                 <button onclick="exportToCsv()" class="btn btn-success" id="exportBtn" style="margin-left: 0.5rem;">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                         stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.5rem;">
@@ -3129,7 +3129,38 @@
                         } catch(e) { iframe.style.height = '500px'; }
                     }, 200);
                 } else {
-                    body.innerHTML = '<div style="text-align: center; padding: 3rem; color: var(--text-secondary);"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 1rem; opacity: 0.4;"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg><p style="font-weight: 600; margin-bottom: 0.5rem;">No Preview Available</p><p style="font-size: 0.85rem;">This email was sent before preview storage was enabled,<br>or the HTML content was not captured.</p></div>';
+                    let helperHtml = '';
+                    if (data.error) {
+                        helperHtml = `
+                            <div style="margin-top: 1.5rem; text-align: left; background: #fff5f5; border: 1px solid #feb2b2; border-radius: 0.5rem; padding: 1rem;">
+                                <p style="color: #c53030; font-weight: 700; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 0.5rem;">Error Details</p>
+                                <p style="font-family: monospace; font-size: 0.85rem; color: #742a2a; word-break: break-all;">${data.error}</p>
+                            </div>
+                        `;
+                    }
+                    
+                    if (data.metadata && Object.keys(data.metadata).length > 0) {
+                        helperHtml += `
+                            <div style="margin-top: 1rem; text-align: left; background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 1rem;">
+                                <p style="color: #4a5568; font-weight: 700; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 0.5rem;">Metadata</p>
+                                <pre style="font-family: monospace; font-size: 0.8rem; color: #2d3748; white-space: pre-wrap; margin: 0;">${JSON.stringify(data.metadata, null, 2)}</pre>
+                            </div>
+                        `;
+                    }
+
+                    body.innerHTML = `
+                        <div style="text-align: center; padding: 1.5rem; color: var(--text-secondary);">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 1rem; opacity: 0.4;">
+                                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                                <polyline points="22,6 12,13 2,6"></polyline>
+                            </svg>
+                            <p style="font-weight: 600; margin-bottom: 0.5rem;">No HTML Preview Available</p>
+                            <p style="font-size: 0.85rem; margin-bottom: 1rem;">
+                                This content was not captured or this is an older log entry.
+                            </p>
+                            ${helperHtml}
+                        </div>
+                    `;
                 }
             } catch (error) {
                 body.innerHTML = `<p style="text-align: center; padding: 2rem; color: var(--danger-color);">Failed to load preview: ${error.message}</p>`;

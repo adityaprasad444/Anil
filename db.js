@@ -107,6 +107,21 @@ const trackingSchema = new mongoose.Schema({
   timestamps: true
 });
 
+// Add indexes for performance optimization
+trackingSchema.index({ trackingId: 1 }); // Already unique but explicitly indexing is fine, though redundant
+trackingSchema.index({ originalTrackingId: 1 });
+trackingSchema.index({ provider: 1 });
+trackingSchema.index({ status: 1 });
+trackingSchema.index({ createdAt: -1 });
+trackingSchema.index({ lastUpdated: -1 });
+
+// Compound indexes for common filter combinations with sorting
+trackingSchema.index({ provider: 1, createdAt: -1 });
+trackingSchema.index({ status: 1, createdAt: -1 });
+trackingSchema.index({ provider: 1, status: 1 });
+trackingSchema.index({ createdAt: -1, status: 1 }); // Useful for status counts over time
+trackingSchema.index({ lastUpdated: -1, status: 1 }); // Useful for identifying stuck shipments
+
 // Create the model
 const TrackingData = mongoose.model('TrackingData', trackingSchema);
 
