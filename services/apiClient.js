@@ -202,7 +202,7 @@ class ApiClient {
             trackingData.destination = shipment.destination || "";
 
             // Deliver Date
-            trackingData.estimatedDelivery = shipment.promiseDeliveryDate || shipment.expectedDeliveryDate || null;
+            trackingData.estimatedDelivery = this.parseISTDate(shipment.promiseDeliveryDate || shipment.expectedDeliveryDate, true);
 
             // Map history
             trackingData.history = scans.map(scan => ({
@@ -329,7 +329,7 @@ class ApiClient {
 
             trackingData.status = this.normalizeStatus(currentStatus);
             trackingData.location = consignment.current_location_name || "Unknown";
-            trackingData.estimatedDelivery = consignment.ExpectedDeliveryDate || null;
+            trackingData.estimatedDelivery = consignment.ExpectedDeliveryDate ? this.parseICLDate(consignment.ExpectedDeliveryDate) : null;
             trackingData.origin = consignment.origin_name || "";
             trackingData.destination = consignment.dest_name || "";
 
@@ -353,23 +353,53 @@ class ApiClient {
 
     /**
      * Parse date assuming IST if no timezone present
+     * @param {string} dateStr - Date string to parse
+     * @param {boolean} returnNullOnFailure - Whether to return null or new Date() on failure
      */
-    parseISTDate(dateStr) {
+    parseISTDate(dateStr, returnNullOnFailure = false) {
         try {
-            if (!dateStr) return new Date();
+            if (!dateStr) return returnNullOnFailure ? null : new Date();
+            
+            if (typeof dateStr !== 'string') {
+                const date = new Date(dateStr);
+                return isNaN(date.getTime()) ? (returnNullOnFailure ? null : new Date()) : date;
+            }
+
+            // Handle DD/MM/YYYY
+            if (dateStr.includes('/') && !dateStr.includes('-')) {
+                const parts = dateStr.split('/');
+                if (parts.length === 3) {
+                    const [day, month, year] = parts;
+                    // Format year-month-day and add IST offset
+                    // Pad month and day to ensure 2 digits
+                    const d = day.trim().padStart(2, '0');
+                    const m = month.trim().padStart(2, '0');
+                    const y = year.trim();
+                    
+                    const date = new Date(`${y}-${m}-${d}T00:00:00+05:30`);
+                    if (!isNaN(date.getTime())) return date;
+                }
+            }
 
             // Check if string intentionally contains a timezone indicator (Z, +HH:mm, -HH:mm) at the end
-            // This avoids catching YYYY-MM-DD dashes
             const hasTimezone = /Z|[+-]\d{2}:?\d{2}$/.test(dateStr);
 
             if (hasTimezone) {
-                return new Date(dateStr);
+                const date = new Date(dateStr);
+                if (!isNaN(date.getTime())) return date;
             }
 
-            // If it looks like an ISO string but has no timezone, append IST
-            return new Date(`${dateStr}+05:30`);
+            // If it looks like an ISO-ish string but has no timezone, append IST
+            // Also handle space-separated dates like "2024-02-26 11:16:06"
+            let normalizedDate = dateStr.replace(' ', 'T');
+            const date = new Date(`${normalizedDate}${normalizedDate.includes('T') ? '' : 'T00:00:00'}+05:30`);
+            if (!isNaN(date.getTime())) return date;
+
+            // Final fallback to native parsing
+            const finalDate = new Date(dateStr);
+            return isNaN(finalDate.getTime()) ? (returnNullOnFailure ? null : new Date()) : finalDate;
         } catch (e) {
-            return new Date();
+            return returnNullOnFailure ? null : new Date();
         }
     }
 
@@ -390,7 +420,7 @@ class ApiClient {
 
             trackingData.status = this.normalizeStatus(tracking.Status || "In Transit");
             trackingData.location = events.length > 0 ? events[0].Location : "Unknown";
-            trackingData.estimatedDelivery = tracking.ExpectedDeliveryDate || null;
+            trackingData.estimatedDelivery = tracking.ExpectedDeliveryDate ? this.parseICLDate(tracking.ExpectedDeliveryDate) : null;
             trackingData.origin = tracking.Origin || "";
             trackingData.destination = tracking.Destination || "";
 
@@ -432,14 +462,25 @@ class ApiClient {
      */
     parseICLDate(dateStr, timeStr) {
         try {
-            if (!dateStr) return new Date();
-            const [day, month, year] = dateStr.split('/');
-            const hour = timeStr ? timeStr.substring(0, 2) : '00';
-            const minute = timeStr ? timeStr.substring(2, 4) : '00';
-            // Append IST offset +05:30
-            return new Date(`${year}-${month}-${day}T${hour}:${minute}:00+05:30`);
+            if (!dateStr) return null;
+            if (typeof dateStr !== 'string') return new Date(dateStr);
+
+            if (dateStr.includes('/')) {
+                const parts = dateStr.split('/');
+                if (parts.length === 3) {
+                    const [day, month, year] = parts;
+                    const hour = (timeStr && typeof timeStr === 'string') ? timeStr.substring(0, 2).padStart(2, '0') : '00';
+                    const minute = (timeStr && typeof timeStr === 'string') ? timeStr.substring(2, 4).padStart(2, '0') : '00';
+                    const date = new Date(`${year.trim()}-${month.trim().padStart(2, '0')}-${day.trim().padStart(2, '0')}T${hour}:${minute}:00+05:30`);
+                    if (!isNaN(date.getTime())) return date;
+                }
+            }
+            
+            const date = new Date(dateStr);
+            return isNaN(date.getTime()) ? null : date;
         } catch (e) {
-            return new Date();
+            console.error("Error parsing ICL Date:", dateStr, e);
+            return null;
         }
     }
 
@@ -458,14 +499,17 @@ class ApiClient {
 
         trackingData.status = this.normalizeStatus(this.extractField(apiResponse, fieldSets.status) || 'In Transit');
         trackingData.location = this.extractField(apiResponse, fieldSets.location) || 'Unknown';
-        trackingData.estimatedDelivery = this.extractField(apiResponse, fieldSets.estimatedDelivery);
+        
+        const estDelivery = this.extractField(apiResponse, fieldSets.estimatedDelivery);
+        trackingData.estimatedDelivery = this.parseISTDate(estDelivery, true);
+        
         trackingData.origin = this.extractField(apiResponse, fieldSets.origin);
         trackingData.destination = this.extractField(apiResponse, fieldSets.destination);
 
         const history = this.extractField(apiResponse, fieldSets.history);
         if (Array.isArray(history)) {
             trackingData.history = history.map(event => ({
-                timestamp: event.timestamp || event.date || new Date(),
+                timestamp: this.parseISTDate(event.timestamp || event.date),
                 status: event.status || event.description || "Update",
                 location: event.location || "",
                 description: event.description || event.remarks || ""
