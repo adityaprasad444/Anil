@@ -1099,14 +1099,7 @@ app.get('/api/reports/generate', requireAuth, async (req, res) => {
           date: deliveryDate
         };
       });
-      // Stats calculation for this report is done client side previously or here?
-      // Wait, existing code returned aggregated stats: { provider, avgDays, count, min, max, speed... }
-      // AND raw data? No, existing code returned the AGGREGATED result.
-      // I must match existing logic.
-      // Re-reading existing code for delivery_performance...
-      // It did aggregation!
-      // Let me fix that.
-      
+
       const stats = {};
       delivered.forEach(pkg => {
         const p = pkg.provider || 'Unknown';
@@ -1258,11 +1251,19 @@ app.get('/api/reports/generate', requireAuth, async (req, res) => {
     }
 
     if (type === 'notification_stats') {
+      const emailFilter = {};
+      if (startDate || endDate) {
+        emailFilter.timestamp = {};
+        if (startDate) emailFilter.timestamp.$gte = new Date(startDate);
+        if (endDate) {
+          const end = new Date(endDate);
+          end.setHours(23, 59, 59, 999);
+          emailFilter.timestamp.$lte = end;
+        }
+      }
       const logs = await EmailLog.aggregate([
         { 
-          $match: { 
-            ...(startDate || endDate ? { timestamp: filter.createdAt } : {})
-          } 
+          $match: emailFilter
         },
         { $group: { _id: { type: "$type", status: "$status" }, count: { $sum: 1 } } }
       ]);
@@ -2069,6 +2070,7 @@ app.get('/api/email-logs/:id/preview', requireAuth, async (req, res) => {
 // Scheduled Tasks (Cron Jobs)
 
 // Only run if ENABLE_CRON is set to 'true'. This prevents duplication in multi-instance deployments.
+// In development, we enable cron by default for testing. In production, it must be explicitly enabled.
 const isCronEnabled = process.env.ENABLE_CRON === 'true' || process.env.NODE_ENV === 'development';
 
 if (isCronEnabled) {
