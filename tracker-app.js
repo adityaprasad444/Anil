@@ -22,6 +22,13 @@ const swaggerUi = require('swagger-ui-express');
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerOptions = require('./swaggerConfig');
 
+// --- RBAC Module Imports ---
+const tenantRoutes = require('./src/rbac/routes/tenant.routes');
+const roleRoutes = require('./src/rbac/routes/role.routes');
+const permissionRoutes = require('./src/rbac/routes/permission.routes');
+const userRoleRoutes = require('./src/rbac/routes/userRole.routes');
+const rbacErrorHandler = require('./src/rbac/middleware/error.middleware');
+
 // Vercel Web Analytics - Server-side integration for Next.js-like servers
 // Note: For plain Express servers, the main analytics tracking happens client-side
 let analyticsModule;
@@ -190,6 +197,10 @@ app.get('/admin', requireAuth, (req, res) => {
 
 app.get('/tools', requireAuth, (req, res) => {
   res.sendFile(path.join(publicPath, 'tools.html'));
+});
+
+app.get('/roles', requireAuth, (req, res) => {
+  res.sendFile(path.join(publicPath, 'roles.html'));
 });
 
 /**
@@ -2151,6 +2162,15 @@ async function sendDailyReport() {
   
   return reportData;
 }
+
+// --- RBAC API Endpoints ---
+app.use('/api/tenants', tenantRoutes);
+app.use('/api/roles', roleRoutes);
+app.use('/api/permissions', permissionRoutes);
+app.use('/api/users/:userId/roles', userRoleRoutes);
+
+// Mount the RBAC operational error handler BEFORE the global fallback
+app.use(rbacErrorHandler);
 
 // Global error handling middleware
 app.use((err, req, res, next) => {

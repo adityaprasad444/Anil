@@ -102,6 +102,11 @@ const trackingSchema = new mongoose.Schema({
   nextFetchAfter: {
     type: Date,
     default: () => new Date(Date.now() + 2 * 60 * 60 * 1000) // Default 2 hours
+  },
+  tenant_id: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Tenant',
+    index: true
   }
 }, {
   timestamps: true
