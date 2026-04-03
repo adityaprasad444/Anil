@@ -4,6 +4,9 @@ const AppError = require('../utils/AppError');
 exports.checkPermissions = (requiredPermissions) => {
   return async (req, res, next) => {
     try {
+      // SuperAdmin bypass — session admin users get full access
+      if (req.user && req.user.isSuperAdmin) return next();
+
       const { roles: userRoles } = req.user;
       
       if (!userRoles || userRoles.length === 0) {

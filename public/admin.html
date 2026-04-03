@@ -140,6 +140,31 @@
             border: 1px solid var(--border-color);
         }
 
+        /* Tenant Selector Styles */
+        .tenant-selector-container {
+            margin-right: 1rem;
+            display: none; /* Hidden by default, shown for admin */
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .tenant-select {
+            padding: 0.4rem 0.8rem;
+            border-radius: 0.5rem;
+            border: 1px solid var(--border-color);
+            background-color: var(--bg-card);
+            color: var(--text-primary);
+            font-size: 0.85rem;
+            outline: none;
+            cursor: pointer;
+            min-width: 151px;
+        }
+        .tenant-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+
         .card-header {
             padding: 1.5rem;
             border-bottom: 1px solid var(--border-color);
@@ -807,15 +832,27 @@
                 <img src="/Logos/logo.jpeg" alt="Logo" class="logo-small">
                 <span>Admin Dashboard</span>
             </a>
+            
+            <div id="userInfo" style="margin-left: auto; margin-right: 2rem; font-size: 0.85rem; color: var(--text-secondary); display: flex; align-items: center; gap: 0.5rem;">
+                <!-- Filled by JS -->
+            </div>
+            
+            <div class="tenant-selector-container" id="tenantSelector">
+                <span class="tenant-label">Viewing:</span>
+                <select id="activeTenantSelect" class="tenant-select" onchange="changeTenant()">
+                    <option value="">All Tenants (Global)</option>
+                </select>
+            </div>
+
             <ul class="nav-menu">
                 <li><a href="/admin" class="nav-link active" id="nav-dashboard" onclick="switchTab('dashboard')">Dashboard</a></li>
-                <li><a href="/tools" class="nav-link">Manage</a></li>
-                <li><a href="/config" class="nav-link">Configuration</a></li>
+                <li><a href="/tools" class="nav-link" id="nav-manage">Manage</a></li>
+                <li><a href="/config" class="nav-link" id="nav-config">Configuration</a></li>
                 <li><a href="#" class="nav-link" id="nav-reports" onclick="switchTab('reports')">Reports</a></li>
                 <li><a href="#" class="nav-link" id="nav-emails" onclick="switchTab('emails')">Emails</a></li>
-                <li><a href="/roles" class="nav-link">Roles</a></li>
-                <li><button class="nav-link" onclick="handleLogout()"
-                        style="background: none; border: none; cursor: pointer; display: block; width: 100%; text-align: left;">Logout</button>
+                <li><a href="/roles" class="nav-link" id="nav-roles">Roles</a></li>
+                <li><button type="button" class="nav-link" onclick="handleLogout()"
+                        style="background: none; border: none; cursor: pointer; display: block; width: 100%; text-align: left; font: inherit;">Logout</button>
                 </li>
             </ul>
             <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme" title="Toggle dark/light mode">
@@ -1320,7 +1357,7 @@
         // Theme Management
         function initTheme() {
             const savedTheme = localStorage.getItem('theme') || 'light';
-            document.documentElement.setAttribute('data-theme', savedTheme);
+            document.documentElement.dataset.theme = savedTheme;
             updateThemeIcon(savedTheme);
         }
 
@@ -1328,7 +1365,7 @@
             const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
             const newTheme = currentTheme === 'light' ? 'dark' : 'light';
             
-            document.documentElement.setAttribute('data-theme', newTheme);
+            document.documentElement.dataset.theme = newTheme;
             localStorage.setItem('theme', newTheme);
             updateThemeIcon(newTheme);
             showToast(`Switched to ${newTheme} mode`, 'info', 2000);
@@ -1348,7 +1385,7 @@
         }
 
         // Initialize theme on page load
-        initTheme();
+        // Redundant permissions logic removed. Active implementation starts at line 1464.
 
         // Keep existing JS logic
 
@@ -1384,6 +1421,7 @@
         let startDate = '';
         let endDate = '';
         let supportedProviders = [];
+        let currentPermissions = [];
 
         function formatDateSafe(dateString) {
             if (!dateString) return 'N/A';
@@ -1400,6 +1438,96 @@
                 timeZone: 'Asia/Kolkata'
             });
         }
+
+        async function applyPermissions() {
+            try {
+                const resp = await fetch('/api/my-permissions');
+                const { data } = await resp.json();
+                currentPermissions = data.permissions || [];
+
+                // Helper to check perm and hide if missing
+                const guard = (elementId, permCode) => {
+                    const el = document.getElementById(elementId);
+                    if (el && !currentPermissions.includes(permCode)) {
+                        el.style.display = 'none';
+                    }
+                };
+
+                // Navigation Tabs
+                guard('nav-manage', 'PROVIDER_READ'); 
+                guard('nav-config', 'EMAIL_CONFIG_READ');
+                guard('nav-reports', 'REPORT_READ');
+                guard('nav-emails', 'EMAIL_LOG_READ');
+                guard('nav-roles', 'ROLE_READ');
+
+                // Action Buttons/Features
+                guard('syncBtn', 'TRACKING_UPDATE');
+                guard('syncForceBtn', 'TRACKING_UPDATE');
+                guard('exportBtn', 'TRACKING_READ');
+                guard('bulkUploadBtn', 'TRACKING_CREATE');
+                guard('createTrackingBtn', 'TRACKING_CREATE');
+
+            } catch (err) {
+                console.error("Failed to apply permissions to UI", err);
+            }
+        }
+
+        // Tenant Management Logic
+        async function initTenantSelector() {
+            try {
+                const response = await fetch('/api/login-status'); // Create this or use existing user info
+                const { user } = await response.json();
+                
+                if (user) {
+                    const roleDisplay = user.role === 'admin' ? 'Super Admin' : (user.role || 'User');
+                    document.getElementById('userInfo').innerHTML = `
+                        <span style="font-weight: 600; color: var(--primary-color)">${user.username}</span>
+                        <span style="background: var(--primary-light); color: var(--primary-color); padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase;">${roleDisplay}</span>
+                    `;
+
+                    if (user.role === 'admin') {
+                        document.getElementById('tenantSelector').style.display = 'flex';
+                        const tResp = await fetch('/api/tenants');
+                        const { data } = await tResp.json();
+                        const select = document.getElementById('activeTenantSelect');
+                        
+                        // Clear existing except first
+                        select.innerHTML = '<option value="">All Tenants (Global)</option>';
+                        
+                        data.tenants.forEach(t => {
+                            const opt = document.createElement('option');
+                            opt.value = t._id;
+                            opt.textContent = t.name;
+                            select.appendChild(opt);
+                        });
+
+                        if (user.active_tenant_id) {
+                            select.value = user.active_tenant_id;
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error('Error initializing tenant selector:', err);
+            }
+        }
+
+        async function changeTenant() {
+            const tenantId = document.getElementById('activeTenantSelect').value;
+            try {
+                await fetch('/api/session/active-tenant', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ tenantId })
+                });
+                showToast("Switching view context...", "info", 1000);
+                // Refresh data for the new tenant
+                location.reload();
+            } catch (err) {
+                showToast("Failed to switch tenant", "error");
+            }
+        }
+
+        initTenantSelector();
 
         async function checkAuth() {
             try {
@@ -2140,7 +2268,8 @@
                     loadProvidersForFilter(),
                     loadTrackingList(),
                     loadStats(),
-                    loadReportsList()
+                    loadReportsList(),
+                    applyPermissions()
                 ]);
                 
                 // Copy providers to report filter

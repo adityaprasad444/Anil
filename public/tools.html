@@ -417,11 +417,11 @@
             </a>
             <ul class="nav-menu">
                 <li><a href="/admin" class="nav-link">Dashboard</a></li>
-                <li><a href="/tools" class="nav-link active">Management</a></li>
-                <li><a href="/config" class="nav-link">Configuration</a></li>
-                <li><a href="/admin?tab=reports" class="nav-link">Reports</a></li>
-                <li><a href="/admin?tab=emails" class="nav-link">Emails</a></li>
-                <li><a href="/roles" class="nav-link">Roles</a></li>
+                <li><a href="/tools" class="nav-link active" id="nav-manage">Management</a></li>
+                <li><a href="/config" class="nav-link" id="nav-config">Configuration</a></li>
+                <li><a href="/admin?tab=reports" class="nav-link" id="nav-reports">Reports</a></li>
+                <li><a href="/admin?tab=emails" class="nav-link" id="nav-emails">Emails</a></li>
+                <li><a href="/roles" class="nav-link" id="nav-roles">Roles</a></li>
                 <li><button class="nav-link" onclick="handleLogout()"
                         style="background: none; border: none; cursor: pointer; display: block; width: 100%; text-align: left;">Logout</button>
                 </li>
@@ -563,9 +563,63 @@
             }
         }
 
+        let currentPermissions = [];
+
+        async function applyPermissions() {
+            try {
+                const resp = await fetch('/api/my-permissions');
+                const { data } = await resp.json();
+                currentPermissions = data.permissions || [];
+
+                const guard = (elementId, permCode) => {
+                    const el = document.getElementById(elementId);
+                    if (el && !currentPermissions.includes(permCode)) {
+                        el.style.display = 'none';
+                    }
+                };
+
+                guard('nav-manage', 'PROVIDER_READ'); 
+                guard('nav-config', 'EMAIL_CONFIG_READ');
+                guard('nav-reports', 'REPORT_READ');
+                guard('nav-emails', 'EMAIL_LOG_READ');
+                guard('nav-roles', 'ROLE_READ');
+
+            } catch (err) {
+                console.error("Failed to apply permissions", err);
+            }
+        }
+
         initTheme();
 
         let supportedProviders = [];
+        let currentPermissions = [];
+
+        async function applyPermissions() {
+            try {
+                const resp = await fetch('/api/my-permissions');
+                const { data } = await resp.json();
+                currentPermissions = data.permissions || [];
+
+                const guard = (elementId, permCode) => {
+                    const el = document.getElementById(elementId);
+                    if (el && !currentPermissions.includes(permCode)) {
+                        el.style.display = 'none';
+                    }
+                };
+
+                guard('nav-manage', 'PROVIDER_READ'); 
+                guard('nav-config', 'EMAIL_CONFIG_READ');
+                guard('nav-reports', 'REPORT_READ');
+                guard('nav-emails', 'EMAIL_LOG_READ');
+                guard('nav-roles', 'ROLE_READ');
+
+                // Page-specific guards
+                guard('bulkUploadBtn', 'TRACKING_CREATE');
+                
+            } catch (err) {
+                console.error("Failed to apply permissions", err);
+            }
+        }
 
         async function checkAuth() {
             try {
@@ -717,6 +771,7 @@
 
         async function initialize() {
             await checkAuth();
+            await applyPermissions();
             await loadProviders();
         }
         initialize();

@@ -16,4 +16,10 @@ router
   .route('/:id')
   .delete(checkPermissions(['ROLE_DELETE']), roleController.deleteRole);
 
+// Permission assignment on a role
+router
+  .route('/:id/permissions')
+  .get(checkPermissions(['ROLE_READ']), roleController.getRolePermissions)
+  .put(checkPermissions(['ROLE_CREATE']), roleController.setRolePermissions);
+
 module.exports = router;

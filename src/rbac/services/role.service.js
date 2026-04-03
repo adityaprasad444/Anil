@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const Role = require('../models/Role');
 const RolePermission = require('../models/RolePermission');
-const User = require('../models/User');
+const User = require('../../../models/User');
 const AppError = require('../utils/AppError');
 
 exports.createRole = async (data, tenant_id) => {
@@ -43,4 +43,27 @@ exports.deleteRole = async (roleId, tenant_id) => {
 
 exports.getRolesByTenant = async (tenant_id) => {
   return await Role.find({ tenant_id }).lean();
+};
+
+exports.getAllRoles = async () => {
+  return await Role.find().lean();
+};
+
+exports.getPermissionsForRole = async (roleId) => {
+  const Permission = require('../models/Permission');
+  const mappings = await RolePermission.find({ role_id: roleId }).lean();
+  const permIds = mappings.map(m => m.permission_id);
+  return await Permission.find({ _id: { $in: permIds } }).lean();
+};
+
+exports.setPermissionsForRole = async (roleId, permissionIds = []) => {
+  const Permission = require('../models/Permission');
+  // Replace all existing mappings with the new set
+  await RolePermission.deleteMany({ role_id: roleId });
+  if (permissionIds.length > 0) {
+    const docs = permissionIds.map(pid => ({ role_id: roleId, permission_id: pid }));
+    await RolePermission.insertMany(docs);
+  }
+  // Return the updated permission objects
+  return await Permission.find({ _id: { $in: permissionIds } }).lean();
 };

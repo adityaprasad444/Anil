@@ -131,6 +131,7 @@ app.use((req, res, next) => {
 // Authentication middleware
 const requireAuth = (req, res, next) => {
   if (req.session && req.session.user) {
+    req.user = req.session.user;
     next();
   } else {
     res.status(401).json({ error: 'Authentication required' });
@@ -376,7 +377,18 @@ app.get('/api/login/check', (req, res) => {
  */
 app.get('/api/tracking/stats', requireAuth, async (req, res) => {
   try {
+    const filter = {};
+    const isAdmin = req.user && (req.user.isSuperAdmin || req.user.role === 'admin');
+    
+    // Tenant filtering
+    if (isAdmin && req.session.user && req.session.user.active_tenant_id) {
+      filter.tenant_id = new mongoose.Types.ObjectId(req.session.user.active_tenant_id);
+    } else if (req.user && !isAdmin && req.user.tenant_id) {
+      filter.tenant_id = new mongoose.Types.ObjectId(req.user.tenant_id);
+    }
+
     const stats = await TrackingData.aggregate([
+      { $match: filter },
       {
         $group: {
           _id: { $toLower: "$status" },
@@ -426,6 +438,15 @@ app.get('/api/tracking/list', requireAuth, async (req, res) => {
     const skip = (page - 1) * limit;
 
     const filter = {};
+    const isAdmin = req.user && (req.user.isSuperAdmin || req.user.role === 'admin');
+
+    // Tenant filtering
+    if (isAdmin && req.session.user && req.session.user.active_tenant_id) {
+      filter.tenant_id = req.session.user.active_tenant_id;
+    } else if (req.user && !isAdmin && req.user.tenant_id) {
+      filter.tenant_id = req.user.tenant_id;
+    }
+
     if (req.query.trackingId) {
       // Search in both trackingId and originalTrackingId fields
       filter.$or = [
@@ -1474,7 +1495,9 @@ app.post('/api/login', async (req, res) => {
     req.session.user = {
       id: user._id,
       username: user.username,
-      role: user.role
+      role: user.role,
+      tenant_id: user.tenant_id,
+      roles: user.roles || []
     };
 
     console.log('✅ Login successful:', { username: user.username, role: user.role });
@@ -1482,7 +1505,8 @@ app.post('/api/login', async (req, res) => {
       success: true,
       user: {
         username: user.username,
-        role: user.role
+        role: user.role,
+        isSuperAdmin: user.role === 'admin'
       }
     });
   } catch (error) {
@@ -1504,6 +1528,29 @@ app.post('/api/login', async (req, res) => {
 app.post('/api/logout', (req, res) => {
   req.session.destroy();
   res.json({ success: true });
+});
+
+app.get('/api/login-status', (req, res) => {
+  if (req.session && req.session.user) {
+    return res.json({ loggedIn: true, user: req.session.user });
+  }
+  res.json({ loggedIn: false });
+});
+
+app.get('/api/login/check', (req, res) => {
+  if (req.session && req.session.user) {
+    return res.json({ success: true, user: req.session.user });
+  }
+  res.status(401).json({ success: false });
+});
+
+app.post('/api/session/active-tenant', requireAuth, (req, res) => {
+  if (req.session.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Permission denied' });
+  }
+  const { tenantId } = req.body;
+  req.session.user.active_tenant_id = tenantId || null;
+  res.json({ success: true, active_tenant_id: req.session.user.active_tenant_id });
 });
 
 /**
@@ -2168,6 +2215,63 @@ app.use('/api/tenants', tenantRoutes);
 app.use('/api/roles', roleRoutes);
 app.use('/api/permissions', permissionRoutes);
 app.use('/api/users/:userId/roles', userRoleRoutes);
+
+// List all users (for role-assignment UI)
+app.get('/api/users', requireAuth, async (req, res) => {
+  try {
+    const users = await User.find({}, 'username role tenant_id lastLogin createdAt').lean();
+    res.json({ status: 'success', data: { users } });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch users' });
+  }
+});
+
+// Get current user's aggregated permissions
+app.get('/api/my-permissions', requireAuth, async (req, res) => {
+  try {
+    if (req.user.role === 'admin') {
+      const Permission = require('./src/rbac/models/Permission');
+      const allPerms = await Permission.find({}, 'code').lean();
+      return res.json({ status: 'success', data: { permissions: allPerms.map(p => p.code) } });
+    }
+    
+    if (!req.user.roles || req.user.roles.length === 0) {
+      return res.json({ status: 'success', data: { permissions: [] } });
+    }
+
+    const RolePermission = require('./src/rbac/models/RolePermission');
+    const rolePermissions = await RolePermission.find({ role_id: { $in: req.user.roles } })
+      .populate('permission_id', 'code')
+      .lean();
+    
+    const codes = [...new Set(rolePermissions.map(rp => rp.permission_id?.code).filter(Boolean))];
+    res.json({ 
+      status: 'success', 
+      data: { 
+        permissions: codes,
+        user: {
+          username: req.user.username,
+          role: req.user.role,
+          isSuperAdmin: req.user.isSuperAdmin || req.user.role === 'admin'
+        }
+      } 
+    });
+  } catch (err) {
+    res.status(500).json({ status: 'error', message: 'Failed to fetch permissions' });
+  }
+});
+
+// Update a user's tenant assignment
+app.put('/api/users/:id/tenant', requireAuth, async (req, res) => {
+  try {
+    const { tenant_id } = req.body;
+    const user = await User.findByIdAndUpdate(req.params.id, { tenant_id: tenant_id || null }, { new: true }).lean();
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.json({ status: 'success', data: { user } });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to update user' });
+  }
+});
 
 // Mount the RBAC operational error handler BEFORE the global fallback
 app.use(rbacErrorHandler);

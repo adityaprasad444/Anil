@@ -1,24 +1,665 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Role Management - Package Tracking</title>
+    <title>Role & User Management - Package Tracking</title>
+    <link rel="icon" type="image/jpeg" href="/Logos/logo.jpeg">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Poppins', sans-serif; background-color: #f3f4f6; color: #1f2937; margin: 0; padding: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; }
-        .card { background: white; padding: 3rem; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); text-align: center; }
-        h1 { color: #4f46e5; margin-bottom: 1rem; }
-        p { color: #6b7280; margin-bottom: 2rem; }
-        .btn { background: #4f46e5; color: white; text-decoration: none; padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 500; transition: background 0.2s; }
-        .btn:hover { background: #4338ca; }
+        :root {
+            --primary-color: #4f46e5;
+            --primary-hover: #4338ca;
+            --primary-light: #e0e7ff;
+            --secondary-color: #64748b;
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+            --warning-color: #f59e0b;
+            --bg-body: #f3f4f6;
+            --bg-card: #ffffff;
+            --text-primary: #1f2937;
+            --text-secondary: #6b7280;
+            --border-color: #e5e7eb;
+            --shadow-sm: 0 1px 2px 0 rgba(0,0,0,0.05);
+            --shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+            --radius: 0.75rem;
+        }
+
+        [data-theme="dark"] {
+            --primary-color: #6366f1;
+            --primary-hover: #4f46e5;
+            --primary-light: #312e81;
+            --secondary-color: #94a3b8;
+            --success-color: #10b981;
+            --danger-color: #f87171;
+            --warning-color: #fbbf24;
+            --bg-body: #0f172a;
+            --bg-card: #1e293b;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border-color: #334155;
+            --shadow-sm: 0 1px 2px 0 rgba(0,0,0,0.3);
+            --shadow: 0 4px 6px -1px rgba(0,0,0,0.3), 0 2px 4px -1px rgba(0,0,0,0.2);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.4), 0 4px 6px -2px rgba(0,0,0,0.3);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .header {
+            background-color: var(--bg-card);
+            box-shadow: var(--shadow-sm);
+            padding: 0 2rem;
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1000;
+            height: 70px;
+            display: flex;
+            align-items: center;
+        }
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+        .logo-small { height: 32px; width: 32px; border-radius: 6px; }
+        .nav-menu { display: flex; gap: 1rem; list-style: none; }
+        .nav-link {
+            text-decoration: none;
+            color: var(--text-secondary);
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+        }
+        .nav-link:hover { color: var(--primary-color); background-color: var(--primary-light); }
+        .nav-link.active { background-color: var(--primary-color); color: white; }
+
+        .container { max-width: 1200px; margin: 6rem auto 2rem; padding: 0 1.5rem; }
+
+        .card {
+            background-color: var(--bg-card);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+            border: 1px solid var(--border-color);
+        }
+        .card-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .card-title { font-size: 1.1rem; font-weight: 600; }
+
+        .tabs { display: flex; gap: 0.25rem; border-bottom: 2px solid var(--border-color); margin-bottom: 1.5rem; }
+        .tab-btn {
+            padding: 0.75rem 1.25rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            border: none;
+            background: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            transition: all 0.2s;
+        }
+        .tab-btn.active { color: var(--primary-color); border-bottom-color: var(--primary-color); font-weight: 600; }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.625rem 1.25rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            gap: 0.4rem;
+        }
+        .btn-primary { background-color: var(--primary-color); color: white; }
+        .btn-secondary { background-color: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-primary); }
+        .btn-danger { background-color: var(--danger-color); color: white; }
+        .btn-sm { padding: 0.35rem 0.75rem; font-size: 0.8rem; }
+
+        .table-wrapper { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+        th { text-align: left; padding: 1rem; border-bottom: 2px solid var(--border-color); color: var(--text-secondary); }
+        td { padding: 1rem; border-bottom: 1px solid var(--border-color); }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0; top: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            align-items: center;
+            justify-content: center;
+        }
+        .modal.active { display: flex; }
+        .modal-content {
+            background-color: var(--bg-card);
+            padding: 2rem;
+            border-radius: var(--radius);
+            width: 100%;
+            max-width: 500px;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .form-group { margin-bottom: 1.25rem; }
+        .form-label { display: block; margin-bottom: 0.5rem; font-weight: 500; font-size: 0.9rem; }
+        .form-input {
+            width: 100%;
+            padding: 0.625rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            background: var(--bg-card);
+            color: var(--text-primary);
+        }
+
+        .badge { padding: 0.2rem 0.5rem; border-radius: 1rem; font-size: 0.75rem; font-weight: 600; }
+        .badge-primary { background: var(--primary-light); color: var(--primary-color); }
+
+        .toast-container { position: fixed; top: 80px; right: 20px; z-index: 3000; }
+        .toast { padding: 1rem; border-radius: 0.5rem; background: var(--bg-card); border-left: 4px solid var(--primary-color); box-shadow: var(--shadow); margin-bottom: 0.5rem; transition: all 0.3s; }
+        
+        .permissions-list {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            padding: 1rem;
+            border-radius: 0.5rem;
+        }
+        .perm-item { font-size: 0.8rem; display: flex; align-items: center; gap: 0.3rem; }
     </style>
 </head>
+
 <body>
-    <div class="card">
-        <h1>🛡️ Role Management</h1>
-        <p>The secure RBAC logic and parsing APIs have been successfully deployed internally.<br/>This graphical UI dashboard is ready to be flushed out natively with your specific frontend stack components!</p>
-        <a href="/admin" class="btn">← Back to Dashboard</a>
+    <header class="header">
+        <nav class="nav-container">
+            <a href="/admin" class="logo-container">
+                <img src="/Logos/logo.jpeg" alt="Logo" class="logo-small">
+                <span>Admin Dashboard</span>
+            </a>
+            <ul class="nav-menu">
+                <li><a href="/admin" class="nav-link">Dashboard</a></li>
+                <li><a href="/tools" class="nav-link">Manage</a></li>
+                <li><a href="/config" class="nav-link">Configuration</a></li>
+                <li><a href="/roles" class="nav-link active">Roles</a></li>
+                <li><button class="nav-link" onclick="handleLogout()" style="background:none;border:none;cursor:pointer;">Logout</button></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <div class="container">
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('roles')">Roles</button>
+            <button class="tab-btn" onclick="switchTab('users')">Users</button>
+            <button class="tab-btn" onclick="switchTab('permissions')">Permissions</button>
+            <button class="tab-btn" onclick="switchTab('tenants')">Tenants</button>
+        </div>
+
+        <!-- Roles Tab -->
+        <div id="roles" class="tab-panel active">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Roles Management</h2>
+                    <button class="btn btn-primary btn-sm" onclick="showModal('roleModal')">+ Add Role</button>
+                </div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Tenant</th>
+                                <th>Permissions</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="roleTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Users Tab -->
+        <div id="users" class="tab-panel">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">User Roles Assignment</h2>
+                </div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Username</th>
+                                <th>Current Role</th>
+                                <th>Tenant</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="userTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Permissions Tab -->
+        <div id="permissions" class="tab-panel">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">System Permissions</h2>
+                    <button class="btn btn-primary btn-sm" onclick="showModal('permissionModal')">+ Add Permission</button>
+                </div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Code</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody id="permissionTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tenants Tab -->
+        <div id="tenants" class="tab-panel">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Tenants</h2>
+                    <button class="btn btn-primary btn-sm" onclick="showModal('tenantModal')">+ Add Tenant</button>
+                </div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Domain</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tenantTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
+
+    <!-- Modals -->
+    <div id="roleModal" class="modal">
+        <div class="modal-content">
+            <h3>Add New Role</h3>
+            <div class="form-group">
+                <label class="form-label">Role Name</label>
+                <input type="text" id="newRoleName" class="form-input" placeholder="e.g. SHIPMENT_MANAGER">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Tenant</label>
+                <select id="newRoleTenant" class="form-input"></select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Permissions</label>
+                <div id="permCheckboxes" class="permissions-list"></div>
+            </div>
+            <div style="display:flex; justify-content:flex-end; gap:0.5rem;">
+                <button class="btn btn-secondary" onclick="hideModal('roleModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="createRole()">Create Role</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="userRoleModal" class="modal">
+        <div class="modal-content">
+            <h3>Assign Role to User</h3>
+            <p id="assignUserName" style="margin-bottom: 1rem; font-weight: 600;"></p>
+            <div class="form-group">
+                <label class="form-label">Role</label>
+                <select id="assignRoleSelect" class="form-input"></select>
+            </div>
+            <div style="display:flex; justify-content:flex-end; gap:0.5rem;">
+                <button class="btn btn-secondary" onclick="hideModal('userRoleModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="submitUserRole()">Assign</button>
+            </div>
+        </div>
+    </div>
+    <div id="editRoleModal" class="modal">
+        <div class="modal-content">
+            <h3>Edit Role Permissions</h3>
+            <p id="editRoleTitle" style="margin-bottom: 1rem; font-weight: 600;"></p>
+            <div class="form-group">
+                <label class="form-label">Permissions</label>
+                <div id="editPermCheckboxes" class="permissions-list"></div>
+            </div>
+            <div style="display:flex; justify-content:flex-end; gap:0.5rem;">
+                <button class="btn btn-secondary" onclick="hideModal('editRoleModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="updateRolePermissions()">Update Permissions</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="permissionModal" class="modal">
+        <div class="modal-content">
+            <h3>Add Permission Key</h3>
+            <div class="form-group">
+                <label class="form-label">Permission Code</label>
+                <input type="text" id="newPermCode" class="form-input" placeholder="E.g. USER_CREATE">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Description</label>
+                <input type="text" id="newPermDesc" class="form-input">
+            </div>
+            <div style="display:flex; justify-content:flex-end; gap:0.5rem;">
+                <button class="btn btn-secondary" onclick="hideModal('permissionModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="createPermission()">Add</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="tenantModal" class="modal">
+        <div class="modal-content">
+            <h3>Add Tenant</h3>
+            <div class="form-group">
+                <label class="form-label">Name</label>
+                <input type="text" id="newTenantName" class="form-input">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Domain</label>
+                <input type="text" id="newTenantDomain" class="form-input">
+            </div>
+            <div style="display:flex; justify-content:flex-end; gap:0.5rem;">
+                <button class="btn btn-secondary" onclick="hideModal('tenantModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="createTenant()">Add</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentUserId = null;
+        let tenants = [];
+        let permissions = [];
+        let roles = [];
+
+        async function fetchData() {
+            try {
+                const [rResp, pResp, tResp, uResp] = await Promise.all([
+                    fetch('/api/roles'),
+                    fetch('/api/permissions'),
+                    fetch('/api/tenants'),
+                    fetch('/api/users')
+                ]);
+
+                roles = (await rResp.json()).data.roles;
+                permissions = (await pResp.json()).data.permissions;
+                tenants = (await tResp.json()).data.tenants;
+                const users = (await uResp.json()).data.users;
+
+                renderRoles();
+                renderUsers(users);
+                renderPermissions();
+                renderTenants();
+                populateDropdowns();
+            } catch (err) {
+                showToast("Failed to fetch data", "error");
+            }
+        }
+
+        function renderRoles() {
+            const body = document.getElementById('roleTableBody');
+            body.innerHTML = roles.map(r => `
+                <tr>
+                    <td>${r.name}</td>
+                    <td>${tenants.find(t => t._id === r.tenant_id)?.name || 'N/A'}</td>
+                    <td><button class="btn btn-sm btn-secondary" onclick="editRolePermissions('${r._id}', '${r.name}')">Edit Permissions</button></td>
+                    <td><button class="btn btn-sm btn-danger" onclick="deleteRole('${r._id}')">Delete</button></td>
+                </tr>
+            `).join('');
+        }
+
+        function renderUsers(users) {
+            const body = document.getElementById('userTableBody');
+            body.innerHTML = users.map(u => `
+                <tr>
+                    <td>${u.username}</td>
+                    <td>${u.role === 'admin' ? 'Super Admin' : u.role}</td>
+                    <td>${tenants.find(t => t._id === u.tenant_id)?.name || 'Global'}</td>
+                    <td><button class="btn btn-sm btn-primary" onclick="showAssignRole('${u._id}', '${u.username}')">Change Role</button></td>
+                </tr>
+            `).join('');
+        }
+
+        function renderPermissions() {
+            document.getElementById('permissionTableBody').innerHTML = permissions.map(p => `
+                <tr><td><code>${p.code}</code></td><td>${p.description}</td></tr>
+            `).join('');
+            
+            document.getElementById('permCheckboxes').innerHTML = permissions.map(p => `
+                <div class="perm-item"><input type="checkbox" name="perm" value="${p._id}">${p.code}</div>
+            `).join('');
+        }
+
+        function renderTenants() {
+            document.getElementById('tenantTableBody').innerHTML = tenants.map(t => `
+                <tr><td>${t.name}</td><td>${t.domain || '-'}</td></tr>
+            `).join('');
+        }
+
+        function populateDropdowns() {
+            const tenantSelect = document.getElementById('newRoleTenant');
+            tenantSelect.innerHTML = tenants.map(t => `<option value="${t._id}">${t.name}</option>`).join('');
+            
+            const roleSelect = document.getElementById('assignRoleSelect');
+            roleSelect.innerHTML = roles.map(r => `<option value="${r._id}">${r.name}</option>`).join('');
+        }
+
+        async function createRole() {
+            const name = document.getElementById('newRoleName').value;
+            const tenant_id = document.getElementById('newRoleTenant').value;
+            const selectedPerms = Array.from(document.querySelectorAll('input[name="perm"]:checked')).map(cb => cb.value);
+
+            const resp = await fetch('/api/roles', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, tenant_id })
+            });
+
+            if (resp.ok) {
+                const roleData = await resp.json();
+                const roleId = roleData.data.role._id;
+                
+                if (selectedPerms.length > 0) {
+                    await fetch(`/api/roles/${roleId}/permissions`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ permissionIds: selectedPerms })
+                    });
+                }
+                
+                showToast("Role created with permissions");
+                hideModal('roleModal');
+                fetchData();
+            }
+        }
+
+        function showAssignRole(userId, username) {
+            currentUserId = userId;
+            document.getElementById('assignUserName').innerText = "User: " + username;
+            showModal('userRoleModal');
+        }
+
+        async function submitUserRole() {
+            const roleId = document.getElementById('assignRoleSelect').value;
+            const resp = await fetch(`/api/users/${currentUserId}/roles`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ roleId })
+            });
+
+            if (resp.ok) {
+                showToast("Role assigned successfully");
+                hideModal('userRoleModal');
+                fetchData();
+            }
+        }
+
+        async function createPermission() {
+            const code = document.getElementById('newPermCode').value;
+            const description = document.getElementById('newPermDesc').value;
+            const resp = await fetch('/api/permissions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code, description })
+            });
+            if (resp.ok) { hideModal('permissionModal'); fetchData(); }
+        }
+
+        async function createTenant() {
+            const name = document.getElementById('newTenantName').value;
+            const domain = document.getElementById('newTenantDomain').value;
+            const resp = await fetch('/api/tenants', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, domain })
+            });
+            if (resp.ok) { hideModal('tenantModal'); fetchData(); }
+        }
+
+        function switchTab(id) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById(id).classList.add('active');
+        }
+
+        function showModal(id) { document.getElementById(id).classList.add('active'); }
+        function hideModal(id) { document.getElementById(id).classList.remove('active'); }
+        function showToast(msg) {
+            const t = document.createElement('div');
+            t.className = 'toast';
+            t.innerText = msg;
+            document.getElementById('toastContainer').appendChild(t);
+            setTimeout(() => t.remove(), 3000);
+        }
+
+        async function handleLogout() {
+            await fetch('/api/logout', { method: 'POST' });
+            window.location.href = '/login';
+        }
+
+        let currentRoleIdForEdit = null;
+
+        async function editRolePermissions(roleId, roleName) {
+            currentRoleIdForEdit = roleId;
+            document.getElementById('editRoleTitle').innerText = "Role: " + roleName;
+            
+            // Render all permissions first
+            document.getElementById('editPermCheckboxes').innerHTML = permissions.map(p => `
+                <div class="perm-item"><input type="checkbox" name="editPerm" value="${p._id}">${p.code}</div>
+            `).join('');
+
+            // Fetch current permissions for this role to pre-check them
+            try {
+                const resp = await fetch(`/api/roles/${roleId}/permissions`);
+                const { data } = await resp.json();
+                const activePermIds = (data.permissions || []).map(p => p._id);
+                
+                document.querySelectorAll('input[name="editPerm"]').forEach(cb => {
+                    if (activePermIds.includes(cb.value)) cb.checked = true;
+                });
+                
+                showModal('editRoleModal');
+            } catch (err) {
+                showToast("Failed to load role permissions", "error");
+            }
+        }
+
+        async function updateRolePermissions() {
+            const selectedPerms = Array.from(document.querySelectorAll('input[name="editPerm"]:checked')).map(cb => cb.value);
+            
+            try {
+                const resp = await fetch(`/api/roles/${currentRoleIdForEdit}/permissions`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ permissionIds: selectedPerms })
+                });
+
+                if (resp.ok) {
+                    showToast("Permissions updated successfully");
+                    hideModal('editRoleModal');
+                    fetchData();
+                } else {
+                    const data = await resp.json();
+                    showToast(data.message || "Update failed", "error");
+                }
+            } catch (err) {
+                showToast("Network error during update", "error");
+            }
+        }
+
+        async function deleteRole(roleId) {
+            if (!confirm("Are you sure you want to delete this role?")) return;
+            try {
+                const resp = await fetch(`/api/roles/${roleId}`, { method: 'DELETE' });
+                if (resp.status === 204 || resp.ok) {
+                    showToast("Role deleted");
+                    fetchData();
+                } else {
+                    const data = await resp.json();
+                    showToast(data.message || "Failed to delete role", "error");
+                }
+            } catch (err) {
+                showToast("Error deleting role", "error");
+            }
+        }
+
+        fetchData();
+        // Check auth status for login link
+        (async () => {
+            try {
+                const res = await fetch('/api/login/check');
+                if (res.ok) {
+                    const link = document.getElementById('adminLink');
+                    if (link) {
+                        link.href = '/admin';
+                        link.textContent = 'Admin Dashboard';
+                    }
+                }
+            } catch (e) {}
+        })();
+    </script>
 </body>
 </html>
