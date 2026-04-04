@@ -12,6 +12,7 @@
     "axios": "^1.13.2",
     "axios-cookiejar-support": "^6.0.5",
     "bcryptjs": "^2.4.3",
+    "bwip-js": "^4.9.0",
     "connect-mongo": "^6.0.0",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
@@ -22,6 +23,7 @@
     "mongoose": "^7.0.3",
     "node-cron": "^4.2.1",
     "nodemailer": "^7.0.13",
+    "qrcode": "^1.5.4",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
     "tough-cookie": "^6.0.0"
