@@ -4,6 +4,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- Force redirect to new domain if accessed via old URL -->
+    <script>
+        if (window.location.hostname.includes('vercel.app')) {
+            window.location.replace('https://aklogistics.org' + window.location.pathname + window.location.search);
+        }
+    </script>
+    
+    <!-- Google Search Console - REPLACE WITH YOUR VERIFICATION CODE -->
+    <meta name="google-site-verification" content="YOUR_VERIFICATION_CODE_HERE" />
+    
     <title>AK Logistics - Fast & Reliable Package Tracking | Courier Services</title>
     <meta name="description" content="AK Logistics provides fast, reliable package tracking and courier services. Track your shipments in real-time across India with our advanced logistics solutions.">
     <meta name="keywords" content="package tracking, courier services, logistics, shipping, delivery tracking, AK Logistics, cargo tracking">
