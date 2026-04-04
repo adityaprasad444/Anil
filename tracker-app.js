@@ -15,8 +15,11 @@ const EmailConfig = require('./models/EmailConfig');
 const EmailLog = require('./models/EmailLog');
 const Report = require('./models/Report');
 const EmailTemplate = require('./models/EmailTemplate');
+const LabelTemplate = require('./models/LabelTemplate');
+const GeneratedLabel = require('./models/GeneratedLabel');
 const trackingService = require('./services/trackingService');
 const emailService = require('./services/emailService');
+const labelService = require('./services/labelService');
 const cron = require('node-cron');
 const swaggerUi = require('swagger-ui-express');
 const swaggerJsdoc = require('swagger-jsdoc');
@@ -190,6 +193,10 @@ app.get('/admin', requireAuth, (req, res) => {
 
 app.get('/tools', requireAuth, (req, res) => {
   res.sendFile(path.join(publicPath, 'tools.html'));
+});
+
+app.get('/labels', requireAuth, (req, res) => {
+  res.sendFile(path.join(publicPath, 'labels.html'));
 });
 
 /**
@@ -2064,6 +2071,381 @@ app.get('/api/email-logs/:id/preview', requireAuth, async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch email preview' });
+  }
+});
+
+// Label Templates API Routes
+
+/**
+ * @swagger
+ * /api/label-templates:
+ *   get:
+ *     summary: Get all label templates for the authenticated user
+ *     tags: [Label Templates]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: List of label templates
+ */
+app.get('/api/label-templates', requireAuth, async (req, res) => {
+  try {
+    const { isActive } = req.query;
+    const userId = req.session.user.id; // Get userId from session.user.id
+    const templates = await labelService.getTemplates(userId, isActive !== 'false');
+    res.json(templates);
+  } catch (error) {
+    console.error('❌ Label templates fetch error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * @swagger
+ * /api/label-templates:
+ *   post:
+ *     summary: Create a new label template
+ *     tags: [Label Templates]
+ *     security:
+ *       - sessionAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               template:
+ *                 type: string
+ *               variables:
+ *                 type: array
+ *               dimensions:
+ *                 type: object
+ *               style:
+ *                 type: object
+ *     responses:
+ *       201:
+ *         description: Label template created successfully
+ */
+app.post('/api/label-templates', requireAuth, async (req, res) => {
+  try {
+    const userId = req.session.user.id; // Get userId from session.user.id
+    const template = await labelService.createTemplate(req.body, userId);
+    res.status(201).json(template);
+  } catch (error) {
+    console.error('❌ Label template creation error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * @swagger
+ * /api/label-templates/:id:
+ *   get:
+ *     summary: Get a specific label template
+ *     tags: [Label Templates]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Label template details
+ */
+app.get('/api/label-templates/:id', requireAuth, async (req, res) => {
+  try {
+    const userId = req.session.user.id; // Get userId from session.user.id
+    const template = await labelService.getTemplateById(req.params.id, userId);
+    res.json(template);
+  } catch (error) {
+    console.error('❌ Label template fetch error:', error);
+    res.status(404).json({ error: error.message });
+  }
+});
+
+/**
+ * @swagger
+ * /api/label-templates/:id:
+ *   put:
+ *     summary: Update a label template
+ *     tags: [Label Templates]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Label template updated successfully
+ */
+app.put('/api/label-templates/:id', requireAuth, async (req, res) => {
+  try {
+    const userId = req.session.user.id; // Get userId from session.user.id
+    const template = await labelService.updateTemplate(req.params.id, req.body, userId);
+    res.json(template);
+  } catch (error) {
+    console.error('❌ Label template update error:', error);
+    res.status(404).json({ error: error.message });
+  }
+});
+
+/**
+ * @swagger
+ * /api/label-templates/:id:
+ *   delete:
+ *     summary: Delete a label template
+ *     tags: [Label Templates]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Label template deleted successfully
+ */
+app.delete('/api/label-templates/:id', requireAuth, async (req, res) => {
+  try {
+    const userId = req.session.user.id; // Get userId from session.user.id
+    const template = await labelService.deleteTemplate(req.params.id, userId);
+    res.json(template);
+  } catch (error) {
+    console.error('❌ Label template deletion error:', error);
+    res.status(404).json({ error: error.message });
+  }
+});
+
+/**
+ * @swagger
+ * /api/label-templates/:id/preview:
+ *   get:
+ *     summary: Generate a preview of a label template
+ *     tags: [Label Templates]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Label preview generated successfully
+ */
+app.get('/api/label-templates/:id/preview', requireAuth, async (req, res) => {
+  try {
+    const userId = req.session.user.id; // Get userId from session.user.id
+    const preview = await labelService.getPreviewData(req.params.id, userId);
+    res.json(preview);
+  } catch (error) {
+    console.error('❌ Label preview generation error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * @swagger
+ * /api/label/generate:
+ *   post:
+ *     summary: Generate a label using a template
+ *     tags: [Label Generation]
+ *     security:
+ *       - sessionAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               templateId:
+ *                 type: string
+ *               data:
+ *                 type: object
+ *     responses:
+ *       200:
+ *         description: Label generated successfully
+ */
+app.post('/api/label/generate', requireAuth, async (req, res) => {
+  try {
+    const { templateId, data } = req.body;
+    const userId = req.session.user.id; // Get userId from session.user.id
+    const label = await labelService.generateLabel(templateId, data, userId);
+    res.json(label);
+  } catch (error) {
+    console.error('❌ Label generation error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * @swagger
+ * /api/label/tracking/:trackingId:
+ *   post:
+ *     summary: Generate a label for tracking data
+ *     tags: [Label Generation]
+ *     security:
+ *       - sessionAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               templateId:
+ *                 type: string
+ *               additionalData:
+ *                 type: object
+ *     responses:
+ *       200:
+ *         description: Label generated for tracking data successfully
+ */
+app.post('/api/label/tracking/:trackingId', requireAuth, async (req, res) => {
+  try {
+    const { templateId, additionalData = {} } = req.body;
+    const userId = req.session.user.id; // Get userId from session.user.id
+    const label = await labelService.generateLabelForTracking(
+      req.params.trackingId, 
+      templateId, 
+      userId, 
+      additionalData
+    );
+    res.json(label);
+  } catch (error) {
+    console.error('❌ Tracking label generation error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Generated Labels API Routes
+
+/**
+ * @swagger
+ * /api/generated-labels:
+ *   get:
+ *     summary: Get all generated labels for the authenticated user
+ *     tags: [Generated Labels]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: List of generated labels
+ */
+app.get('/api/generated-labels', requireAuth, async (req, res) => {
+  try {
+    const { limit = 50, offset = 0 } = req.query;
+    const userId = req.session.user.id; // Get userId from session.user.id
+    const result = await labelService.getGeneratedLabels(
+      userId, 
+      parseInt(limit), 
+      parseInt(offset)
+    );
+    res.json(result);
+  } catch (error) {
+    console.error('❌ Generated labels fetch error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * @swagger
+ * /api/generated-labels:
+ *   post:
+ *     summary: Save a generated label
+ *     tags: [Generated Labels]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       201:
+ *         description: Label saved successfully
+ */
+app.post('/api/generated-labels', requireAuth, async (req, res) => {
+  try {
+    const { templateId, data, trackingId } = req.body;
+    const userId = req.session.user.id; // Get userId from session.user.id
+    
+    console.log('🏷️ Saving generated label:', { 
+      templateId, 
+      trackingId, 
+      userId: userId,
+      dataKeys: Object.keys(data)
+    });
+    
+    if (!userId) {
+      throw new Error('User not authenticated');
+    }
+    
+    const savedLabel = await labelService.saveGeneratedLabel(
+      templateId, 
+      data, 
+      userId, 
+      trackingId
+    );
+    res.status(201).json(savedLabel);
+  } catch (error) {
+    console.error('❌ Save generated label error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * @swagger
+ * /api/generated-labels/:id:
+ *   get:
+ *     summary: Get a specific generated label
+ *     tags: [Generated Labels]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Generated label details
+ */
+app.get('/api/generated-labels/:id', requireAuth, async (req, res) => {
+  try {
+    const userId = req.session.user.id; // Get userId from session.user.id
+    const label = await labelService.getGeneratedLabelById(req.params.id, userId);
+    res.json(label);
+  } catch (error) {
+    console.error('❌ Generated label fetch error:', error);
+    res.status(404).json({ error: error.message });
+  }
+});
+
+/**
+ * @swagger
+ * /api/generated-labels/:id:
+ *   put:
+ *     summary: Update a generated label
+ *     tags: [Generated Labels]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Generated label updated successfully
+ */
+app.put('/api/generated-labels/:id', requireAuth, async (req, res) => {
+  try {
+    const userId = req.session.user.id; // Get userId from session.user.id
+    const label = await labelService.updateGeneratedLabel(req.params.id, req.body, userId);
+    res.json(label);
+  } catch (error) {
+    console.error('❌ Generated label update error:', error);
+    res.status(404).json({ error: error.message });
+  }
+});
+
+/**
+ * @swagger
+ * /api/generated-labels/:id:
+ *   delete:
+ *     summary: Delete a generated label
+ *     tags: [Generated Labels]
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Generated label deleted successfully
+ */
+app.delete('/api/generated-labels/:id', requireAuth, async (req, res) => {
+  try {
+    const userId = req.session.user.id; // Get userId from session.user.id
+    const label = await labelService.deleteGeneratedLabel(req.params.id, userId);
+    res.json(label);
+  } catch (error) {
+    console.error('❌ Generated label deletion error:', error);
+    res.status(404).json({ error: error.message });
   }
 });
 

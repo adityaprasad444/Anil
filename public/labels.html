@@ -1,0 +1,2270 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Label Templates - Package Tracking</title>
+    <link rel="icon" type="image/jpeg" href="/Logos/logo.jpeg">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --primary-hover: #4338ca;
+            --primary-light: #e0e7ff;
+            --secondary-color: #64748b;
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+            --warning-color: #f59e0b;
+            --bg-body: #f3f4f6;
+            --bg-card: #ffffff;
+            --text-primary: #1f2937;
+            --text-secondary: #6b7280;
+            --border-color: #e5e7eb;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --radius: 0.75rem;
+        }
+
+        [data-theme="dark"] {
+            --primary-color: #6366f1;
+            --primary-hover: #4f46e5;
+            --primary-light: #312e81;
+            --secondary-color: #94a3b8;
+            --success-color: #10b981;
+            --danger-color: #f87171;
+            --warning-color: #fbbf24;
+            --bg-body: #0f172a;
+            --bg-card: #1e293b;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border-color: #334155;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .header {
+            background-color: var(--bg-card);
+            box-shadow: var(--shadow-sm);
+            padding: 0 2rem;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            height: 70px;
+            display: flex;
+            align-items: center;
+        }
+
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            color: var(--text-primary);
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .logo-small {
+            height: 32px;
+            width: 32px;
+            border-radius: 6px;
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+
+        .nav-link:hover {
+            background-color: var(--primary-light);
+            color: var(--primary-color);
+        }
+
+        .nav-link.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .theme-toggle {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            transition: all 0.2s;
+        }
+
+        .theme-toggle:hover {
+            background-color: var(--border-color);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            margin-top: 70px;
+        }
+
+        .page-header {
+            margin-bottom: 2rem;
+        }
+
+        .page-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .page-subtitle {
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .tab {
+            padding: 0.75rem 1.5rem;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-weight: 500;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .tab:hover {
+            color: var(--text-primary);
+        }
+
+        .tab.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .card {
+            background-color: var(--bg-card);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            font-size: 0.875rem;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-secondary {
+            background-color: var(--bg-card);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--border-color);
+        }
+
+        .btn-danger {
+            background-color: var(--danger-color);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #dc2626;
+        }
+
+        .btn-sm {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+            width: 100%;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            font-size: 0.875rem;
+            line-height: 1.25;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            background-color: var(--bg-card);
+            color: var(--text-primary);
+            font-size: 0.875rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            box-sizing: border-box;
+            line-height: 1.5;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
+        }
+
+        .form-input.invalid {
+            border-color: var(--danger-color);
+            box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.1);
+        }
+
+        .validation-error {
+            color: var(--danger-color);
+            font-size: 0.75rem;
+            margin-top: 0.25rem;
+            display: none;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            align-items: start;
+        }
+
+        /* Better textarea styling for address fields */
+        textarea.form-input {
+            min-height: 120px;
+            resize: vertical;
+            font-family: inherit;
+            line-height: 1.4;
+        }
+
+        /* Form container styling */
+        .form-container {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-section {
+            margin-bottom: 2rem;
+        }
+
+        .form-section-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        /* Button container styling */
+        .button-container {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            align-items: center;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+            margin-top: 2rem;
+        }
+
+        /* Validation summary improvements */
+        .validation-summary {
+            margin-bottom: 1.5rem;
+            border-radius: 0.5rem;
+        }
+
+        /* Responsive form adjustments */
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .button-container {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .form-container {
+                padding: 1rem;
+            }
+        }
+
+        /* Printable Modal Styles */
+        .print-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            overflow: auto;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .print-modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .print-modal-content {
+            background: white;
+            border-radius: 12px;
+            max-width: 95vw;
+            max-height: 95vh;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        .print-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 24px;
+            border-bottom: 1px solid #e5e7eb;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border-radius: 12px 12px 0 0;
+            flex-shrink: 0;
+        }
+
+        .print-modal-header h3 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 600;
+            color: #1f2937;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .print-modal-header h3::before {
+            content: "🏷️";
+            font-size: 24px;
+        }
+
+        .print-modal-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .print-modal-body {
+            padding: 24px;
+            overflow-y: auto;
+            background: #fafbfc;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .print-options {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .print-options label {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            margin: 0 8px 0 0;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 500;
+            color: #374151;
+        }
+
+        .print-options label:hover {
+            background: #f3f4f6;
+            color: #1f2937;
+        }
+
+        .print-options input[type="radio"] {
+            margin: 0;
+            accent-color: #3b82f6;
+        }
+
+        .print-options input[type="radio"]:checked + span {
+            color: #3b82f6;
+            font-weight: 600;
+        }
+
+        .printable-label-container {
+            margin: 0 auto;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            border-radius: 8px;
+            overflow: hidden;
+            background: white;
+        }
+
+        .print-info {
+            max-width: 600px;
+            margin: 24px auto 0;
+            padding: 16px;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #475569;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .print-info strong {
+            color: #1e293b;
+            font-weight: 600;
+        }
+
+        .a4-print-layout {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            margin: 0 auto;
+        }
+
+        /* Improve button styling in modal */
+        .print-modal-actions .btn {
+            padding: 10px 20px;
+            font-weight: 500;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .print-modal-actions .btn-primary {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            border: none;
+            color: white;
+        }
+
+        .print-modal-actions .btn-primary:hover {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        }
+
+        .print-modal-actions .btn-secondary {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            color: #64748b;
+        }
+
+        .print-modal-actions .btn-secondary:hover {
+            background: #f1f5f9;
+            color: #475569;
+            border-color: #cbd5e1;
+        }
+
+        /* Print-specific styles */
+        @media print {
+            .print-modal {
+                position: static;
+                background: white;
+                overflow: visible;
+            }
+
+            .print-modal-content {
+                max-width: 100%;
+                max-height: 100%;
+                box-shadow: none;
+                border-radius: 0;
+            }
+
+            .print-modal-header,
+            .print-options,
+            .print-info {
+                display: none;
+            }
+
+            .print-modal-body {
+                padding: 0;
+                background: white;
+            }
+
+            .a4-print-layout {
+                width: 210mm !important;
+                min-height: 297mm !important;
+                margin: 0 !important;
+                padding: 5mm !important;
+                box-sizing: border-box !important;
+                background: white !important;
+                page-break-after: always !important;
+                border: none !important;
+                box-shadow: none !important;
+            }
+
+            .printable-label-container {
+                box-shadow: none !important;
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+                border: 2px solid #333 !important;
+                /* Ensure the template border is visible */
+            }
+
+            /* Ensure the template content itself has the border */
+            .printable-label-container > div {
+                border: 2px solid #333 !important;
+            }
+
+            body * {
+                visibility: hidden;
+            }
+
+            .print-modal,
+            .print-modal * {
+                visibility: visible;
+            }
+
+            .print-modal {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+            }
+
+            /* Ensure proper A4 sizing */
+            @page {
+                size: A4 portrait;
+                margin: 0;
+            }
+
+            /* Force vertical layout for printing */
+            .a4-print-layout {
+                width: 210mm !important;
+                height: 297mm !important;
+                min-height: 297mm !important;
+                max-height: 297mm !important;
+                margin: 0 !important;
+                padding: 5mm 10mm !important;
+                box-sizing: border-box !important;
+                background: white !important;
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: flex-start !important;
+                page-break-after: avoid !important;
+                overflow: hidden !important;
+            }
+
+            .a4-print-layout .printable-label-container {
+                width: 190mm !important;
+                height: 137mm !important;
+                min-height: 137mm !important;
+                max-height: 137mm !important;
+                page-break-inside: avoid !important;
+                box-sizing: border-box !important;
+                overflow: hidden !important;
+                flex-shrink: 0 !important;
+                flex-grow: 0 !important;
+            }
+
+            .a4-print-layout .printable-label-container:first-child {
+                margin-bottom: 0 !important;
+            }
+
+            /* Prevent extra pages */
+            .print-modal-body {
+                max-height: 297mm !important;
+                overflow: hidden !important;
+            }
+
+            #printableLabels {
+                max-height: 297mm !important;
+                overflow: hidden !important;
+            }
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .template-list {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .template-item {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            transition: all 0.2s;
+        }
+
+        .template-item:hover {
+            box-shadow: var(--shadow);
+        }
+
+        .template-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 1rem;
+        }
+
+        .template-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .template-description {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .template-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .template-meta {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .preview-container {
+            background-color: var(--bg-body);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            padding: 2rem;
+            margin-top: 1rem;
+            text-align: center;
+            min-height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .preview-content {
+            background-color: white;
+            border: 1px solid #000;
+            padding: 1rem;
+            font-family: Arial, sans-serif;
+        }
+
+        .variable-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem;
+            background-color: var(--bg-body);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .variable-remove {
+            background: none;
+            border: none;
+            color: var(--danger-color);
+            cursor: pointer;
+            padding: 0.25rem;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background-color: var(--bg-card);
+            border-radius: var(--radius);
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .modal-footer {
+            padding: 1.5rem;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+        }
+
+        .toast-container {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            z-index: 3000;
+        }
+
+        .toast {
+            background: var(--bg-card);
+            border-radius: 0.5rem;
+            padding: 1rem 1.25rem;
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            min-width: 300px;
+            margin-bottom: 1rem;
+            animation: slideIn 0.3s ease-out;
+            border-left: 4px solid;
+        }
+
+        .toast.success {
+            border-left-color: var(--success-color);
+        }
+
+        .toast.error {
+            border-left-color: var(--danger-color);
+        }
+
+        .toast.info {
+            border-left-color: var(--primary-color);
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-state svg {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+
+<body>
+    <header class="header">
+        <nav class="nav-container">
+            <a href="/admin" class="logo-container">
+                <img src="/Logos/logo.jpeg" alt="Package Tracking Logo" class="logo-small" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iOCIgZmlsbD0iIzM4ODJmNiIvPgo8cGF0aCBkPSJNOCAxMkgyNFYyMEg4VjEyWiIgZmlsbD0id2hpdGUiLz4KPHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4PSI4IiB5PSI4Ij4KPHBhdGggZD0iTTggMTJIMTZWMTZIOFYxMloiIGZpbGw9IiMzODgyZjYiLz4KPC9zdmc+Cjwvc3ZnPgo=';">
+                <span>Package Tracking</span>
+            </a>
+            <div class="nav-actions">
+                <a href="/admin" class="nav-link">Dashboard</a>
+                <a href="/tools" class="nav-link">Tools</a>
+                <a href="/labels" class="nav-link active">Labels</a>
+                <a href="/config" class="nav-link">Config</a>
+                <a href="/admin?tab=reports" class="nav-link">Reports</a>
+                <a href="/admin?tab=emails" class="nav-link">Emails</a>
+                <button onclick="handleLogout()" class="nav-link" style="background: none; border: none; cursor: pointer;">Logout</button>
+            </div>
+            <button onclick="toggleTheme()" class="theme-toggle" id="themeToggle">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </nav>
+    </header>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <div class="container">
+        <div class="page-header">
+            <h1 class="page-title">Label Templates</h1>
+            <p class="page-subtitle">Create and manage custom label templates for your tracking needs</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('templates')">Templates</button>
+            <button class="tab" onclick="switchTab('generator')">Generate Label</button>
+            <button class="tab" onclick="switchTab('generated')">Generated Labels</button>
+        </div>
+
+        <div id="templates-tab" class="tab-content active">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Label Templates</h2>
+                    <button class="btn btn-primary" onclick="openCreateModal()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        Create Template
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div id="templatesList" class="template-list">
+                        <!-- Templates will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="generator-tab" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Generate Label</h2>
+                </div>
+                <div class="card-body">
+                    <form id="generateForm" onsubmit="generateLabel(event)">
+                        <div class="form-container">
+                            <div class="form-section">
+                                <h3 class="form-section-title">📋 Template Selection</h3>
+                                <div class="form-grid">
+                                    <div class="form-group">
+                                        <label class="form-label" for="templateSelect">Select Template *</label>
+                                        <select id="templateSelect" class="form-input" required>
+                                            <option value="">Choose a template...</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="trackingId">Tracking ID (Optional)</label>
+                                        <input type="text" id="trackingId" class="form-input" placeholder="Auto-fill from tracking data">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-section" id="variableFieldsSection" style="display: none;">
+                                <h3 class="form-section-title">📝 Label Information</h3>
+                                <div id="variableFields" class="form-grid">
+                                    <!-- Variable fields will be dynamically added here -->
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="button-container">
+                            <button type="button" class="btn btn-secondary" onclick="resetForm()">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                                    <path d="M3 3v5h5"></path>
+                                </svg>
+                                Reset Form
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="17 8 12 3 7 8"></polyline>
+                                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                                </svg>
+                                Generate Label
+                            </button>
+                        </div>
+                    </form>
+                    <div id="labelPreview" class="preview-container" style="display: none;">
+                        <!-- Label preview will be shown here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="generated-tab" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Generated Labels</h2>
+                    <button class="btn btn-secondary" onclick="loadGeneratedLabels()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.3" />
+                        </svg>
+                        Refresh
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div id="generatedLabelsList" class="template-list">
+                        <!-- Generated labels will be loaded here -->
+                    </div>
+                    <div id="generatedLabelsPagination" style="margin-top: 20px; text-align: center;">
+                        <!-- Pagination controls -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create/Edit Template Modal -->
+    <div id="templateModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Create Label Template</h3>
+                <button onclick="closeModal()" class="btn btn-secondary btn-sm">✕</button>
+            </div>
+            <div class="modal-body">
+                <form id="templateForm">
+                    <div class="form-group">
+                        <label class="form-label" for="templateName">Template Name</label>
+                        <input type="text" id="templateName" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="templateDescription">Description</label>
+                        <input type="text" id="templateDescription" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="templateContent">Template Content</label>
+                        <textarea id="templateContent" class="form-input form-textarea" required 
+                                  placeholder="Use {{variableName}} for placeholders. Example: Tracking ID: {{trackingId}}"></textarea>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label" for="labelWidth">Width (mm)</label>
+                            <input type="number" id="labelWidth" class="form-input" value="100" min="10" max="500">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="labelHeight">Height (mm)</label>
+                            <input type="number" id="labelHeight" class="form-input" value="50" min="10" max="500">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Variables</label>
+                        <div id="variablesList">
+                            <!-- Variables will be added here -->
+                        </div>
+                        <button type="button" class="btn btn-secondary" onclick="addVariable()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                            Add Variable
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveTemplate()">Save Template</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentTemplates = [];
+        let currentEditingTemplate = null;
+        let variableCounter = 0;
+
+        // Theme Management
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            updateThemeIcon(savedTheme);
+        }
+
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeIcon(newTheme);
+        }
+
+        function updateThemeIcon(theme) {
+            const icon = document.querySelector('#themeToggle svg');
+            if (theme === 'dark') {
+                icon.innerHTML = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>';
+            } else {
+                icon.innerHTML = '<circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>';
+            }
+        }
+
+        // Tab Management
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+            
+            if (tabName === 'generator') {
+                loadTemplatesForGenerator();
+            } else if (tabName === 'generated') {
+                loadGeneratedLabels();
+            }
+        }
+
+        // Toast Notifications
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            
+            const icon = type === 'success' ? '✓' : type === 'error' ? '✕' : 'ℹ';
+            toast.innerHTML = `
+                <span class="toast-icon">${icon}</span>
+                <span class="toast-content">${message}</span>
+            `;
+            
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.animation = 'slideIn 0.3s ease-out reverse';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Template Management
+        async function loadTemplates() {
+            try {
+                const response = await fetch('/api/label-templates', {
+                    credentials: 'include'
+                });
+                if (!response.ok) throw new Error('Failed to load templates');
+                
+                currentTemplates = await response.json();
+                renderTemplates();
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        }
+
+        function renderTemplates() {
+            const container = document.getElementById('templatesList');
+            
+            if (currentTemplates.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="9" y1="9" x2="15" y2="9"></line>
+                            <line x1="9" y1="13" x2="15" y2="13"></line>
+                        </svg>
+                        <h3>No templates yet</h3>
+                        <p>Create your first label template to get started</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = currentTemplates.map(template => `
+                <div class="template-item">
+                    <div class="template-header">
+                        <div>
+                            <div class="template-name">${template.name}</div>
+                            <div class="template-description">${template.description || 'No description'}</div>
+                        </div>
+                        <div class="template-actions">
+                            <button class="btn btn-secondary btn-sm" onclick="previewTemplate('${template._id}')">Preview</button>
+                            <button class="btn btn-secondary btn-sm" onclick="editTemplate('${template._id}')">Edit</button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteTemplate('${template._id}')">Delete</button>
+                        </div>
+                    </div>
+                    <div class="template-meta">
+                        <span>${template.dimensions.width}×${template.dimensions.height}mm</span>
+                        <span>${template.variables.length} variables</span>
+                        <span>Created ${new Date(template.createdAt).toLocaleDateString()}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function loadTemplatesForGenerator() {
+            const select = document.getElementById('templateSelect');
+            select.innerHTML = '<option value="">Choose a template...</option>';
+            
+            currentTemplates.forEach(template => {
+                if (template.isActive) {
+                    select.innerHTML += `<option value="${template._id}">${template.name}</option>`;
+                }
+            });
+        }
+
+        // Modal Management
+        function openCreateModal() {
+            currentEditingTemplate = null;
+            document.getElementById('modalTitle').textContent = 'Create Label Template';
+            document.getElementById('templateForm').reset();
+            document.getElementById('variablesList').innerHTML = '';
+            variableCounter = 0;
+            addVariable(); // Add one default variable
+            document.getElementById('templateModal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('templateModal').classList.remove('active');
+        }
+
+        function addVariable() {
+            const container = document.getElementById('variablesList');
+            const id = `var_${variableCounter++}`;
+            
+            const variableDiv = document.createElement('div');
+            variableDiv.className = 'variable-item';
+            variableDiv.id = id;
+            variableDiv.innerHTML = `
+                <input type="text" placeholder="Variable name" class="form-input" style="flex: 1;" data-field="name">
+                <select class="form-input" style="flex: 1;" data-field="type">
+                    <option value="text">Text</option>
+                    <option value="number">Number</option>
+                    <option value="date">Date</option>
+                    <option value="email">Email</option>
+                    <option value="phone">Phone</option>
+                    <option value="url">URL</option>
+                    <option value="barcode">Barcode</option>
+                    <option value="qrcode">QR Code</option>
+                </select>
+                <label style="display: flex; align-items: center; gap: 0.5rem;">
+                    <input type="checkbox" data-field="required">
+                    <span>Required</span>
+                </label>
+                <input type="text" placeholder="Default value" class="form-input" style="flex: 1;" data-field="defaultValue">
+                <button type="button" class="variable-remove" onclick="removeVariable('${id}')">✕</button>
+            `;
+            
+            container.appendChild(variableDiv);
+        }
+
+        function removeVariable(id) {
+            document.getElementById(id).remove();
+        }
+
+        async function saveTemplate() {
+            const name = document.getElementById('templateName').value.trim();
+            const description = document.getElementById('templateDescription').value.trim();
+            const template = document.getElementById('templateContent').value.trim();
+            const width = parseInt(document.getElementById('labelWidth').value);
+            const height = parseInt(document.getElementById('labelHeight').value);
+            
+            if (!name || !template) {
+                showToast('Name and template content are required', 'error');
+                return;
+            }
+            
+            const variables = [];
+            document.querySelectorAll('#variablesList .variable-item').forEach(item => {
+                const name = item.querySelector('[data-field="name"]').value.trim();
+                if (name) {
+                    variables.push({
+                        name,
+                        type: item.querySelector('[data-field="type"]').value,
+                        required: item.querySelector('[data-field="required"]').checked,
+                        defaultValue: item.querySelector('[data-field="defaultValue"]').value.trim()
+                    });
+                }
+            });
+            
+            const templateData = {
+                name,
+                description,
+                template,
+                variables,
+                dimensions: { width, height, unit: 'mm' },
+                style: {
+                    fontSize: 12,
+                    fontFamily: 'Arial',
+                    alignment: 'center',
+                    backgroundColor: '#ffffff',
+                    textColor: '#000000',
+                    borderWidth: 1,
+                    borderColor: '#000000'
+                }
+            };
+            
+            try {
+                const url = currentEditingTemplate 
+                    ? `/api/label-templates/${currentEditingTemplate}`
+                    : '/api/label-templates';
+                const method = currentEditingTemplate ? 'PUT' : 'POST';
+                
+                const response = await fetch(url, {
+                    method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(templateData)
+                });
+                
+                if (!response.ok) throw new Error('Failed to save template');
+                
+                showToast('Template saved successfully', 'success');
+                closeModal();
+                loadTemplates();
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        }
+
+        async function editTemplate(id) {
+            const template = currentTemplates.find(t => t._id === id);
+            if (!template) return;
+            
+            currentEditingTemplate = id;
+            document.getElementById('modalTitle').textContent = 'Edit Label Template';
+            
+            document.getElementById('templateName').value = template.name;
+            document.getElementById('templateDescription').value = template.description || '';
+            document.getElementById('templateContent').value = template.template;
+            document.getElementById('labelWidth').value = template.dimensions.width;
+            document.getElementById('labelHeight').value = template.dimensions.height;
+            
+            document.getElementById('variablesList').innerHTML = '';
+            variableCounter = 0;
+            
+            template.variables.forEach(variable => {
+                addVariable();
+                const lastVar = document.querySelector(`#variablesList .variable-item:last-child`);
+                lastVar.querySelector('[data-field="name"]').value = variable.name;
+                lastVar.querySelector('[data-field="type"]').value = variable.type;
+                lastVar.querySelector('[data-field="required"]').checked = variable.required;
+                lastVar.querySelector('[data-field="defaultValue"]').value = variable.defaultValue || '';
+            });
+            
+            document.getElementById('templateModal').classList.add('active');
+        }
+
+        async function deleteTemplate(id) {
+            if (!confirm('Are you sure you want to delete this template?')) return;
+            
+            try {
+                const response = await fetch(`/api/label-templates/${id}`, {
+                    method: 'DELETE'
+                });
+                
+                if (!response.ok) throw new Error('Failed to delete template');
+                
+                showToast('Template deleted successfully', 'success');
+                loadTemplates();
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        }
+
+        async function previewTemplate(id) {
+            try {
+                const response = await fetch(`/api/label-templates/${id}/preview`);
+                if (!response.ok) throw new Error('Failed to generate preview');
+                
+                const preview = await response.json();
+                
+                // Create or update printable view modal for template preview
+                let modal = document.getElementById('printModal');
+                if (!modal) {
+                    modal = document.createElement('div');
+                    modal.id = 'printModal';
+                    modal.className = 'print-modal';
+                    modal.innerHTML = `
+                        <div class="print-modal-content">
+                            <div class="print-modal-header">
+                                <h3>Template Preview</h3>
+                                <div class="print-modal-actions">
+                                    <button class="btn btn-primary" onclick="window.print()">
+                                        <span>🖨️</span> Print
+                                    </button>
+                                    <button class="btn btn-secondary" onclick="closePrintModal()">
+                                        <span>✕</span> Close
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="print-modal-body">
+                                <div id="printableLabel"></div>
+                            </div>
+                        </div>
+                    `;
+                    document.body.appendChild(modal);
+                }
+                
+                // Update header for template preview
+                const header = modal.querySelector('.print-modal-header h3');
+                header.textContent = 'Template Preview';
+                
+                // Calculate actual size (1mm = 3.78px at 96 DPI)
+                const mmToPx = 3.78;
+                const actualWidthPx = preview.dimensions.width * mmToPx;
+                const actualHeightPx = preview.dimensions.height * mmToPx;
+                
+                // Set the printable content at actual size
+                const printableContent = document.getElementById('printableLabel');
+                
+                if (!printableContent) {
+                    console.error('Printable label container not found');
+                    return;
+                }
+                printableContent.innerHTML = `
+                    <div class="printable-label-container" style="
+                        width: ${actualWidthPx}px;
+                        height: ${actualHeightPx}px;
+                        font-size: ${preview.style.fontSize}px;
+                        font-family: ${preview.style.fontFamily};
+                        text-align: ${preview.style.alignment};
+                        background-color: ${preview.style.backgroundColor};
+                        color: ${preview.style.textColor};
+                        border: ${preview.style.borderWidth}px solid ${preview.style.borderColor};
+                        display: flex;
+                        align-items: flex-start;
+                        justify-content: flex-start;
+                        padding: 8px;
+                        box-sizing: border-box;
+                        overflow: hidden;
+                        page-break-inside: avoid;
+                    ">
+                        ${preview.template}
+                    </div>
+                    <div class="print-info" style="
+                        margin-top: 20px;
+                        padding: 10px;
+                        background: #f5f5f5;
+                        border-radius: 4px;
+                        font-size: 12px;
+                        color: #666;
+                        text-align: center;
+                    ">
+                        <strong>Template Preview</strong><br>
+                        <strong>Dimensions:</strong> ${preview.dimensions.width}×${preview.dimensions.height}${preview.dimensions.unit}<br>
+                        <strong>Font Size:</strong> ${preview.style.fontSize}px<br>
+                        <strong>Font Family:</strong> ${preview.style.fontFamily}<br>
+                        <strong>Alignment:</strong> ${preview.style.alignment}<br>
+                        <em>This is a preview with sample data</em>
+                    </div>
+                `;
+                
+                // Show the modal
+                modal.classList.add('active');
+                
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        }
+
+        // Label Generation
+        document.getElementById('templateSelect').addEventListener('change', function() {
+            const templateId = this.value;
+            if (!templateId) {
+                document.getElementById('variableFields').innerHTML = '';
+                document.getElementById('variableFieldsSection').style.display = 'none';
+                // Clear validation summary
+                const summaryDiv = document.getElementById('validationSummary');
+                if (summaryDiv) summaryDiv.remove();
+                return;
+            }
+            
+            const template = currentTemplates.find(t => t._id === templateId);
+            if (!template) return;
+            
+            // Show the variable fields section
+            document.getElementById('variableFieldsSection').style.display = 'block';
+            
+            const container = document.getElementById('variableFields');
+            container.innerHTML = '';
+            
+            template.variables.forEach(variable => {
+                const fieldDiv = document.createElement('div');
+                fieldDiv.className = 'form-group';
+                
+                const inputType = variable.type === 'number' ? 'number' : 
+                                 variable.type === 'date' ? 'date' : 'text';
+                
+                const requiredAttr = variable.required ? 'required' : '';
+                const requiredLabel = variable.required ? ' *' : '';
+                
+                // Set default value based on variable type
+                let defaultValue = variable.defaultValue || '';
+                if (variable.type === 'date' && !defaultValue) {
+                    // Set default to today's date in YYYY-MM-DD format
+                    const today = new Date();
+                    defaultValue = today.toISOString().split('T')[0];
+                } else if (variable.type === 'number' && !defaultValue) {
+                    // Set default to 1 for number fields (especially quantity)
+                    defaultValue = '1';
+                }
+                
+                fieldDiv.innerHTML = `
+                    <label class="form-label" for="var_${variable.name}">
+                        ${variable.name}${requiredLabel}
+                        <span class="variable-type" style="font-size: 0.75em; color: #666; margin-left: 5px;">(${variable.type})</span>
+                    </label>
+                    <input type="${inputType}" 
+                           id="var_${variable.name}" 
+                           class="form-input" 
+                           placeholder="${defaultValue || `Enter ${variable.name}`}"
+                           value="${defaultValue}"
+                           ${requiredAttr}
+                           data-variable-type="${variable.type}"
+                           data-required="${variable.required}"
+                           onblur="validateVariable(this)"
+                           oninput="validateVariable(this)">
+                    <div class="validation-error" id="error_${variable.name}" style="color: #ef4444; font-size: 0.75rem; margin-top: 0.25rem; display: none;"></div>
+                `;
+                
+                container.appendChild(fieldDiv);
+            });
+            
+            // Update validation summary after template loads
+            setTimeout(updateValidationSummary, 100);
+        });
+
+        // Client-side validation function
+        function validateVariable(input) {
+            const variableName = input.id.replace('var_', '');
+            const value = input.value.trim();
+            const type = input.dataset.variableType;
+            const required = input.dataset.required === 'true';
+            const errorDiv = document.getElementById(`error_${variableName}`);
+            
+            // Clear previous error
+            errorDiv.style.display = 'none';
+            errorDiv.textContent = '';
+            input.classList.remove('invalid');
+            
+            // Check required fields
+            if (required && !value) {
+                showValidationError(variableName, `${variableName} is required`);
+                updateValidationSummary();
+                return false;
+            }
+            
+            // Skip validation if field is empty and not required
+            if (!value && !required) {
+                updateValidationSummary();
+                return true;
+            }
+            
+            // Type-specific validation
+            let isValid = true;
+            let errorMessage = '';
+            
+            switch (type) {
+                case 'number':
+                    if (isNaN(Number(value))) {
+                        errorMessage = `${variableName} must be a valid number`;
+                        isValid = false;
+                    }
+                    break;
+                case 'date':
+                    const dateValue = new Date(value);
+                    if (isNaN(dateValue.getTime())) {
+                        errorMessage = `${variableName} must be a valid date`;
+                        isValid = false;
+                    }
+                    break;
+                case 'email':
+                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    if (!emailRegex.test(value)) {
+                        errorMessage = `${variableName} must be a valid email address`;
+                        isValid = false;
+                    }
+                    break;
+                case 'phone':
+                    const phoneRegex = /^[\d\s\-\+\(\)]+$/;
+                    if (!phoneRegex.test(value)) {
+                        errorMessage = `${variableName} must be a valid phone number`;
+                        isValid = false;
+                    }
+                    break;
+                case 'url':
+                    try {
+                        if (!value.startsWith('http')) {
+                            new URL('https://' + value);
+                        } else {
+                            new URL(value);
+                        }
+                    } catch {
+                        errorMessage = `${variableName} must be a valid URL`;
+                        isValid = false;
+                    }
+                    break;
+            }
+            
+            if (!isValid) {
+                showValidationError(variableName, errorMessage);
+            }
+            
+            // Update validation summary after each change
+            updateValidationSummary();
+            
+            return isValid;
+        }
+
+        function showValidationError(variableName, message) {
+            const errorDiv = document.getElementById(`error_${variableName}`);
+            const input = document.getElementById(`var_${variableName}`);
+            
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            input.classList.add('invalid');
+        }
+
+        function updateValidationSummary() {
+            const templateSelect = document.getElementById('templateSelect');
+            const templateId = templateSelect.value;
+            
+            if (!templateId) {
+                // Remove validation summary if no template selected
+                const summaryDiv = document.getElementById('validationSummary');
+                if (summaryDiv) summaryDiv.remove();
+                return;
+            }
+            
+            const template = currentTemplates.find(t => t._id === templateId);
+            if (!template) return;
+            
+            let validCount = 0;
+            let totalCount = 0;
+            const errors = [];
+            
+            template.variables.forEach(variable => {
+                const input = document.getElementById(`var_${variable.name}`);
+                if (input) {
+                    totalCount++;
+                    const isValid = !input.classList.contains('invalid') && 
+                                   (!variable.required || input.value.trim() !== '');
+                    if (isValid) {
+                        validCount++;
+                    } else {
+                        const errorDiv = document.getElementById(`error_${variable.name}`);
+                        if (errorDiv && errorDiv.style.display !== 'none') {
+                            errors.push(`${variable.name}: ${errorDiv.textContent}`);
+                        }
+                    }
+                }
+            });
+            
+            // Update or create validation summary
+            let summaryDiv = document.getElementById('validationSummary');
+            if (!summaryDiv) {
+                summaryDiv = document.createElement('div');
+                summaryDiv.id = 'validationSummary';
+                summaryDiv.className = 'validation-summary';
+                
+                // Insert after the form
+                const form = document.querySelector('#generator-tab form');
+                if (form && form.parentNode) {
+                    form.parentNode.insertBefore(summaryDiv, form.nextSibling);
+                } else {
+                    // Fallback: add to generator tab
+                    const generatorTab = document.getElementById('generator-tab');
+                    if (generatorTab) {
+                        generatorTab.appendChild(summaryDiv);
+                    } else {
+                        console.error('Cannot find container for validation summary');
+                        return;
+                    }
+                }
+            }
+            
+            // Only set innerHTML if element exists in DOM
+            if (summaryDiv && summaryDiv.parentNode) {
+                if (errors.length > 0) {
+                    summaryDiv.innerHTML = `
+                        <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 0.5rem; padding: 1rem; margin-bottom: 1rem;">
+                            <div style="color: #dc2626; font-weight: bold; margin-bottom: 0.5rem;">
+                                ⚠️ Validation Issues (${errors.length})
+                            </div>
+                            <ul style="margin: 0; padding-left: 1.25rem; color: #991b1b; font-size: 0.875rem;">
+                                ${errors.map(error => `<li>${error}</li>`).join('')}
+                            </ul>
+                        </div>
+                    `;
+                } else if (validCount === totalCount && totalCount > 0) {
+                    summaryDiv.innerHTML = `
+                        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 0.5rem; padding: 1rem; margin-bottom: 1rem;">
+                            <div style="color: #16a34a; font-weight: bold;">
+                                ✅ All fields valid (${validCount}/${totalCount})
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    summaryDiv.innerHTML = `
+                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 1rem; margin-bottom: 1rem;">
+                            <div style="color: #64748b; font-weight: bold;">
+                                📝 Progress: ${validCount}/${totalCount} fields completed
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        function validateAllVariables() {
+            const templateSelect = document.getElementById('templateSelect');
+            const templateId = templateSelect.value;
+            
+            if (!templateId) {
+                showToast('Please select a template', 'error');
+                return false;
+            }
+            
+            const template = currentTemplates.find(t => t._id === templateId);
+            if (!template) return false;
+            
+            let isValid = true;
+            const errors = [];
+            
+            template.variables.forEach(variable => {
+                const input = document.getElementById(`var_${variable.name}`);
+                if (input) {
+                    const fieldValid = validateVariable(input);
+                    if (!fieldValid) {
+                        isValid = false;
+                        errors.push(`${variable.name}: ${document.getElementById(`error_${variable.name}`).textContent}`);
+                    }
+                }
+            });
+            
+            if (!isValid) {
+                showToast('Please fix validation errors: ' + errors.join(', '), 'error');
+            }
+            
+            return isValid;
+        }
+
+        async function generateLabel(event) {
+            event.preventDefault();
+            
+            // Validate all variables first
+            if (!validateAllVariables()) {
+                return;
+            }
+            
+            const templateId = document.getElementById('templateSelect').value;
+            const template = currentTemplates.find(t => t._id === templateId);
+            
+            const data = {};
+            let hasData = false;
+            
+            template.variables.forEach(variable => {
+                const input = document.getElementById(`var_${variable.name}`);
+                if (input) {
+                    const value = input.value.trim();
+                    if (value) {
+                        data[variable.name] = value;
+                        hasData = true;
+                    }
+                }
+            });
+            
+            if (!hasData) {
+                showToast('Please fill in at least one field', 'error');
+                return;
+            }
+            
+            // Show loading state
+            const generateBtn = document.querySelector('#generator-tab button[type="submit"]');
+            const originalText = generateBtn.textContent;
+            generateBtn.textContent = 'Generating...';
+            generateBtn.disabled = true;
+            
+            try {
+                const response = await fetch('/api/label/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ templateId, data })
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Failed to generate label');
+                }
+                
+                const label = await response.json();
+                
+                // Check for unreplaced variables
+                if (label.unreplacedVariables && label.unreplacedVariables.length > 0) {
+                    showToast(`Warning: Some variables were not replaced: ${label.unreplacedVariables.join(', ')}`, 'warning');
+                }
+                
+                showLabelPreview(label);
+                
+                // Also save the generated label
+                try {
+                    const saveResponse = await fetch('/api/generated-labels', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                            templateId, 
+                            data, 
+                            trackingId: data.trackingId || null 
+                        })
+                    });
+                    
+                    if (saveResponse.ok) {
+                        showToast('Label generated and saved successfully', 'success');
+                    } else {
+                        showToast('Label generated but could not be saved', 'warning');
+                    }
+                } catch (saveError) {
+                    showToast('Label generated but could not be saved', 'warning');
+                }
+                
+            } catch (error) {
+                showToast(error.message, 'error');
+            } finally {
+                // Restore button state
+                generateBtn.textContent = originalText;
+                generateBtn.disabled = false;
+            }
+        }
+
+        function showLabelPreview(labelData) {
+            const container = document.getElementById('labelPreview');
+            container.style.display = 'block';
+            
+            // Convert mm to pixels at 96 DPI (1mm = 3.78px)
+            const mmToPx = 3.78;
+            const widthPx = labelData.dimensions.width * mmToPx;
+            const heightPx = labelData.dimensions.height * mmToPx;
+            
+            // Calculate scale to fit in container (max 600px width, 400px height)
+            const maxWidth = 600;
+            const maxHeight = 400;
+            const scale = Math.min(maxWidth / widthPx, maxHeight / heightPx, 1);
+            
+            const scaledWidth = widthPx * scale;
+            const scaledHeight = heightPx * scale;
+            
+            container.innerHTML = `
+                <div style="margin-bottom: 10px; font-size: 12px; color: #666;">
+                    Preview (Scale: ${Math.round(scale * 100)}% - ${labelData.dimensions.width}×${labelData.dimensions.height}${labelData.dimensions.unit})
+                </div>
+                <div class="preview-content" style="
+                    width: ${scaledWidth}px;
+                    height: ${scaledHeight}px;
+                    font-size: ${labelData.style.fontSize * scale}px;
+                    font-family: ${labelData.style.fontFamily};
+                    text-align: ${labelData.style.alignment};
+                    background-color: ${labelData.style.backgroundColor};
+                    color: ${labelData.style.textColor};
+                    border: ${labelData.style.borderWidth}px solid ${labelData.style.borderColor};
+                    display: flex;
+                    align-items: flex-start;
+                    justify-content: flex-start;
+                    padding: 8px;
+                    box-sizing: border-box;
+                    overflow: auto;
+                ">
+                    ${labelData.template}
+                </div>
+            `;
+            
+            // Scroll to preview
+            container.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        // Generated Labels Management
+        let currentGeneratedLabels = [];
+        let currentGeneratedPage = 0;
+        const generatedLabelsPerPage = 10;
+
+        async function loadGeneratedLabels(page = 0) {
+            try {
+                const response = await fetch(`/api/generated-labels?limit=${generatedLabelsPerPage}&offset=${page * generatedLabelsPerPage}`);
+                if (!response.ok) throw new Error('Failed to load generated labels');
+                
+                const result = await response.json();
+                currentGeneratedLabels = result.labels;
+                currentGeneratedPage = page;
+                
+                renderGeneratedLabels();
+                renderGeneratedLabelsPagination(result.total);
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        }
+
+        function renderGeneratedLabels() {
+            const container = document.getElementById('generatedLabelsList');
+            
+            if (currentGeneratedLabels.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10 9 9 9 8 9"></polyline>
+                        </svg>
+                        <h3>No generated labels yet</h3>
+                        <p>Generate and save labels to see them here</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = currentGeneratedLabels.map(label => `
+                <div class="template-item">
+                    <div class="template-header">
+                        <div>
+                            <div class="template-name">${label.templateName}</div>
+                            <div class="template-description">
+                                ${label.trackingId ? `Tracking: ${label.trackingId}` : 'Custom label'}
+                                ${label.notes ? ` - ${label.notes}` : ''}
+                            </div>
+                        </div>
+                        <div class="template-actions">
+                            <button class="btn btn-secondary btn-sm" onclick="viewGeneratedLabel('${label._id}')">View</button>
+                            <button class="btn btn-secondary btn-sm" onclick="editGeneratedLabel('${label._id}')">Edit</button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteGeneratedLabel('${label._id}')">Delete</button>
+                        </div>
+                    </div>
+                    <div class="template-meta">
+                        <span>${label.dimensions.width}×${label.dimensions.height}mm</span>
+                        <span>Status: ${label.status}</span>
+                        <span>Generated ${new Date(label.generatedAt).toLocaleDateString()}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderGeneratedLabelsPagination(total) {
+            const container = document.getElementById('generatedLabelsPagination');
+            const totalPages = Math.ceil(total / generatedLabelsPerPage);
+            
+            if (totalPages <= 1) {
+                container.innerHTML = '';
+                return;
+            }
+            
+            let paginationHTML = '<div style="display: flex; justify-content: center; gap: 10px; align-items: center;">';
+            
+            // Previous button
+            if (currentGeneratedPage > 0) {
+                paginationHTML += `<button class="btn btn-secondary btn-sm" onclick="loadGeneratedLabels(${currentGeneratedPage - 1})">Previous</button>`;
+            }
+            
+            // Page numbers
+            for (let i = 0; i < totalPages; i++) {
+                if (i === currentGeneratedPage) {
+                    paginationHTML += `<span style="padding: 5px 10px; font-weight: bold;">${i + 1}</span>`;
+                } else {
+                    paginationHTML += `<button class="btn btn-secondary btn-sm" onclick="loadGeneratedLabels(${i})">${i + 1}</button>`;
+                }
+            }
+            
+            // Next button
+            if (currentGeneratedPage < totalPages - 1) {
+                paginationHTML += `<button class="btn btn-secondary btn-sm" onclick="loadGeneratedLabels(${currentGeneratedPage + 1})">Next</button>`;
+            }
+            
+            paginationHTML += '</div>';
+            container.innerHTML = paginationHTML;
+        }
+
+        async function viewGeneratedLabel(labelId) {
+            try {
+                const response = await fetch(`/api/generated-labels/${labelId}`);
+                if (!response.ok) throw new Error('Failed to load label');
+                
+                const label = await response.json();
+                
+                // Create or update printable view modal
+                let modal = document.getElementById('printModal');
+                if (!modal) {
+                    modal = document.createElement('div');
+                    modal.id = 'printModal';
+                    modal.className = 'print-modal';
+                    modal.innerHTML = `
+                        <div class="print-modal-content">
+                            <div class="print-modal-header">
+                                <h3>Printable Labels</h3>
+                                <div class="print-modal-actions">
+                                    <button class="btn btn-primary" onclick="window.print()">
+                                        <span>🖨️</span> Print 2 Labels
+                                    </button>
+                                    <button class="btn btn-secondary" onclick="closePrintModal()">
+                                        <span>✕</span> Close
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="print-modal-body">
+                                <div class="print-options">
+                                    <label style="margin-right: 20px;">
+                                        <input type="radio" name="printLayout" value="duplicate" onchange="updatePrintLayout('duplicate')"> 
+                                        <span>Print Same Label Twice</span>
+                                    </label>
+                                    <label>
+                                        <input type="radio" name="printLayout" value="different" checked onchange="updatePrintLayout('different')"> 
+                                        <span>Print Different Labels</span>
+                                    </label>
+                                </div>
+                                <div id="printableLabels"></div>
+                            </div>
+                        </div>
+                    `;
+                    document.body.appendChild(modal);
+                }
+                
+                // Store the label data for later use
+                modal.currentLabel = label;
+                
+                // Ensure print-options exist (in case modal was reused from template preview)
+                let printOptions = modal.querySelector('.print-options');
+                if (!printOptions) {
+                    const printModalBody = modal.querySelector('.print-modal-body');
+                    if (printModalBody) {
+                        printModalBody.innerHTML = `
+                            <div class="print-options">
+                                <label style="margin-right: 20px;">
+                                    <input type="radio" name="printLayout" value="duplicate" onchange="updatePrintLayout('duplicate')"> 
+                                    <span>Print Same Label Twice</span>
+                                </label>
+                                <label>
+                                    <input type="radio" name="printLayout" value="different" checked onchange="updatePrintLayout('different')"> 
+                                    <span>Print Different Labels</span>
+                                </label>
+                            </div>
+                            <div id="printableLabels"></div>
+                        `;
+                    }
+                }
+                
+                // Update header
+                const header = modal.querySelector('.print-modal-header h3');
+                header.textContent = 'Printable Labels - A4 Layout';
+                
+                // Generate the double label layout
+                generateDoubleLabelLayout(label, 'different');
+                
+                // Show the modal
+                modal.classList.add('active');
+                
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        }
+
+        function generateDoubleLabelLayout(label, layoutType) {
+            // Calculate actual size (1mm = 3.78px at 96 DPI)
+            const mmToPx = 3.78;
+            const actualWidthPx = label.dimensions.width * mmToPx;
+            const actualHeightPx = label.dimensions.height * mmToPx;
+            
+            // A4 paper dimensions in pixels (210mm × 297mm at 96 DPI)
+            const a4WidthPx = 210 * mmToPx; // ~794px
+            const a4HeightPx = 297 * mmToPx; // ~1123px
+            
+            // CSS now handles all layout and spacing
+            const printableContent = document.getElementById('printableLabels');
+            
+            if (!printableContent) {
+                console.error('Printable labels container not found');
+                return;
+            }
+            
+            if (layoutType === 'duplicate') {
+                // Same label twice
+                printableContent.innerHTML = `
+                    <div class="a4-print-layout">
+                        <div class="printable-label-container" style="
+                            font-size: ${label.style.fontSize}px;
+                            font-family: ${label.style.fontFamily};
+                            text-align: ${label.style.alignment};
+                            background-color: ${label.style.backgroundColor};
+                            color: ${label.style.textColor};
+                            border: ${label.style.borderWidth}px solid ${label.style.borderColor};
+                            overflow: hidden;
+                        ">
+                            ${label.generatedHtml}
+                        </div>
+                        <div class="printable-label-container" style="
+                            font-size: ${label.style.fontSize}px;
+                            font-family: ${label.style.fontFamily};
+                            text-align: ${label.style.alignment};
+                            background-color: ${label.style.backgroundColor};
+                            color: ${label.style.textColor};
+                            border: ${label.style.borderWidth}px solid ${label.style.borderColor};
+                            overflow: hidden;
+                        ">
+                            ${label.generatedHtml}
+                        </div>
+                    </div>
+                `;
+            } else {
+                // Different labels - show only first label, no empty space
+                printableContent.innerHTML = `
+                    <div class="a4-print-layout">
+                        <div class="printable-label-container" style="
+                            font-size: ${label.style.fontSize}px;
+                            font-family: ${label.style.fontFamily};
+                            text-align: ${label.style.alignment};
+                            background-color: ${label.style.backgroundColor};
+                            color: ${label.style.textColor};
+                            border: ${label.style.borderWidth}px solid ${label.style.borderColor};
+                            overflow: hidden;
+                        ">
+                            ${label.generatedHtml}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Remove any existing print info
+            const existingInfo = document.querySelector('.print-info');
+            if (existingInfo) existingInfo.remove();
+        }
+
+        function updatePrintLayout(layoutType) {
+            const modal = document.getElementById('printModal');
+            if (modal && modal.currentLabel) {
+                generateDoubleLabelLayout(modal.currentLabel, layoutType);
+            }
+        }
+
+        function closePrintModal() {
+            const modal = document.getElementById('printModal');
+            if (modal) {
+                modal.classList.remove('active');
+            }
+        }
+
+        function resetForm() {
+            document.getElementById('generateForm').reset();
+            document.getElementById('variableFields').innerHTML = '';
+            document.getElementById('variableFieldsSection').style.display = 'none';
+            
+            // Remove validation summary
+            const summaryDiv = document.getElementById('validationSummary');
+            if (summaryDiv) summaryDiv.remove();
+            
+            // Clear any preview
+            document.getElementById('labelPreview').style.display = 'none';
+            
+            showToast('Form reset successfully', 'info');
+        }
+
+        async function editGeneratedLabel(labelId) {
+            try {
+                const response = await fetch(`/api/generated-labels/${labelId}`);
+                if (!response.ok) throw new Error('Failed to load label');
+                
+                const label = await response.json();
+                
+                // Switch to generator tab
+                document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+                document.querySelectorAll('.tab')[1].classList.add('active'); // Generator tab
+                document.getElementById('generator-tab').classList.add('active');
+                
+                // Wait for tab switch, then populate template and trigger change
+                setTimeout(() => {
+                    // First populate the template select
+                    const select = document.getElementById('templateSelect');
+                    select.innerHTML = '<option value="">Choose a template...</option>';
+                    
+                    currentTemplates.forEach(template => {
+                        if (template.isActive) {
+                            select.innerHTML += `<option value="${template._id}">${template.name}</option>`;
+                        }
+                    });
+                    
+                    // Set the template value and trigger change event
+                    select.value = label.templateId;
+                    
+                    // Manually trigger the change event to load the form fields
+                    const changeEvent = new Event('change', { bubbles: true });
+                    select.dispatchEvent(changeEvent);
+                    
+                    // Wait for form fields to be created, then populate them with existing data
+                    setTimeout(() => {
+                        Object.keys(label.labelData).forEach(key => {
+                            const input = document.getElementById(`var_${key}`);
+                            if (input) {
+                                input.value = label.labelData[key];
+                                // Trigger validation for the populated field
+                                validateVariable(input);
+                            }
+                        });
+                        
+                        // Update validation summary after populating all fields
+                        setTimeout(updateValidationSummary, 100);
+                    }, 200);
+                }, 100);
+                
+                showToast('Label loaded for editing. Modify data and click Generate Label to regenerate.', 'info');
+                
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        }
+
+        async function deleteGeneratedLabel(labelId) {
+            if (!confirm('Are you sure you want to delete this generated label?')) return;
+            
+            try {
+                const response = await fetch(`/api/generated-labels/${labelId}`, {
+                    method: 'DELETE'
+                });
+                
+                if (!response.ok) throw new Error('Failed to delete label');
+                
+                showToast('Label deleted successfully', 'success');
+                loadGeneratedLabels(currentGeneratedPage);
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            initTheme();
+            loadTemplates();
+        });
+
+        // Logout function
+        async function handleLogout() {
+            try {
+                const response = await fetch('/api/logout', {
+                    method: 'POST'
+                });
+                
+                if (response.ok) {
+                    window.location.href = '/login';
+                } else {
+                    showToast('Logout failed', 'error');
+                }
+            } catch (error) {
+                showToast('Logout failed', 'error');
+            }
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('templateModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+
+</html>
