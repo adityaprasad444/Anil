@@ -1,0 +1,16 @@
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://aklogistics.org/sitemap.xml
+
+# Disallow admin and API routes from indexing
+Disallow: /api/
+Disallow: /admin-panel
+Disallow: /login
+Disallow: /config
+Disallow: /labels
+Disallow: /tools
+
+# Crawl-delay for bots
+Crawl-delay: 10
