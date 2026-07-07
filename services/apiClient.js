@@ -1,11 +1,22 @@
 const axios = require('axios');
 const https = require('https');
+const { CookieJar } = require('tough-cookie');
+const { wrapper } = require('axios-cookiejar-support');
 
 /**
  * API Client Service
  * Handles fetching tracking data from provider APIs
  */
 class ApiClient {
+    constructor() {
+        this.dtdcJar = new CookieJar();
+        this.dtdcClient = wrapper(axios.create({
+            jar: this.dtdcJar,
+            withCredentials: true,
+            timeout: 30000
+        }));
+        this.dtdcTrackToken = null;
+    }
 
     /**
      * Fetch tracking data from provider API
@@ -36,6 +47,19 @@ class ApiClient {
                 })
             };
 
+            const isDtdc = provider.name.toLowerCase().includes("dtdc");
+            if (isDtdc) {
+                if (!this.dtdcTrackToken) {
+                    const headersObj = this.buildHeaders(headers);
+                    this.dtdcTrackToken = headersObj['x-dtdc-track-token'] || headersObj['X-DTDC-Track-Token'] || null;
+                }
+                
+                if (!this.dtdcTrackToken) {
+                    await this.refreshDtdcToken();
+                }
+                config.headers['x-dtdc-track-token'] = this.dtdcTrackToken;
+            }
+
             // 🔍 Print the request URL before calling axios
             console.log("🔍 Request URL:", config.url);
 
@@ -43,10 +67,38 @@ class ApiClient {
                 config.data = this.buildRequestBody(requestBodyTemplate, trackingId);
             }
 
-            const response = await axios(config);
+            let response;
+            if (isDtdc) {
+                config.jar = this.dtdcJar;
+                config.withCredentials = true;
+                delete config.httpsAgent;
+                try {
+                    response = await this.dtdcClient(config);
+                    if (response.data && response.data.success === false) {
+                        console.log('🔄 Response returned success: false. Refreshing DTDC token and retrying...');
+                        await this.refreshDtdcToken();
+                        config.headers['x-dtdc-track-token'] = this.dtdcTrackToken;
+                        response = await this.dtdcClient(config);
+                    }
+                } catch (error) {
+                    const isSecurityError = error.response && (
+                        error.response.status === 403 || 
+                        (error.response.data && error.response.data.success === false)
+                    );
+                    if (isSecurityError) {
+                        console.log('🔄 Security verification failed or token expired. Refreshing DTDC token and retrying...');
+                        await this.refreshDtdcToken();
+                        config.headers['x-dtdc-track-token'] = this.dtdcTrackToken;
+                        response = await this.dtdcClient(config);
+                    } else {
+                        throw error;
+                    }
+                }
+            } else {
+                response = await axios(config);
+            }
 
             console.log(`✅ Successfully fetched data from ${provider.name} API`);
-            // console.log("Response Data:", response);
             return {
                 data: response.data,
                 requestUrl: config.url,
@@ -64,6 +116,175 @@ class ApiClient {
             } else {
                 throw new Error(`Request setup error: ${error.message}`);
             }
+        }
+    }
+
+    /**
+     * Preprocesses the raw captcha PNG buffer to binarize and remove line noise
+     * @param {Buffer} rawBuffer - Base64 decoded PNG buffer
+     * @param {number} threshold - Color brightness threshold for characters
+     */
+    preprocessCaptcha(rawBuffer, threshold = 340) {
+        const PNG = require('pngjs').PNG;
+        return new Promise((resolve, reject) => {
+            const png = new PNG();
+            png.parse(rawBuffer, function(err, data) {
+                if (err) return reject(err);
+                const width = data.width;
+                const height = data.height;
+                
+                // 1. Initial Binarization
+                const grid = new Uint8Array(width * height);
+                for (let y = 0; y < height; y++) {
+                    for (let x = 0; x < width; x++) {
+                        const idx = (width * y + x) << 2;
+                        const sum = data.data[idx] + data.data[idx+1] + data.data[idx+2];
+                        grid[width * y + x] = (sum < threshold) ? 1 : 0;
+                    }
+                }
+
+                // 2. Binary Erosion to filter out thin lines/noise
+                const cleanGrid = new Uint8Array(width * height);
+                for (let y = 1; y < height - 1; y++) {
+                    for (let x = 1; x < width - 1; x++) {
+                        if (grid[width * y + x] === 1) {
+                            let count = 0;
+                            for (let ny = -1; ny <= 1; ny++) {
+                                for (let nx = -1; nx <= 1; nx++) {
+                                    if (grid[width * (y + ny) + (x + nx)] === 1) {
+                                        count++;
+                                    }
+                                }
+                            }
+                            if (count >= 5) {
+                                cleanGrid[width * y + x] = 1;
+                            }
+                        }
+                    }
+                }
+
+                // 3. Write clean grid back to PNG buffer
+                for (let y = 0; y < height; y++) {
+                    for (let x = 0; x < width; x++) {
+                        const idx = (width * y + x) << 2;
+                        const isDark = cleanGrid[width * y + x] === 1;
+                        data.data[idx] = isDark ? 0 : 255;
+                        data.data[idx+1] = isDark ? 0 : 255;
+                        data.data[idx+2] = isDark ? 0 : 255;
+                    }
+                }
+                
+                const chunks = [];
+                data.pack()
+                    .on('data', chunk => chunks.push(chunk))
+                    .on('end', () => resolve(Buffer.concat(chunks)))
+                    .on('error', reject);
+            });
+        });
+    }
+
+    /**
+     * Fetches captcha, solves it, and validates to obtain fresh DTDC token using local OCR solver
+     */
+    async refreshDtdcToken() {
+        console.log('🔄 Refreshing DTDC session and token via local OCR solver...');
+        const { createWorker } = require('tesseract.js');
+        const worker = await createWorker();
+        await worker.setParameters({
+            tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
+            tessedit_pageseg_mode: '7'
+        });
+
+        const maxAttempts = 15;
+        let successfulToken = null;
+
+        try {
+            for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+                try {
+                    console.log(`📡 Captcha solving attempt ${attempt}/${maxAttempts}...`);
+                    
+                    // 1. Fetch generate-captcha to get key, image and establish session cookies
+                    const captchaUrl = `https://www.dtdc.com/wp-json/custom/v1/generate-captcha?t=${Date.now()}`;
+                    const captchaRes = await this.dtdcClient.get(captchaUrl, {
+                        headers: {
+                            'accept': '*/*',
+                            'referer': 'https://www.dtdc.com/track-your-shipment/',
+                            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36'
+                        }
+                    });
+
+                    const { key, image } = captchaRes.data;
+                    if (!key || !image) {
+                        throw new Error('Failed to retrieve key or image from DTDC captcha generator');
+                    }
+
+                    // 2. Preprocess the image buffer
+                    const rawBuffer = Buffer.from(image, 'base64');
+                    const cleanBuffer = await this.preprocessCaptcha(rawBuffer);
+
+                    // 3. Solve using local OCR
+                    const ocrResult = await worker.recognize(cleanBuffer);
+                    const captchaValue = ocrResult.data.text.replace(/[^A-Z0-9]/g, '').trim();
+                    console.log(`> Solve attempt: ${captchaValue}`);
+
+                    if (!captchaValue || captchaValue.length < 4) {
+                        console.log('⚠️ OCR guess is too short, skipping validation.');
+                        continue;
+                    }
+
+                    // 4. Validate captcha to get the JWT token
+                    console.log('📡 Validating captcha with DTDC...');
+                    const validateUrl = 'https://www.dtdc.com/wp-json/custom/v1/captcha/validate';
+                    const validateRes = await this.dtdcClient.post(validateUrl, {
+                        captchaKey: key,
+                        captchaValue: captchaValue
+                    }, {
+                        headers: {
+                            'content-type': 'application/json',
+                            'referer': 'https://www.dtdc.com/track-your-shipment/',
+                            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36'
+                        }
+                    });
+
+                    if (validateRes.data && validateRes.data.success && validateRes.data.token) {
+                        successfulToken = validateRes.data.token;
+                        console.log(`🎉 SUCCESS! Obtained fresh DTDC token on attempt #${attempt}`);
+                        break;
+                    } else {
+                        console.log(`❌ Validation failed: ${validateRes.data.message || 'Invalid captcha'}`);
+                    }
+                } catch (attemptErr) {
+                    console.warn(`⚠️ Attempt ${attempt} failed: ${attemptErr.message}`);
+                }
+
+                // Small delay between attempts to be polite to the server
+                await new Promise(r => setTimeout(r, 1000));
+            }
+
+            if (!successfulToken) {
+                throw new Error(`Failed to obtain a valid DTDC token after ${maxAttempts} attempts.`);
+            }
+
+            this.dtdcTrackToken = successfulToken;
+
+            // Save the new token to database so other worker instances can reuse it
+            try {
+                const Provider = require('../models/Provider');
+                await Provider.findOneAndUpdate(
+                    { name: 'DTDC' },
+                    { 
+                        $set: { 
+                            'apiConfig.headers.x-dtdc-track-token': this.dtdcTrackToken 
+                        } 
+                    }
+                );
+                console.log('💾 Persisted fresh DTDC token to database.');
+            } catch (dbErr) {
+                console.warn('⚠️ Could not persist DTDC token to DB:', dbErr.message);
+            }
+
+        } finally {
+            await worker.terminate();
         }
     }
 
@@ -241,8 +462,48 @@ class ApiClient {
      * DTDC-specific parser
      */
     parseDTDCResponse(apiResponse, trackingData) {
-        if (apiResponse.statusCode === 200 && Array.isArray(apiResponse.statuses)) {
-            const statuses = apiResponse.statuses;
+        const payload = apiResponse?.response || apiResponse || {};
+
+        // Support the new schema (header and milestones)
+        if (payload.header || Array.isArray(payload.milestones)) {
+            const header = payload.header || {};
+            const milestones = payload.milestones || [];
+
+            // Current Status
+            const statusStr = header.currentStatusDescription || (milestones.length > 0 ? milestones[0].mileName : 'In Transit');
+            trackingData.status = this.normalizeStatus(statusStr);
+
+            // Location
+            trackingData.location = header.currentStatusCity || (milestones.length > 0 ? milestones[0].mileLocationName : 'Unknown');
+
+            // Estimated Delivery
+            trackingData.estimatedDelivery = header.opsEdd ? this.parseISTDate(header.opsEdd, true) : null;
+
+            // Origin and destination
+            trackingData.origin = header.originCity || '';
+            trackingData.destination = header.destinationCity || '';
+
+            // Map history
+            trackingData.history = milestones.map(mile => {
+                let timestamp = new Date();
+                if (mile.mileStatusDateTime) {
+                    timestamp = this.parseISTDate(mile.mileStatusDateTime);
+                }
+
+                return {
+                    timestamp: timestamp,
+                    status: this.cleanText(mile.mileName || 'Update'),
+                    location: this.cleanText(mile.mileLocationName || ''),
+                    description: this.cleanText(mile.mileName || '')
+                };
+            });
+
+            return trackingData;
+        }
+
+        // Support the old schema
+        if (payload.statusCode === 200 && Array.isArray(payload.statuses)) {
+            const statuses = payload.statuses;
 
             if (statuses.length > 0) {
                 const latest = statuses[0];
@@ -275,11 +536,11 @@ class ApiClient {
                     };
                 });
             } else {
-                trackingData.status = apiResponse.statusDescription || 'No tracking info';
+                trackingData.status = payload.statusDescription || 'No tracking info';
                 trackingData.location = 'Unknown';
             }
         } else {
-            trackingData.status = apiResponse.statusDescription || 'Unable to fetch tracking data';
+            trackingData.status = payload.statusDescription || 'Unable to fetch tracking data';
             trackingData.location = 'Unknown';
         }
 

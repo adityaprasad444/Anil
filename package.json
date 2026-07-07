@@ -23,9 +23,11 @@
     "mongoose": "^7.0.3",
     "node-cron": "^4.2.1",
     "nodemailer": "^7.0.13",
+    "pngjs": "^7.0.0",
     "qrcode": "^1.5.4",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
+    "tesseract.js": "^7.0.0",
     "tough-cookie": "^6.0.0"
   },
   "devDependencies": {

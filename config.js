@@ -43,15 +43,28 @@ module.exports = {
   defaultProviders: [
     {
       name: 'DTDC',
-      trackingUrl: 'https://www.dtdc.in/tracking/tracking_results.asp?TranType=awbquery',
+      trackingUrl: 'https://www.dtdc.com/track-your-shipment/',
       apiConfig: {
-        endpoint: 'https://dtdc.in/olp_api/trk_order_details',
+        endpoint: 'https://www.dtdc.com/wp-json/custom/v1/domestic/track',
         method: 'POST',
         headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+          'accept': '*/*',
+          'accept-language': 'en-US,en;q=0.9',
+          'content-type': 'application/json',
+          'cookie': 'csrf_token=c53b8046-45b4-4d56-97d9-0610a02ef37a; _ga=GA1.1.404227030.1783312806; _ga_8GEYX49QKC=GS2.1.s1783312806$o1$g0$t1783312829$j37$l0$h0',
+          'origin': 'https://www.dtdc.com',
+          'priority': 'u=1, i',
+          'referer': 'https://www.dtdc.com/track-your-shipment/',
+          'sec-ch-ua': '"Not;A=Brand";v="8", "Chromium";v="150", "Microsoft Edge";v="150"',
+          'sec-ch-ua-mobile': '?0',
+          'sec-ch-ua-platform': '"Windows"',
+          'sec-fetch-dest': 'empty',
+          'sec-fetch-mode': 'cors',
+          'sec-fetch-site': 'same-origin',
+          'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36 Edg/150.0.0.0',
+          'x-dtdc-track-token': 'eyJqdGkiOiIwNDJkZWE1YmZhZTM5N2E3OThjOWM3YjY5ZDNmOTQ3ZSIsImV4cCI6MTc4MzMxNDAwNX0.CRms9drXOru-MaD3PNtCOBj-YQJ3PMiKr_KXp0CfLzg'
         },
-        requestBodyTemplate: 'strCnno={trackingId}&strCanNo=&strAction=awbquery'
+        requestBodyTemplate: '{"trackType":"cnno","trackNumber":"{trackingId}"}'
       }
     },
     {
