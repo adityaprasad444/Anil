@@ -1,7 +1,5 @@
 const axios = require('axios');
 const https = require('https');
-const { CookieJar } = require('tough-cookie');
-const { wrapper } = require('axios-cookiejar-support');
 
 /**
  * API Client Service
@@ -9,13 +7,24 @@ const { wrapper } = require('axios-cookiejar-support');
  */
 class ApiClient {
     constructor() {
+        this.dtdcJar = null;
+        this.dtdcClient = null;
+        this.dtdcTrackToken = null;
+    }
+
+    /**
+     * Lazily initializes the cookie-jar and wrapped axios client for DTDC
+     */
+    async initDtdcClient() {
+        if (this.dtdcClient) return;
+        const { CookieJar } = require('tough-cookie');
+        const { wrapper } = await import('axios-cookiejar-support');
         this.dtdcJar = new CookieJar();
         this.dtdcClient = wrapper(axios.create({
             jar: this.dtdcJar,
             withCredentials: true,
             timeout: 30000
         }));
-        this.dtdcTrackToken = null;
     }
 
     /**
@@ -49,6 +58,7 @@ class ApiClient {
 
             const isDtdc = provider.name.toLowerCase().includes("dtdc");
             if (isDtdc) {
+                await this.initDtdcClient();
                 if (!this.dtdcTrackToken) {
                     const headersObj = this.buildHeaders(headers);
                     this.dtdcTrackToken = headersObj['x-dtdc-track-token'] || headersObj['X-DTDC-Track-Token'] || null;
@@ -188,6 +198,7 @@ class ApiClient {
      */
     async refreshDtdcToken() {
         console.log('🔄 Refreshing DTDC session and token via local OCR solver...');
+        await this.initDtdcClient();
         const { createWorker } = require('tesseract.js');
         const worker = await createWorker({
             cachePath: '/tmp'

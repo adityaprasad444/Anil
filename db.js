@@ -19,8 +19,8 @@ const connectDB = async () => {
     return cached.conn;
   }
 
-  // If not ready, kill the promise/conn to force reconnection
-  if (mongoose.connection.readyState !== 1) {
+  // If disconnected or disconnecting, kill the promise/conn to force reconnection
+  if (mongoose.connection.readyState === 0 || mongoose.connection.readyState === 3) {
     cached.promise = null;
     cached.conn = null;
   }

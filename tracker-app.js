@@ -42,6 +42,9 @@ try {
 const app = express();
 app.set('trust proxy', 1); // Trust first proxy (Vercel)
 
+// Start the database connection in the background immediately at load time to support connect-mongo session store
+connectDB().catch(err => console.error('🔌 Background DB connection failed:', err));
+
 // Database connection middleware - MUST be the first thing
 const ensureDbConnection = async (req, res, next) => {
   try {
