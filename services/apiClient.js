@@ -189,7 +189,9 @@ class ApiClient {
     async refreshDtdcToken() {
         console.log('🔄 Refreshing DTDC session and token via local OCR solver...');
         const { createWorker } = require('tesseract.js');
-        const worker = await createWorker();
+        const worker = await createWorker({
+            cachePath: '/tmp'
+        });
         await worker.setParameters({
             tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
             tessedit_pageseg_mode: '7'
