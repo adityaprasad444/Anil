@@ -6,7 +6,11 @@
             "use": "@vercel/node",
             "config": {
                 "includeFiles": [
-                    "public/**"
+                    "public/**",
+                    "tessdata/**",
+                    "node_modules/tesseract.js-core/**/*.wasm",
+                    "node_modules/tesseract.js-core/**/*.js",
+                    "node_modules/tesseract.js/**/*.js"
                 ]
             }
         }
