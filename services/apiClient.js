@@ -497,20 +497,22 @@ class ApiClient {
             trackingData.origin = header.originCity || '';
             trackingData.destination = header.destinationCity || '';
 
-            // Map history
-            trackingData.history = milestones.map(mile => {
-                let timestamp = new Date();
-                if (mile.mileStatusDateTime) {
-                    timestamp = this.parseISTDate(mile.mileStatusDateTime);
-                }
+            // Map history (only include active milestones)
+            trackingData.history = milestones
+                .filter(mile => mile.mileStatus === 'A')
+                .map(mile => {
+                    let timestamp = new Date();
+                    if (mile.mileStatusDateTime) {
+                        timestamp = this.parseISTDate(mile.mileStatusDateTime);
+                    }
 
-                return {
-                    timestamp: timestamp,
-                    status: this.cleanText(mile.mileName || 'Update'),
-                    location: this.cleanText(mile.mileLocationName || ''),
-                    description: this.cleanText(mile.mileName || '')
-                };
-            });
+                    return {
+                        timestamp: timestamp,
+                        status: this.cleanText(mile.mileName || 'Update'),
+                        location: this.cleanText(mile.mileLocationName || ''),
+                        description: this.cleanText(mile.mileName || '')
+                    };
+                });
 
             return trackingData;
         }
