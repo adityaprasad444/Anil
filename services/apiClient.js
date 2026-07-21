@@ -10,6 +10,39 @@ class ApiClient {
         this.dtdcJar = null;
         this.dtdcClient = null;
         this.dtdcTrackToken = null;
+        this.ocrWorker = null;
+    }
+
+    /**
+     * Lazily initializes and caches the Tesseract OCR worker for CAPTCHA solving
+     */
+    async getOcrWorker() {
+        if (this.ocrWorker) return this.ocrWorker;
+
+        const { createWorker } = require('tesseract.js');
+        const path = require('path');
+        this.ocrWorker = await createWorker('eng', 1, {
+            cachePath: path.join(__dirname, '..', 'tessdata')
+        });
+        await this.ocrWorker.setParameters({
+            tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
+            tessedit_pageseg_mode: '7'
+        });
+        return this.ocrWorker;
+    }
+
+    /**
+     * Gracefully terminates cached OCR worker if needed
+     */
+    async terminateOcrWorker() {
+        if (this.ocrWorker) {
+            try {
+                await this.ocrWorker.terminate();
+            } catch (err) {
+                console.warn('⚠️ Error terminating OCR worker:', err.message);
+            }
+            this.ocrWorker = null;
+        }
     }
 
     /**
@@ -130,62 +163,98 @@ class ApiClient {
     }
 
     /**
-     * Preprocesses the raw captcha PNG buffer to binarize and remove line noise
+     * Preprocesses the raw captcha PNG buffer to binarize, scale, pad, and remove line noise
      * @param {Buffer} rawBuffer - Base64 decoded PNG buffer
-     * @param {number} threshold - Color brightness threshold for characters
+     * @param {Object|number} options - Preprocessing parameters (scale, pad, threshold, thresholdPercentile, erodeMinCount)
      */
-    preprocessCaptcha(rawBuffer, threshold = 340) {
+    preprocessCaptcha(rawBuffer, options = {}) {
+        const {
+            scale = 3,
+            pad = 20,
+            threshold = 360,
+            thresholdPercentile = null,
+            erodeMinCount = 4
+        } = typeof options === 'number' ? { threshold: options } : options;
+
         const PNG = require('pngjs').PNG;
         return new Promise((resolve, reject) => {
             const png = new PNG();
-            png.parse(rawBuffer, function(err, data) {
+            png.parse(rawBuffer, (err, data) => {
                 if (err) return reject(err);
-                const width = data.width;
-                const height = data.height;
-                
+                const w = data.width;
+                const h = data.height;
+
+                // Determine effective threshold (adaptive percentile or static value)
+                let effectiveThreshold = threshold;
+                if (thresholdPercentile !== null) {
+                    const sums = new Uint16Array(w * h);
+                    for (let i = 0; i < w * h; i++) {
+                        const idx = i << 2;
+                        sums[i] = data.data[idx] + data.data[idx+1] + data.data[idx+2];
+                    }
+                    const sorted = Array.from(sums).sort((a, b) => a - b);
+                    effectiveThreshold = sorted[Math.floor(sorted.length * thresholdPercentile)];
+                }
+
                 // 1. Initial Binarization
-                const grid = new Uint8Array(width * height);
-                for (let y = 0; y < height; y++) {
-                    for (let x = 0; x < width; x++) {
-                        const idx = (width * y + x) << 2;
+                const grid = new Uint8Array(w * h);
+                for (let y = 0; y < h; y++) {
+                    for (let x = 0; x < w; x++) {
+                        const idx = (w * y + x) << 2;
                         const sum = data.data[idx] + data.data[idx+1] + data.data[idx+2];
-                        grid[width * y + x] = (sum < threshold) ? 1 : 0;
+                        grid[w * y + x] = (sum <= effectiveThreshold) ? 1 : 0;
                     }
                 }
 
                 // 2. Binary Erosion to filter out thin lines/noise
-                const cleanGrid = new Uint8Array(width * height);
-                for (let y = 1; y < height - 1; y++) {
-                    for (let x = 1; x < width - 1; x++) {
-                        if (grid[width * y + x] === 1) {
+                const cleanGrid = new Uint8Array(w * h);
+                for (let y = 1; y < h - 1; y++) {
+                    for (let x = 1; x < w - 1; x++) {
+                        if (grid[w * y + x] === 1) {
                             let count = 0;
                             for (let ny = -1; ny <= 1; ny++) {
                                 for (let nx = -1; nx <= 1; nx++) {
-                                    if (grid[width * (y + ny) + (x + nx)] === 1) {
+                                    if (grid[w * (y + ny) + (x + nx)] === 1) {
                                         count++;
                                     }
                                 }
                             }
-                            if (count >= 5) {
-                                cleanGrid[width * y + x] = 1;
+                            if (count >= erodeMinCount) {
+                                cleanGrid[w * y + x] = 1;
                             }
                         }
                     }
                 }
 
-                // 3. Write clean grid back to PNG buffer
-                for (let y = 0; y < height; y++) {
-                    for (let x = 0; x < width; x++) {
-                        const idx = (width * y + x) << 2;
-                        const isDark = cleanGrid[width * y + x] === 1;
-                        data.data[idx] = isDark ? 0 : 255;
-                        data.data[idx+1] = isDark ? 0 : 255;
-                        data.data[idx+2] = isDark ? 0 : 255;
+                // 3. Construct Scaled & Padded Target Image Buffer
+                const newW = w * scale + pad * 2;
+                const newH = h * scale + pad * 2;
+                const outPng = new PNG({ width: newW, height: newH });
+
+                // Fill background with white (255, 255, 255, 255)
+                outPng.data.fill(255);
+
+                // Draw scaled dark pixels
+                for (let y = 0; y < h; y++) {
+                    for (let x = 0; x < w; x++) {
+                        if (cleanGrid[w * y + x] === 1) {
+                            for (let sy = 0; sy < scale; sy++) {
+                                for (let sx = 0; sx < scale; sx++) {
+                                    const outX = pad + x * scale + sx;
+                                    const outY = pad + y * scale + sy;
+                                    const outIdx = (newW * outY + outX) << 2;
+                                    outPng.data[outIdx] = 0;
+                                    outPng.data[outIdx+1] = 0;
+                                    outPng.data[outIdx+2] = 0;
+                                    outPng.data[outIdx+3] = 255;
+                                }
+                            }
+                        }
                     }
                 }
-                
+
                 const chunks = [];
-                data.pack()
+                outPng.pack()
                     .on('data', chunk => chunks.push(chunk))
                     .on('end', () => resolve(Buffer.concat(chunks)))
                     .on('error', reject);
@@ -194,60 +263,60 @@ class ApiClient {
     }
 
     /**
-     * Fetches captcha, solves it, and validates to obtain fresh DTDC token using local OCR solver
+     * Fetches captcha, solves it using multi-strategy OCR solver, and validates to obtain fresh DTDC token
      */
     async refreshDtdcToken() {
         console.log('🔄 Refreshing DTDC session and token via local OCR solver...');
         await this.initDtdcClient();
-        const { createWorker } = require('tesseract.js');
-        const path = require('path');
-        const worker = await createWorker('eng', 1, {
-            cachePath: path.join(__dirname, '..', 'tessdata')
-        });
-        await worker.setParameters({
-            tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
-            tessedit_pageseg_mode: '7'
-        });
+        const worker = await this.getOcrWorker();
 
-        const maxAttempts = 15;
+        const maxSessionAttempts = 5;
         let successfulToken = null;
 
-        try {
-            for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-                try {
-                    console.log(`📡 Captcha solving attempt ${attempt}/${maxAttempts}...`);
-                    
-                    // 1. Fetch generate-captcha to get key, image and establish session cookies
-                    const captchaUrl = `https://www.dtdc.com/wp-json/custom/v1/generate-captcha?t=${Date.now()}`;
-                    const captchaRes = await this.dtdcClient.get(captchaUrl, {
-                        headers: {
-                            'accept': '*/*',
-                            'referer': 'https://www.dtdc.com/track-your-shipment/',
-                            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36'
-                        }
-                    });
+        const strategies = [
+            { scale: 3, pad: 20, thresholdPercentile: 0.14, erodeMinCount: 4 },
+            { scale: 3, pad: 20, thresholdPercentile: 0.16, erodeMinCount: 4 },
+            { scale: 3, pad: 20, threshold: 360, erodeMinCount: 4 },
+            { scale: 3, pad: 25, thresholdPercentile: 0.18, erodeMinCount: 3 },
+            { scale: 4, pad: 20, threshold: 380, erodeMinCount: 4 }
+        ];
 
-                    const { key, image } = captchaRes.data;
-                    if (!key || !image) {
-                        throw new Error('Failed to retrieve key or image from DTDC captcha generator');
+        for (let sessionAttempt = 1; sessionAttempt <= maxSessionAttempts; sessionAttempt++) {
+            try {
+                console.log(`📡 Captcha session attempt ${sessionAttempt}/${maxSessionAttempts}...`);
+                
+                // 1. Fetch generate-captcha to get key, image and establish session cookies
+                const captchaUrl = `https://www.dtdc.com/wp-json/custom/v1/generate-captcha?t=${Date.now()}`;
+                const captchaRes = await this.dtdcClient.get(captchaUrl, {
+                    headers: {
+                        'accept': '*/*',
+                        'referer': 'https://www.dtdc.com/track-your-shipment/',
+                        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36'
                     }
+                });
 
-                    // 2. Preprocess the image buffer
-                    const rawBuffer = Buffer.from(image, 'base64');
-                    const cleanBuffer = await this.preprocessCaptcha(rawBuffer);
+                const { key, image } = captchaRes.data;
+                if (!key || !image) {
+                    throw new Error('Failed to retrieve key or image from DTDC captcha generator');
+                }
 
-                    // 3. Solve using local OCR
+                const rawBuffer = Buffer.from(image, 'base64');
+                const triedValues = new Set();
+
+                // 2. Try multi-strategy OCR solving on the SAME captcha image
+                for (let sIdx = 0; sIdx < strategies.length; sIdx++) {
+                    const strat = strategies[sIdx];
+                    const cleanBuffer = await this.preprocessCaptcha(rawBuffer, strat);
                     const ocrResult = await worker.recognize(cleanBuffer);
                     const captchaValue = ocrResult.data.text.replace(/[^A-Z0-9]/g, '').trim();
-                    console.log(`> Solve attempt: ${captchaValue}`);
 
-                    if (!captchaValue || captchaValue.length < 4) {
-                        console.log('⚠️ OCR guess is too short, skipping validation.');
-                        continue;
-                    }
+                    if (!captchaValue || captchaValue.length < 4) continue;
+                    if (triedValues.has(captchaValue)) continue;
+                    triedValues.add(captchaValue);
 
-                    // 4. Validate captcha to get the JWT token
-                    console.log('📡 Validating captcha with DTDC...');
+                    console.log(`  > Strategy #${sIdx + 1} guess: ${captchaValue}`);
+
+                    // 3. Validate captcha to get the JWT token
                     const validateUrl = 'https://www.dtdc.com/wp-json/custom/v1/captcha/validate';
                     const validateRes = await this.dtdcClient.post(validateUrl, {
                         captchaKey: key,
@@ -262,43 +331,43 @@ class ApiClient {
 
                     if (validateRes.data && validateRes.data.success && validateRes.data.token) {
                         successfulToken = validateRes.data.token;
-                        console.log(`🎉 SUCCESS! Obtained fresh DTDC token on attempt #${attempt}`);
+                        console.log(`🎉 SUCCESS! Obtained fresh DTDC token on session attempt #${sessionAttempt} using Strategy #${sIdx + 1}`);
                         break;
                     } else {
-                        console.log(`❌ Validation failed: ${validateRes.data.message || 'Invalid captcha'}`);
+                        console.log(`  ❌ Strategy #${sIdx + 1} validation failed: ${validateRes.data.message || 'Invalid captcha'}`);
                     }
-                } catch (attemptErr) {
-                    console.warn(`⚠️ Attempt ${attempt} failed: ${attemptErr.message}`);
                 }
 
-                // Small delay between attempts to be polite to the server
-                await new Promise(r => setTimeout(r, 1000));
+                if (successfulToken) break;
+
+            } catch (attemptErr) {
+                console.warn(`⚠️ Captcha session attempt ${sessionAttempt} failed: ${attemptErr.message}`);
             }
 
-            if (!successfulToken) {
-                throw new Error(`Failed to obtain a valid DTDC token after ${maxAttempts} attempts.`);
-            }
+            // Delay between session attempts
+            await new Promise(r => setTimeout(r, 500));
+        }
 
-            this.dtdcTrackToken = successfulToken;
+        if (!successfulToken) {
+            throw new Error(`Failed to obtain a valid DTDC token after ${maxSessionAttempts} captcha sessions.`);
+        }
 
-            // Save the new token to database so other worker instances can reuse it
-            try {
-                const Provider = require('../models/Provider');
-                await Provider.findOneAndUpdate(
-                    { name: 'DTDC' },
-                    { 
-                        $set: { 
-                            'apiConfig.headers.x-dtdc-track-token': this.dtdcTrackToken 
-                        } 
-                    }
-                );
-                console.log('💾 Persisted fresh DTDC token to database.');
-            } catch (dbErr) {
-                console.warn('⚠️ Could not persist DTDC token to DB:', dbErr.message);
-            }
+        this.dtdcTrackToken = successfulToken;
 
-        } finally {
-            await worker.terminate();
+        // Save the new token to database so other worker instances can reuse it
+        try {
+            const Provider = require('../models/Provider');
+            await Provider.findOneAndUpdate(
+                { name: 'DTDC' },
+                { 
+                    $set: { 
+                        'apiConfig.headers.x-dtdc-track-token': this.dtdcTrackToken 
+                    } 
+                }
+            );
+            console.log('💾 Persisted fresh DTDC token to database.');
+        } catch (dbErr) {
+            console.warn('⚠️ Could not persist DTDC token to DB:', dbErr.message);
         }
     }
 
@@ -478,32 +547,79 @@ class ApiClient {
     parseDTDCResponse(apiResponse, trackingData) {
         const payload = apiResponse?.response || apiResponse || {};
 
-        // Support the new schema (header and milestones)
-        if (payload.header || Array.isArray(payload.milestones)) {
+        // Support the new schema (header, milestones, and statuses)
+        if (payload.header || Array.isArray(payload.milestones) || Array.isArray(payload.statuses)) {
             const header = payload.header || {};
-            const milestones = payload.milestones || [];
+            const milestones = Array.isArray(payload.milestones) ? payload.milestones : [];
+            const statuses = Array.isArray(payload.statuses) ? payload.statuses : [];
+            const activeMilestones = milestones.filter(mile => mile.mileStatus === 'A');
 
-            // Current Status
-            const statusStr = header.currentStatusDescription || (milestones.length > 0 ? milestones[0].mileName : 'In Transit');
-            trackingData.status = this.normalizeStatus(statusStr);
+            // Detect if shipment has reached Delivered state
+            const isDeliveredInHeader = header.currentStatusDescription === 'Delivered' || header.currentStatusCode === 'DLV';
+            const isDeliveredInMilestones = activeMilestones.some(m => (m.mileName || '').toLowerCase().includes('delivered'));
+            const isDeliveredInStatuses = statuses.some(s => 
+                (s.statusDescription || '').toLowerCase().includes('delivered') || 
+                (s.remarks || '').toLowerCase().includes('delivered')
+            );
+            const hasDeliveredState = isDeliveredInHeader || isDeliveredInMilestones || isDeliveredInStatuses;
 
-            // Location
-            trackingData.location = header.currentStatusCity || (milestones.length > 0 ? milestones[0].mileLocationName : 'Unknown');
+            // 1. Current Status
+            let statusStr = '';
+            if (hasDeliveredState) {
+                statusStr = 'Delivered';
+            } else {
+                statusStr = header.currentStatusDescription;
+                if (!statusStr && statuses.length > 0) {
+                    statusStr = statuses[0].statusDescription || statuses[0].status;
+                }
+                if (!statusStr && activeMilestones.length > 0) {
+                    statusStr = activeMilestones[activeMilestones.length - 1].mileName;
+                }
+            }
+            trackingData.status = this.normalizeStatus(statusStr || 'In Transit');
 
-            // Estimated Delivery
-            trackingData.estimatedDelivery = header.opsEdd ? this.parseISTDate(header.opsEdd, true) : null;
-
-            // Origin and destination
+            // 2. Origin and Destination
             trackingData.origin = header.originCity || '';
             trackingData.destination = header.destinationCity || '';
 
-            // Map history (only include active milestones)
-            trackingData.history = milestones
-                .filter(mile => mile.mileStatus === 'A')
-                .map(mile => {
-                    let timestamp = new Date();
-                    if (mile.mileStatusDateTime) {
-                        timestamp = this.parseISTDate(mile.mileStatusDateTime);
+            // 3. Estimated Delivery
+            trackingData.estimatedDelivery = header.opsEdd ? this.parseISTDate(header.opsEdd, true) : null;
+
+            // 4. Map History Events with Smart Timestamp Fallback
+            let rawHistory = [];
+
+            if (statuses.length > 0) {
+                rawHistory = statuses.map(s => {
+                    let sText = s.statusDescription || s.status;
+                    if (!sText && s.remarks) {
+                        sText = this.cleanText(s.remarks);
+                        if (!sText || sText.length > 100) sText = "Update";
+                    }
+                    if (!sText) sText = "In Transit";
+
+                    const locText = s.actCityName || s.actBranchName || s.actBranchCode || s.location || '';
+                    const parsedDate = s.statusTimestamp ? this.parseISTDate(s.statusTimestamp, true) : null;
+
+                    return {
+                        timestamp: parsedDate || (header.bookingDate ? this.parseISTDate(header.bookingDate) : new Date(0)),
+                        status: this.cleanText(sText),
+                        location: this.cleanText(locText),
+                        description: this.cleanText(s.remarks || s.statusDescription || sText)
+                    };
+                });
+            } else if (activeMilestones.length > 0) {
+                let lastValidTimestamp = header.bookingDate ? this.parseISTDate(header.bookingDate) : new Date(0);
+
+                rawHistory = activeMilestones.map(mile => {
+                    let timestamp = null;
+                    if (mile.mileStatusDateTime && mile.mileStatusDateTime.trim() !== '') {
+                        timestamp = this.parseISTDate(mile.mileStatusDateTime, true);
+                    }
+
+                    if (timestamp) {
+                        lastValidTimestamp = timestamp;
+                    } else {
+                        timestamp = new Date(lastValidTimestamp);
                     }
 
                     return {
@@ -513,36 +629,78 @@ class ApiClient {
                         description: this.cleanText(mile.mileName || '')
                     };
                 });
+            }
+
+            // Ensure history is sorted descending by timestamp (newest update at index 0)
+            rawHistory.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            trackingData.history = rawHistory;
+
+            // 5. Determine Current Location Accurately
+            let currentLocation = '';
+
+            if (hasDeliveredState) {
+                const deliveredScan = statuses.find(s => 
+                    (s.statusDescription || '').toLowerCase().includes('delivered') ||
+                    (s.remarks || '').toLowerCase().includes('delivered')
+                );
+                if (deliveredScan) {
+                    currentLocation = deliveredScan.actCityName || deliveredScan.actBranchName || deliveredScan.actBranchCode || '';
+                }
+                if (!currentLocation) {
+                    const deliveredMilestone = activeMilestones.find(m => (m.mileName || '').toLowerCase().includes('delivered'));
+                    if (deliveredMilestone) {
+                        currentLocation = deliveredMilestone.mileLocationName || '';
+                    }
+                }
+                if (!currentLocation) {
+                    currentLocation = trackingData.destination || header.destinationCity || '';
+                }
+            }
+
+            if (!currentLocation && statuses.length > 0) {
+                const latestScan = statuses[0];
+                currentLocation = latestScan.actCityName || latestScan.actBranchName || latestScan.actBranchCode || latestScan.location || '';
+            }
+
+            if (!currentLocation && activeMilestones.length > 0) {
+                const latestMilestone = activeMilestones[activeMilestones.length - 1];
+                currentLocation = latestMilestone.mileLocationName || '';
+            }
+
+            if (!currentLocation) {
+                currentLocation = header.currentStatusCity || header.originCity || 'Unknown';
+            }
+
+            trackingData.location = this.cleanText(currentLocation);
 
             return trackingData;
         }
 
-        // Support the old schema
+        // Support old schema fallback
         if (payload.statusCode === 200 && Array.isArray(payload.statuses)) {
             const statuses = payload.statuses;
 
             if (statuses.length > 0) {
                 const latest = statuses[0];
 
-                // Use statusDescription, status, or remarks as fallback
                 const statusStr = latest.statusDescription || latest.status || (latest.remarks ? latest.remarks.replace(/<[^>]*>?/gm, '').trim() : 'In Transit');
                 trackingData.status = this.normalizeStatus(statusStr);
 
-                // Use branch name/city as location fallback
-                trackingData.location = latest.actBranchName || latest.actBranchCode || latest.actCityName || latest.location || '';
+                let loc = latest.actCityName || latest.actBranchName || latest.actBranchCode || latest.location || '';
+                if (!loc && trackingData.status === 'Delivered' && trackingData.destination) {
+                    loc = trackingData.destination;
+                }
+                trackingData.location = this.cleanText(loc || 'Unknown');
 
                 trackingData.history = statuses.map(s => {
-                    // Extract clean status text
                     let sText = s.statusDescription || s.status;
                     if (!sText && s.remarks) {
                         sText = this.cleanText(s.remarks);
-                        // If it's still empty or just too long, use a default
                         if (!sText || sText.length > 100) sText = "Update";
                     }
                     if (!sText) sText = "In Transit";
 
-                    // Extract location
-                    const locText = s.actBranchName || s.actBranchCode || s.actCityName || s.location || '';
+                    const locText = s.actCityName || s.actBranchName || s.actBranchCode || s.location || '';
 
                     return {
                         timestamp: this.parseISTDate(s.statusTimestamp || s.date),
