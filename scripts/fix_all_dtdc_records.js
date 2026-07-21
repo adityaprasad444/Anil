@@ -1,59 +1,83 @@
 require('dotenv').config({ path: '.env.local' });
 require('dotenv').config();
 
-const { TrackingData, connectDB } = require('../db');
+const mongoose = require('mongoose');
+const { connectDB, trackingSchema } = require('../db');
 const trackingService = require('../services/trackingService');
 const apiClient = require('../services/apiClient');
+const config = require('../config');
+
+// Databases in MongoDB Atlas cluster to update
+const TARGET_DBS = ['Tracking', 'Dev'];
 
 async function fixAllDtdcRecords() {
-    try {
-        console.log('🔌 Connecting to MongoDB...');
-        await connectDB();
+    const baseUri = process.env.MONGODB_URI;
 
-        console.log('🔄 Fetching all DTDC records from database...');
+    for (const dbName of TARGET_DBS) {
+        try {
+            console.log(`\n========================================`);
+            console.log(`🔌 Connecting to Database: [${dbName}]`);
+            console.log(`========================================`);
 
-        const dtdcRecords = await TrackingData.find({
-            provider: { $regex: /dtdc/i }
-        });
-
-        console.log(`📦 Found ${dtdcRecords.length} DTDC records to process.`);
-
-        let successCount = 0;
-        let failCount = 0;
-
-        for (const record of dtdcRecords) {
-            const oldLoc = record.location;
-            try {
-                console.log(`\n🔄 Processing [${record.trackingId}]...`);
-                console.log(`  - Status: ${record.status}`);
-                console.log(`  - Old Location: ${oldLoc || 'N/A'}`);
-
-                // Force refresh DTDC data from API
-                const result = await trackingService.fetchAndStoreTrackingData(record.trackingId, true);
-                const updated = result.trackingData || result;
-
-                console.log(`  - New Location: ${updated.location || 'N/A'}`);
-                console.log(`  ✅ Successfully updated [${record.trackingId}]`);
-                successCount++;
-            } catch (err) {
-                console.error(`  ❌ Failed [${record.trackingId}]: ${err.message}`);
-                failCount++;
+            let dbUri = baseUri;
+            if (baseUri.includes('/Dev?')) {
+                dbUri = baseUri.replace('/Dev?', `/${dbName}?`);
+            } else if (baseUri.includes('/Dev')) {
+                dbUri = baseUri.replace('/Dev', `/${dbName}`);
             }
-            // Polite delay between provider requests
-            await new Promise(resolve => setTimeout(resolve, 500));
+
+            process.env.MONGODB_URI = dbUri;
+            config.mongo.uri = dbUri;
+
+            if (mongoose.connection.readyState !== 0) {
+                await mongoose.disconnect();
+            }
+
+            await connectDB();
+
+            const TrackingModel = mongoose.model('TrackingData', trackingSchema);
+
+            const dtdcRecords = await TrackingModel.find({
+                provider: { $regex: /dtdc/i }
+            });
+
+            console.log(`📦 Found ${dtdcRecords.length} DTDC records in [${dbName}].`);
+
+            let successCount = 0;
+            let failCount = 0;
+
+            for (const record of dtdcRecords) {
+                const oldLoc = record.location;
+                try {
+                    console.log(`\n🔄 Processing [${record.trackingId}]...`);
+                    console.log(`  - Status: ${record.status}`);
+                    console.log(`  - Old Location: ${oldLoc || 'N/A'}`);
+
+                    const result = await trackingService.fetchAndStoreTrackingData(record.trackingId, true);
+                    const updated = result.trackingData || result;
+
+                    console.log(`  - New Location: ${updated.location || 'N/A'}`);
+                    console.log(`  ✅ Successfully updated [${record.trackingId}]`);
+                    successCount++;
+                } catch (err) {
+                    console.error(`  ❌ Failed [${record.trackingId}]: ${err.message}`);
+                    failCount++;
+                }
+                await new Promise(resolve => setTimeout(resolve, 300));
+            }
+
+            console.log(`\n✨ Data Fix Summary for [${dbName}]:`);
+            console.log(`Total DTDC Records: ${dtdcRecords.length}`);
+            console.log(`Successfully Updated: ${successCount}`);
+            console.log(`Failed/Skipped: ${failCount}`);
+
+        } catch (error) {
+            console.error(`💥 Error in database [${dbName}]:`, error.message);
         }
-
-        console.log('\n✨ Data Fix Summary:');
-        console.log(`Total DTDC Records: ${dtdcRecords.length}`);
-        console.log(`Successfully Updated: ${successCount}`);
-        console.log(`Failed/Skipped: ${failCount}`);
-
-    } catch (error) {
-        console.error('💥 Critical Error:', error.message);
-    } finally {
-        await apiClient.terminateOcrWorker();
-        process.exit(0);
     }
+
+    await apiClient.terminateOcrWorker();
+    process.exit(0);
 }
 
 fixAllDtdcRecords();

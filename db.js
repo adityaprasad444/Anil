@@ -128,5 +128,6 @@ const TrackingData = mongoose.model('TrackingData', trackingSchema);
 module.exports = {
   connectDB,
   mongoose,
-  TrackingData
+  TrackingData,
+  trackingSchema
 };
