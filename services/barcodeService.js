@@ -68,49 +68,45 @@ class BarcodeService {
         }
     }
 
-    // Process template content to replace barcode/QR placeholders with actual images
+    // Process template content - generates Barcode for tracking ID & QR Code for website URL
     async processTemplateContent(template, variables) {
         try {
             let processedContent = template;
+            const trackingId = variables.trackingId || variables.originalTrackingId || 'AK102938LG';
+            const websiteUrl = variables.websiteUrl || variables.website || 'https://aklogistics.org';
 
-            // Find all barcode placeholders
+            // 1. Process Barcode placeholders for system tracking number
             const barcodeRegex = /\[BARCODE:([^\]]+)\]/g;
             const barcodeMatches = template.match(barcodeRegex) || [];
-            
             for (const match of barcodeMatches) {
-                const data = match.replace('[BARCODE:', '').replace(']', '');
-                const variableValue = variables[data] || data;
-                
+                const param = match.replace('[BARCODE:', '').replace(']', '');
+                const val = variables[param] || trackingId;
                 try {
-                    const barcodeHTML = await this.generateBarcodeHTML(variableValue);
+                    const barcodeHTML = await this.generateBarcodeHTML(val);
                     processedContent = processedContent.replace(match, barcodeHTML);
-                } catch (error) {
-                    console.error(`Failed to generate barcode for ${data}:`, error);
-                    // Keep original placeholder if generation fails
+                } catch (err) {
+                    processedContent = processedContent.replace(match, `<div style="font-family: monospace; font-size: 15px; font-weight: bold; border: 1px solid #000; padding: 4px 8px; text-align: center; background: #fff;">|||||| |||| ||| ${val}</div>`);
                 }
             }
 
-            // Find all QR code placeholders
+            // 2. Process QR Code placeholders for website URL
             const qrRegex = /\[QRCODE:([^\]]+)\]/g;
             const qrMatches = template.match(qrRegex) || [];
-            
             for (const match of qrMatches) {
-                const data = match.replace('[QRCODE:', '').replace(']', '');
-                const variableValue = variables[data] || data;
-                
+                const param = match.replace('[QRCODE:', '').replace(']', '');
+                const val = (param.startsWith('http') ? param : (variables[param] || websiteUrl));
                 try {
-                    const qrHTML = await this.generateQRCodeHTML(variableValue);
+                    const qrHTML = await this.generateQRCodeHTML(val);
                     processedContent = processedContent.replace(match, qrHTML);
-                } catch (error) {
-                    console.error(`Failed to generate QR code for ${data}:`, error);
-                    // Keep original placeholder if generation fails
+                } catch (err) {
+                    processedContent = processedContent.replace(match, `<div style="border: 1px solid #000; padding: 6px; text-align: center; font-weight: bold; font-size: 10px; background: #fff;">[QR: ${val}]</div>`);
                 }
             }
 
             return processedContent;
         } catch (error) {
             console.error('Template processing error:', error);
-            throw new Error(`Failed to process template: ${error.message}`);
+            return template;
         }
     }
 }

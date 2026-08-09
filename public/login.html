@@ -152,6 +152,12 @@
             color: var(--danger-color);
             border: 1px solid #fecaca;
         }
+
+        .message.success {
+            background-color: #ecfdf5;
+            color: #10b981;
+            border: 1px solid #a7f3d0;
+        }
     </style>
 </head>
 
@@ -173,17 +179,74 @@
                     <input type="text" id="username" class="form-input" name="username" required
                         placeholder="Enter your username">
                 </div>
-                <div class="form-group">
+                <div class="form-group" style="margin-bottom: 0.5rem;">
                     <label class="form-label" for="password">Password</label>
                     <input type="password" id="password" class="form-input" name="password" required
                         placeholder="Enter your password">
                 </div>
+                <div style="text-align: right; margin-bottom: 1.5rem;">
+                    <a href="#" onclick="showForgotPassword(event)" style="color: var(--primary-color); font-size: 0.85rem; text-decoration: none; font-weight: 500;">Forgot Password?</a>
+                </div>
                 <button type="submit" id="loginButton" class="btn">Sign In</button>
+            </form>
+
+            <form id="forgotPasswordForm" style="display: none;" onsubmit="handleForgotPassword(event)">
+                <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 1.25rem;">Enter your registered username or email address below to receive a single-use reset token link valid for <strong>24 hours</strong>.</p>
+                <div class="form-group">
+                    <label class="form-label" for="usernameOrEmail">Username or Email</label>
+                    <input type="text" id="usernameOrEmail" class="form-input" required placeholder="Enter username or email">
+                </div>
+                <button type="submit" id="forgotButton" class="btn" style="margin-bottom: 0.75rem;">Send Reset Link</button>
+                <button type="button" onclick="showLoginForm()" class="btn" style="background-color: transparent; color: var(--text-secondary); border: 1px solid var(--border-color);">Back to Sign In</button>
             </form>
         </div>
     </div>
 
     <script>
+        function showForgotPassword(event) {
+            if (event) event.preventDefault();
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('forgotPasswordForm').style.display = 'block';
+            document.getElementById('message').style.display = 'none';
+        }
+
+        function showLoginForm() {
+            document.getElementById('forgotPasswordForm').style.display = 'none';
+            document.getElementById('loginForm').style.display = 'block';
+            document.getElementById('message').style.display = 'none';
+        }
+
+        async function handleForgotPassword(event) {
+            event.preventDefault();
+            const usernameOrEmail = document.getElementById('usernameOrEmail').value.trim();
+            const messageDiv = document.getElementById('message');
+            const forgotButton = document.getElementById('forgotButton');
+
+            messageDiv.style.display = 'none';
+            forgotButton.disabled = true;
+            forgotButton.textContent = 'Sending...';
+
+            try {
+                const response = await fetch('/api/forgot-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ usernameOrEmail })
+                });
+
+                const data = await response.json();
+                messageDiv.textContent = data.message || data.error;
+                messageDiv.className = response.ok ? 'message success' : 'message error';
+                messageDiv.style.display = 'block';
+            } catch (error) {
+                messageDiv.textContent = 'An error occurred. Please try again.';
+                messageDiv.className = 'message error';
+                messageDiv.style.display = 'block';
+            } finally {
+                forgotButton.disabled = false;
+                forgotButton.textContent = 'Send Reset Link';
+            }
+        }
+
         // Check if already logged in
         window.onload = async function () {
             try {

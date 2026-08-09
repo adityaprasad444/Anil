@@ -93,6 +93,49 @@ class EmailService {
         }
     }
 
+    async sendPasswordResetEmail(username, resetUrl, recipientEmail) {
+        const subject = '🔑 Password Reset Request - Package Tracking Admin';
+        const html = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px; background-color: #ffffff;">
+                <h2 style="color: #4f46e5; margin-top: 0;">Password Reset Request</h2>
+                <p>Hello <strong>${username}</strong>,</p>
+                <p>You requested a password reset for your Package Tracking Admin account.</p>
+                <p>Click the button below to set a new password. This link is valid for <strong>24 hours</strong> and can only be used once:</p>
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="${resetUrl}" style="background-color: #4f46e5; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Reset Password</a>
+                </div>
+                <p style="color: #6b7280; font-size: 0.9em;">If the button doesn't work, copy and paste this link into your browser:</p>
+                <p style="color: #4f46e5; word-break: break-all; font-size: 0.9em;">${resetUrl}</p>
+                <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;" />
+                <p style="color: #9ca3af; font-size: 0.85em;">If you did not request a password reset, please ignore this email.</p>
+            </div>
+        `;
+
+        console.log(`\n==================================================`);
+        console.log(`🔑 PASSWORD RESET TOKEN GENERATED FOR USER: ${username}`);
+        console.log(`🔗 RESET LINK (Valid 24h): ${resetUrl}`);
+        console.log(`==================================================\n`);
+
+        const emailTo = recipientEmail || (this.config && this.config.adminEmail && this.config.adminEmail[0]) ? recipientEmail : null;
+        
+        if (await this.ensureTransporter() && emailTo) {
+            try {
+                const info = await this.transporter.sendMail({
+                    from: `"${this.config.fromName || 'Package Tracker'}" <${this.config.user}>`,
+                    to: emailTo,
+                    subject,
+                    html
+                });
+                await this.logEmail('PASSWORD_RESET', [emailTo], subject, 'SENT', null, { username, resetUrl }, html);
+                return { success: true, messageId: info.messageId };
+            } catch (err) {
+                console.error('❌ Failed to send reset email via SMTP:', err);
+                await this.logEmail('PASSWORD_RESET', [emailTo], subject, 'FAILED', err, { username, resetUrl }, html);
+            }
+        }
+        return { success: true, loggedToConsole: true };
+    }
+
     renderTemplate(templateContent, params) {
         // Replace {{variableName}} with actual values from params object
         let rendered = templateContent;

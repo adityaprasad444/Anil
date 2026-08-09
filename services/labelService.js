@@ -2,6 +2,70 @@ const LabelTemplate = require('../models/LabelTemplate');
 const GeneratedLabel = require('../models/GeneratedLabel');
 const { TrackingData } = require('../db');
 const barcodeService = require('./barcodeService');
+const contactService = require('./contactService');
+
+const AK_LOGISTICS_A4_TEMPLATE_HTML = `<div style="font-family: Arial, Helvetica, sans-serif; width: 100%; max-width: 680px; min-height: 520px; margin: 0 auto; background: #ffffff; border: 2px solid #0f172a; border-radius: 16px; padding: 24px 20px 20px 20px; box-sizing: border-box; color: #0f172a; page-break-inside: avoid; break-inside: avoid;">
+    <div class="ak-label-header-v2" style="display: flex; align-items: center; justify-content: flex-start; gap: 14px; padding-bottom: 14px; border-bottom: 2px solid #0f172a;">
+        <img src="/Logos/logo.jpeg" alt="AK Logistics" style="height: 60px; max-width: 120px; object-fit: contain; display: block; flex-shrink: 0;" />
+        <div style="text-align: left;">
+            <div style="font-size: 22px; font-weight: 900; color: #0f172a; letter-spacing: 0.5px; text-transform: uppercase;">AK Logistics</div>
+            <div style="font-size: 13px; color: #475569; font-style: italic; font-weight: 600;">Delivering the Future, Today</div>
+        </div>
+    </div>
+    <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #0f172a; padding: 16px 10px; gap: 12px;">
+        <div style="width: 90px; text-align: center; flex-shrink: 0;">
+            [QRCODE:https://aklogistics.org]
+        </div>
+        <div style="flex-grow: 1; text-align: left; padding-left: 14px;">
+            <div style="margin-bottom: 6px;">
+                [BARCODE:{{trackingId}}]
+            </div>
+            <div style="font-size: 11px; font-weight: 800; color: #475569; letter-spacing: 0.5px; text-transform: uppercase;">TRACKING NUMBER:</div>
+            <div style="font-size: 24px; font-weight: 900; color: #000; letter-spacing: 1px;">{{trackingId}}</div>
+        </div>
+    </div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; border-bottom: 2px solid #0f172a;">
+        <div style="padding: 16px 14px; border-right: 2px solid #0f172a;">
+            <div style="font-size: 14px; font-weight: 900; color: #000; margin-bottom: 8px; text-transform: uppercase;">TO:</div>
+            <div style="font-size: 13px; line-height: 1.5; color: #1e293b;">{{toAddress}}</div>
+        </div>
+        <div style="padding: 16px 14px;">
+            <div style="font-size: 14px; font-weight: 900; color: #000; margin-bottom: 8px; text-transform: uppercase;">FROM:</div>
+            <div style="font-size: 13px; line-height: 1.5; color: #1e293b;">{{fromAddress}}</div>
+        </div>
+    </div>
+    <div style="border-bottom: 2px solid #0f172a;">
+        <div style="font-size: 13px; font-weight: 900; color: #000; padding: 8px 14px; background: #f1f5f9; border-bottom: 1px solid #0f172a; text-transform: uppercase;">
+            SHIPMENT DETAILS:
+        </div>
+        <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+            <thead>
+                <tr style="background: #f8fafc; border-bottom: 1px solid #0f172a;">
+                    <th style="padding: 10px 14px; text-align: left; font-weight: 800; width: 55%; border-right: 1px solid #cbd5e1;">Item Description</th>
+                    <th style="padding: 10px 14px; text-align: center; font-weight: 800; width: 20%; border-right: 1px solid #cbd5e1;">Weight (kg)</th>
+                    <th style="padding: 10px 14px; text-align: right; font-weight: 800; width: 25%;">Value (₹)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="padding: 12px 14px; font-weight: 600; color: #1e293b; border-right: 1px solid #cbd5e1;">{{itemDescription}}</td>
+                    <td style="padding: 12px 14px; text-align: center; font-weight: 700; color: #1e293b; border-right: 1px solid #cbd5e1;">{{chargedWeight}}</td>
+                    <td style="padding: 12px 14px; text-align: right; font-weight: 800; color: #000;">{{itemCost}}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div style="padding-top: 18px; padding-bottom: 8px; text-align: center;">
+        <div style="font-size: 26px; font-weight: 900; color: #0b192c; letter-spacing: 0.5px;">www.aklogistics.org</div>
+        <div style="font-size: 11px; font-weight: 800; color: #475569; margin-top: 6px; text-transform: uppercase;">
+            CONTACT INFORMATION:
+        </div>
+        <div style="font-size: 11px; color: #334155; margin-top: 4px; line-height: 1.5;">
+            Support Tel: <strong>{{supportPhone}}</strong> | Email: <strong>{{supportEmail}}</strong><br>
+            <span style="font-size: 10px; color: #64748b;">Address: {{supportAddress}}</span>
+        </div>
+    </div>
+</div>`;
 
 class LabelService {
   async createTemplate(templateData, userId) {
@@ -23,7 +87,48 @@ class LabelService {
         query.isActive = isActive;
       }
       
-      const templates = await LabelTemplate.find(query).sort({ createdAt: -1 });
+      let templates = await LabelTemplate.find(query).sort({ createdAt: -1 });
+
+      if (templates.length === 0) {
+        const defaultTmpl = new LabelTemplate({
+          name: 'AK Logistics Official A4 Label',
+          description: 'Official AK Logistics A4 Shipping Label with System Tracking Barcode and Website QR Code',
+          template: AK_LOGISTICS_A4_TEMPLATE_HTML,
+          dimensions: { width: 210, height: 297, unit: 'mm' },
+          style: { fontSize: 12, fontFamily: 'Arial', alignment: 'left', backgroundColor: '#ffffff', textColor: '#0f172a', borderWidth: 2, borderColor: '#0f172a' },
+          variables: [
+            { name: 'fromAddress', label: 'From Address', type: 'text', required: true },
+            { name: 'toAddress', label: 'To Address', type: 'text', required: true },
+            { name: 'itemDescription', label: 'Item Description', type: 'text', required: true },
+            { name: 'itemCost', label: 'Cost Value (₹)', type: 'text', required: true },
+            { name: 'chargedWeight', label: 'Weight (kg)', type: 'text', required: true },
+            { name: 'trackingId', label: 'Tracking Number', type: 'text', required: true }
+          ],
+          createdBy: userId || '000000000000000000000000'
+        });
+        await defaultTmpl.save();
+        templates = [defaultTmpl];
+      } else {
+        const correctDimensions = { width: 210, height: 297, unit: 'mm' };
+        const correctStyle = { fontSize: 12, fontFamily: 'Arial, Helvetica, sans-serif', alignment: 'left', backgroundColor: '#ffffff', textColor: '#0f172a', borderWidth: 2, borderColor: '#0f172a' };
+        for (let t of templates) {
+          // Always force-update if template doesn't match the latest A4 design
+          const hasLatestTemplate = t.template && t.template.includes('ak-label-header-v2') && t.template.includes('SHIPMENT DETAILS');
+          const hasCorrectDimensions = t.dimensions?.width === 210 && t.dimensions?.height === 297;
+          const hasCorrectStyle = t.style?.fontSize === 12;
+          if (!hasLatestTemplate || !hasCorrectDimensions || !hasCorrectStyle) {
+            t.template = AK_LOGISTICS_A4_TEMPLATE_HTML;
+            t.dimensions = correctDimensions;
+            t.style = correctStyle;
+            await LabelTemplate.updateOne({ _id: t._id }, { $set: { 
+              template: AK_LOGISTICS_A4_TEMPLATE_HTML, 
+              dimensions: correctDimensions, 
+              style: correctStyle 
+            } });
+            console.log(`🏷️ Force-updated template ${t._id} to latest AK Logistics A4 design`);
+          }
+        }
+      }
       return templates;
     } catch (error) {
       throw new Error(`Failed to fetch label templates: ${error.message}`);
@@ -143,10 +248,19 @@ class LabelService {
         throw new Error(`Validation errors: ${validationErrors.join(', ')}`);
       }
 
+      // Always merge dynamic Contact Us details from Home Page
+      const contactInfo = contactService.getHomePageContactInfo();
+      const mergedData = {
+        supportPhone: contactInfo.phone,
+        supportEmail: contactInfo.email,
+        supportAddress: contactInfo.address,
+        ...data
+      };
+
       // Prepare variables with defaults and formatting
       const variables = {};
       template.variables.forEach(variable => {
-        let value = data[variable.name] || variable.defaultValue || '';
+        let value = mergedData[variable.name] || variable.defaultValue || '';
         
         // Apply formatting based on variable type
         variables[variable.name] = this.formatVariable(value, variable.type);
@@ -154,9 +268,10 @@ class LabelService {
 
       // Process template variables
       let processedTemplate = template.template;
-      Object.keys(data).forEach(key => {
+      Object.keys(mergedData).forEach(key => {
         const regex = new RegExp(`{{${key}}}`, 'g');
-        processedTemplate = processedTemplate.replace(regex, variables[key]);
+        const val = (mergedData[key] !== undefined && mergedData[key] !== null) ? String(mergedData[key]) : (variables[key] || '');
+        processedTemplate = processedTemplate.replace(regex, val);
       });
 
       // Process barcode and QR code placeholders
@@ -249,43 +364,39 @@ class LabelService {
     try {
       const template = await this.getTemplateById(templateId, userId);
       
-      const previewData = {};
-      template.variables.forEach(variable => {
-        switch (variable.type) {
-          case 'text':
-            if (variable.name === 'fromAddress') {
-              previewData[variable.name] = variable.defaultValue || 'John Doe\n123 Main Street\nSuite 100\nNew York, NY 10001\n(555) 123-4567\njohn@example.com';
-            } else if (variable.name === 'toAddress') {
-              previewData[variable.name] = variable.defaultValue || 'Jane Smith\n456 Oak Avenue\nApt 2B\nLos Angeles, CA 90001\n(555) 987-6543\njane@example.com';
-            } else {
-              previewData[variable.name] = variable.defaultValue || 'Sample Text';
-            }
-            break;
-          case 'number':
-            previewData[variable.name] = variable.defaultValue || '123';
-            break;
-          case 'date':
-            previewData[variable.name] = variable.defaultValue || new Date().toISOString().split('T')[0];
-            break;
-          case 'email':
-            previewData[variable.name] = variable.defaultValue || 'sample@example.com';
-            break;
-          case 'phone':
-            previewData[variable.name] = variable.defaultValue || '123-456-7890';
-            break;
-          case 'url':
-            previewData[variable.name] = variable.defaultValue || 'https://example.com';
-            break;
-          case 'barcode':
-            previewData[variable.name] = variable.defaultValue || 'AK123456789US';
-            break;
-          case 'qrcode':
-            previewData[variable.name] = variable.defaultValue || 'https://aklogistics.com/track/123456789';
-            break;
-          default:
-            previewData[variable.name] = variable.defaultValue || 'Sample Value';
-        }
-      });
+      const contactInfo = contactService.getHomePageContactInfo();
+
+      const previewData = {
+        fromAddress: 'AK Logistics Hub\n100 Port Road\nHyderabad, Telangana - 500001\nPh: +91 9876543210',
+        toAddress: 'Anil Kumar\nFlat 402, Sunrise Towers\nMG Road, Bangalore, Karnataka - 560001\nPh: +91 9123456789',
+        fromName: 'AK Logistics Hub',
+        fromMobile: '+91 9876543210',
+        fromCity: 'Hyderabad',
+        fromPincode: '500001',
+        fromState: 'Telangana',
+        toName: 'Anil Kumar',
+        toMobile: '+91 9123456789',
+        toAddress: 'Flat 402, Sunrise Towers',
+        toCity: 'Bangalore',
+        toPincode: '560001',
+        toState: 'Karnataka',
+        itemDescription: 'High-Precision Robotics Controller (Model ARC-50)',
+        itemCost: '₹ 1,500.00',
+        itemValue: '₹ 1,500.00',
+        cost: '₹ 1,500.00',
+        declaredValue: '₹ 1,500.00',
+        chargedWeight: '1.50 kg',
+        itemWeight: '1.50 kg',
+        totalWeight: '1.50 kg',
+        trackingId: 'AKL-987-654-321-GL',
+        originalTrackingId: 'AWB-10928374',
+        provider: 'DTDC Express',
+        courier: 'DTDC Express',
+        supportPhone: contactInfo.phone,
+        supportEmail: contactInfo.email,
+        supportAddress: contactInfo.address,
+        currentDate: new Date().toLocaleDateString('en-IN')
+      };
 
       return await this.generateLabel(templateId, previewData, userId);
     } catch (error) {
@@ -343,13 +454,14 @@ class LabelService {
 
   async getGeneratedLabels(userId, limit = 50, offset = 0) {
     try {
-      const labels = await GeneratedLabel.find({ generatedBy: userId })
+      const query = userId ? { generatedBy: userId } : {};
+      const labels = await GeneratedLabel.find(query)
         .populate('templateId', 'name')
         .sort({ generatedAt: -1 })
         .limit(limit)
         .skip(offset);
       
-      const total = await GeneratedLabel.countDocuments({ generatedBy: userId });
+      const total = await GeneratedLabel.countDocuments(query);
       
       return { labels, total };
     } catch (error) {
@@ -359,10 +471,8 @@ class LabelService {
 
   async getGeneratedLabelById(labelId, userId) {
     try {
-      const label = await GeneratedLabel.findOne({ 
-        _id: labelId, 
-        generatedBy: userId 
-      }).populate('templateId');
+      const query = userId ? { _id: labelId, generatedBy: userId } : { _id: labelId };
+      const label = await GeneratedLabel.findOne(query).populate('templateId');
       
       if (!label) {
         throw new Error('Generated label not found');
@@ -376,8 +486,9 @@ class LabelService {
 
   async updateGeneratedLabel(labelId, updateData, userId) {
     try {
+      const query = userId ? { _id: labelId, generatedBy: userId } : { _id: labelId };
       const label = await GeneratedLabel.findOneAndUpdate(
-        { _id: labelId, generatedBy: userId },
+        query,
         updateData,
         { new: true, runValidators: true }
       ).populate('templateId');
@@ -394,10 +505,8 @@ class LabelService {
 
   async deleteGeneratedLabel(labelId, userId) {
     try {
-      const label = await GeneratedLabel.findOneAndDelete({ 
-        _id: labelId, 
-        generatedBy: userId 
-      });
+      const query = userId ? { _id: labelId, generatedBy: userId } : { _id: labelId };
+      const label = await GeneratedLabel.findOneAndDelete(query);
       
       if (!label) {
         throw new Error('Generated label not found');

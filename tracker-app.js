@@ -1,10 +1,12 @@
 // tracker-app.js
 const express = require('express');
+const axios = require('axios');
 const session = require('express-session');
 const cors = require('cors');
 const helmet = require('helmet');
 const cookieParser = require('cookie-parser');
 const path = require('path');
+const crypto = require('crypto');
 const mongoose = require('mongoose');
 const config = require('./config');
 const { connectDB, TrackingData } = require('./db');
@@ -16,10 +18,12 @@ const EmailLog = require('./models/EmailLog');
 const Report = require('./models/Report');
 const EmailTemplate = require('./models/EmailTemplate');
 const LabelTemplate = require('./models/LabelTemplate');
+const contactService = require('./services/contactService');
 const GeneratedLabel = require('./models/GeneratedLabel');
 const trackingService = require('./services/trackingService');
 const emailService = require('./services/emailService');
 const labelService = require('./services/labelService');
+const addressService = require('./services/addressService');
 const cron = require('node-cron');
 const swaggerUi = require('swagger-ui-express');
 const swaggerJsdoc = require('swagger-jsdoc');
@@ -190,6 +194,10 @@ app.get('/login', (req, res) => {
   res.sendFile(path.join(publicPath, 'login.html'));
 });
 
+app.get('/reset-password', (req, res) => {
+  res.sendFile(path.join(publicPath, 'reset-password.html'));
+});
+
 app.get('/admin', requireAuth, (req, res) => {
   res.sendFile(path.join(publicPath, 'admin.html'));
 });
@@ -287,6 +295,16 @@ app.get('/api/login/check', (req, res) => {
     });
   } else {
     res.status(401).json({ authenticated: false });
+  }
+});
+
+// Dynamic Contact Info endpoint (scrapes/returns Contact Us details from Home Page)
+app.get('/api/contact-info', (req, res) => {
+  try {
+    const contactInfo = contactService.getHomePageContactInfo();
+    res.json(contactInfo);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch contact info' });
   }
 });
 
@@ -1505,6 +1523,138 @@ app.post('/api/logout', (req, res) => {
   res.json({ success: true });
 });
 
+// Change Password Endpoint (Admin Dashboard)
+app.post('/api/change-password', requireAuth, async (req, res) => {
+  try {
+    const { currentPassword, newPassword, confirmPassword } = req.body;
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      return res.status(400).json({ error: 'Current password, new password, and confirm password are required.' });
+    }
+
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({ error: 'New password and confirm password do not match.' });
+    }
+
+    if (currentPassword === newPassword) {
+      return res.status(400).json({ error: 'New password cannot be the same as current password.' });
+    }
+
+    const userId = req.session.user && req.session.user.id;
+    let user;
+    if (userId) {
+      user = await User.findById(userId);
+    }
+    if (!user && req.session.user && req.session.user.username) {
+      user = await User.findOne({ username: req.session.user.username });
+    }
+
+    if (!user) {
+      return res.status(404).json({ error: 'User account not found.' });
+    }
+
+    const isMatch = await user.comparePassword(currentPassword);
+    if (!isMatch) {
+      return res.status(400).json({ error: 'Current password is incorrect.' });
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    console.log('✅ Password changed successfully for user:', user.username);
+    res.json({ success: true, message: 'Password changed successfully.' });
+  } catch (error) {
+    console.error('❌ Change password error:', error);
+    res.status(500).json({ error: 'Failed to change password.' });
+  }
+});
+
+// Forgot Password Endpoint (Sends 24-hour single-use token link)
+app.post('/api/forgot-password', async (req, res) => {
+  try {
+    const { usernameOrEmail } = req.body;
+
+    if (!usernameOrEmail) {
+      return res.status(400).json({ error: 'Username or email is required.' });
+    }
+
+    const term = usernameOrEmail.trim().toLowerCase();
+    const user = await User.findOne({
+      $or: [
+        { username: term },
+        { email: term }
+      ]
+    });
+
+    if (!user) {
+      // Return neutral success response to prevent username/email enumeration attacks
+      return res.json({
+        success: true,
+        message: 'If an account matches that username or email, a password reset link has been sent (valid for 24 hours).'
+      });
+    }
+
+    const token = crypto.randomBytes(32).toString('hex');
+    user.resetPasswordToken = token;
+    user.resetPasswordExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+    await user.save();
+
+    const resetUrl = `${req.protocol}://${req.get('host')}/reset-password?token=${token}`;
+    const targetEmail = user.email || (config.admin && config.admin.email) || null;
+
+    await emailService.sendPasswordResetEmail(user.username, resetUrl, targetEmail);
+
+    res.json({
+      success: true,
+      message: 'If an account matches that username or email, a password reset link has been sent (valid for 24 hours).'
+    });
+  } catch (error) {
+    console.error('❌ Forgot password error:', error);
+    res.status(500).json({ error: 'Failed to process forgot password request.' });
+  }
+});
+
+// Reset Password Endpoint (Validates 24-hour token and sets new password)
+app.post('/api/reset-password', async (req, res) => {
+  try {
+    const { token, newPassword, confirmPassword } = req.body;
+
+    if (!token || !newPassword || !confirmPassword) {
+      return res.status(400).json({ error: 'Token, new password, and confirm password are required.' });
+    }
+
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({ error: 'New password and confirm password do not match.' });
+    }
+
+    const user = await User.findOne({
+      resetPasswordToken: token,
+      resetPasswordExpires: { $gt: new Date() }
+    });
+
+    if (!user) {
+      return res.status(400).json({ error: 'Password reset token is invalid or has expired (valid limit is 24 hours).' });
+    }
+
+    // Check if new password is the same as current password
+    const isSamePassword = await user.comparePassword(newPassword);
+    if (isSamePassword) {
+      return res.status(400).json({ error: 'New password cannot be the same as current password.' });
+    }
+
+    user.password = newPassword;
+    user.resetPasswordToken = null;
+    user.resetPasswordExpires = null;
+    await user.save();
+
+    console.log('✅ Password successfully reset via token for user:', user.username);
+    res.json({ success: true, message: 'Password has been reset successfully. You can now log in.' });
+  } catch (error) {
+    console.error('❌ Reset password error:', error);
+    res.status(500).json({ error: 'Failed to reset password.' });
+  }
+});
+
 /**
  * @swagger
  * /api/tracking/generate:
@@ -2077,6 +2227,122 @@ app.get('/api/email-logs/:id/preview', requireAuth, async (req, res) => {
   }
 });
 
+// Pincode Lookup Route with Multi-Tier Fallback
+function getStateByPincodePrefix(pc) {
+  if (!pc || pc.length < 3) return '';
+  const p3 = parseInt(pc.substring(0, 3), 10);
+  const p2 = parseInt(pc.substring(0, 2), 10);
+
+  // Precise 3-digit prefix checks
+  if (p3 >= 500 && p3 <= 509) return 'Telangana';
+  if (p3 >= 515 && p3 <= 535) return 'Andhra Pradesh';
+  if (p3 >= 790 && p3 <= 792) return 'Arunachal Pradesh';
+  if (p3 >= 793 && p3 <= 794) return 'Meghalaya';
+  if (p3 === 795) return 'Manipur';
+  if (p3 === 796) return 'Mizoram';
+  if (p3 >= 797 && p3 <= 798) return 'Nagaland';
+  if (p3 === 799) return 'Tripura';
+  if (p3 === 737) return 'Sikkim';
+  if (p3 >= 825 && p3 <= 835) return 'Jharkhand';
+  if (p3 >= 800 && p3 <= 824) return 'Bihar';
+  if (p3 >= 840 && p3 <= 855) return 'Bihar';
+
+  // 2-digit prefix checks
+  if (p2 === 11) return 'Delhi';
+  if (p2 >= 12 && p2 <= 13) return 'Haryana';
+  if (p2 >= 14 && p2 <= 15) return 'Punjab';
+  if (p2 === 16) return 'Chandigarh';
+  if (p2 === 17) return 'Himachal Pradesh';
+  if (p2 >= 18 && p2 <= 19) return 'Jammu & Kashmir';
+  if (p2 >= 20 && p2 <= 28) return 'Uttar Pradesh';
+  if (p2 >= 30 && p2 <= 34) return 'Rajasthan';
+  if (p2 >= 36 && p2 <= 39) return 'Gujarat';
+  if (p2 >= 40 && p2 <= 44) return 'Maharashtra';
+  if (p2 >= 45 && p2 <= 48) return 'Madhya Pradesh';
+  if (p2 === 49) return 'Chhattisgarh';
+  if (p2 >= 56 && p2 <= 59) return 'Karnataka';
+  if (p2 >= 60 && p2 <= 64) return 'Tamil Nadu';
+  if (p2 >= 67 && p2 <= 69) return 'Kerala';
+  if (p2 >= 70 && p2 <= 74) return 'West Bengal';
+  if (p2 >= 75 && p2 <= 77) return 'Odisha';
+  if (p2 === 78) return 'Assam';
+
+  return '';
+}
+
+app.get('/api/pincode/:pincode', async (req, res) => {
+  try {
+    const { pincode } = req.params;
+    if (!pincode || !/^\d{6}$/.test(pincode)) {
+      return res.status(400).json({ error: 'Valid 6-digit pincode is required' });
+    }
+
+    let state = '';
+    let city = '';
+    let district = '';
+    let possibleCities = [];
+
+    // Tier 1: Try api.postalpincode.in
+    try {
+      const response = await axios.get(`https://api.postalpincode.in/pincode/${pincode}`, { timeout: 3000 });
+      const data = response.data;
+      if (Array.isArray(data) && data[0]?.Status === 'Success' && data[0]?.PostOffice?.length > 0) {
+        const offices = data[0].PostOffice;
+        state = offices[0].State || '';
+        city = offices[0].District || offices[0].Block || offices[0].Circle || '';
+        district = offices[0].District || '';
+
+        const set = new Set();
+        offices.forEach(po => {
+          if (po.District) set.add(po.District.trim());
+          if (po.Name) set.add(po.Name.trim());
+          if (po.Block && po.Block !== 'NA') set.add(po.Block.trim());
+        });
+        possibleCities = Array.from(set).filter(Boolean);
+      }
+    } catch (e) {
+      console.warn('PostalPincode API failed/timed out, trying fallback');
+    }
+
+    // Tier 2: Try zippopotam if state is still missing
+    if (!state) {
+      try {
+        const zippoRes = await axios.get(`https://api.zippopotam.us/in/${pincode}`, { timeout: 3000 });
+        if (zippoRes.data?.places?.length > 0) {
+          const place = zippoRes.data.places[0];
+          state = place.state || '';
+          city = place['place name'] || '';
+          possibleCities = zippoRes.data.places.map(p => p['place name']).filter(Boolean);
+        }
+      } catch (e) {
+        console.warn('Zippopotam API failed/timed out');
+      }
+    }
+
+    // Tier 3: Fallback to pincode prefix calculation if state is still missing
+    if (!state) {
+      state = getStateByPincodePrefix(pincode);
+    }
+
+    if (state) {
+      return res.json({
+        success: true,
+        pincode: pincode,
+        state: state,
+        city: city,
+        district: district,
+        possibleCities: possibleCities,
+        country: 'India'
+      });
+    }
+
+    return res.status(404).json({ error: 'Pincode not found' });
+  } catch (error) {
+    console.error('❌ Pincode lookup error:', error.message);
+    res.status(500).json({ error: 'Failed to fetch pincode details' });
+  }
+});
+
 // Label Templates API Routes
 
 /**
@@ -2260,11 +2526,59 @@ app.get('/api/label-templates/:id/preview', requireAuth, async (req, res) => {
  *       200:
  *         description: Label generated successfully
  */
+// Address Management API Routes
+app.get('/api/addresses', requireAuth, async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+    const { search, type } = req.query;
+    const addresses = await addressService.searchAddresses(search, userId, type);
+    res.json(addresses);
+  } catch (error) {
+    console.error('❌ Error fetching addresses:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/addresses', requireAuth, async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+    const saved = await addressService.saveOrUpdateAddress(req.body, userId);
+    res.json({ success: true, address: saved });
+  } catch (error) {
+    console.error('❌ Error saving address:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.post('/api/label/generate', requireAuth, async (req, res) => {
   try {
     const { templateId, data } = req.body;
     const userId = req.session.user.id; // Get userId from session.user.id
     const label = await labelService.generateLabel(templateId, data, userId);
+
+    // Save sender & recipient addresses to DB for future keyword search & analytics
+    if (data && data.fromName && data.fromCity && data.fromPincode) {
+      addressService.saveOrUpdateAddress({
+        name: data.fromName,
+        mobile: data.fromMobile,
+        city: data.fromCity,
+        pincode: data.fromPincode,
+        state: data.fromState,
+        type: 'sender'
+      }, userId).catch(err => console.error('Address save warning (from):', err.message));
+    }
+    if (data && data.toName && data.toCity && data.toPincode) {
+      addressService.saveOrUpdateAddress({
+        name: data.toName,
+        mobile: data.toMobile,
+        address: data.toAddress,
+        city: data.toCity,
+        pincode: data.toPincode,
+        state: data.toState,
+        type: 'recipient'
+      }, userId).catch(err => console.error('Address save warning (to):', err.message));
+    }
+
     res.json(label);
   } catch (error) {
     console.error('❌ Label generation error:', error);
@@ -2326,10 +2640,29 @@ app.post('/api/label/tracking/:trackingId', requireAuth, async (req, res) => {
  *       200:
  *         description: List of generated labels
  */
+async function resolveUserId(req) {
+  if (req.session && req.session.user) {
+    const sUser = req.session.user;
+    if (sUser.id && mongoose.Types.ObjectId.isValid(sUser.id)) {
+      return sUser.id;
+    }
+    if (sUser._id && mongoose.Types.ObjectId.isValid(sUser._id)) {
+      return sUser._id;
+    }
+    if (sUser.username) {
+      const dbUser = await User.findOne({ username: sUser.username });
+      if (dbUser) return dbUser._id;
+    }
+  }
+  const defaultAdmin = await User.findOne();
+  if (defaultAdmin) return defaultAdmin._id;
+  return new mongoose.Types.ObjectId('000000000000000000000000');
+}
+
 app.get('/api/generated-labels', requireAuth, async (req, res) => {
   try {
     const { limit = 50, offset = 0 } = req.query;
-    const userId = req.session.user.id; // Get userId from session.user.id
+    const userId = await resolveUserId(req);
     const result = await labelService.getGeneratedLabels(
       userId, 
       parseInt(limit), 
@@ -2357,7 +2690,7 @@ app.get('/api/generated-labels', requireAuth, async (req, res) => {
 app.post('/api/generated-labels', requireAuth, async (req, res) => {
   try {
     const { templateId, data, trackingId } = req.body;
-    const userId = req.session.user.id; // Get userId from session.user.id
+    const userId = await resolveUserId(req);
     
     console.log('🏷️ Saving generated label:', { 
       templateId, 
@@ -2365,10 +2698,6 @@ app.post('/api/generated-labels', requireAuth, async (req, res) => {
       userId: userId,
       dataKeys: Object.keys(data)
     });
-    
-    if (!userId) {
-      throw new Error('User not authenticated');
-    }
     
     const savedLabel = await labelService.saveGeneratedLabel(
       templateId, 
@@ -2543,13 +2872,35 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Internal server error' });
 });
 
+const seedAdminUser = async () => {
+  try {
+    const adminUsername = config.admin?.username || 'admin';
+    const adminPassword = config.admin?.password || 'admin123';
+    let adminUser = await User.findOne({ username: adminUsername });
+    if (!adminUser) {
+      console.log('👤 No admin user found. Creating default admin user...');
+      adminUser = new User({
+        username: adminUsername,
+        password: adminPassword,
+        role: 'admin',
+        email: 'admin@example.com'
+      });
+      await adminUser.save();
+      console.log('✅ Default admin user seeded successfully:', adminUsername);
+    }
+  } catch (error) {
+    console.error('❌ Error seeding admin user:', error);
+  }
+};
+
 // Start the server
 const startServer = async () => {
   try {
     // Connect to MongoDB
     await connectDB();
     
-    // Seed email templates
+    // Seed default admin user and email templates
+    await seedAdminUser();
     await seedEmailTemplates();
 
     const PORT = config.server.port || 3001;

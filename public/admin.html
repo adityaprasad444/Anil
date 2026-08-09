@@ -814,6 +814,7 @@
                 <li><a href="/config" class="nav-link">Configuration</a></li>
                 <li><a href="#" class="nav-link" id="nav-reports" onclick="switchTab('reports')">Reports</a></li>
                 <li><a href="#" class="nav-link" id="nav-emails" onclick="switchTab('emails')">Emails</a></li>
+                <li><a href="#" class="nav-link" id="nav-change-password" onclick="openChangePasswordModal(event)">Change Password</a></li>
                 <li><button class="nav-link" onclick="handleLogout()"
                         style="background: none; border: none; cursor: pointer; display: block; width: 100%; text-align: left;">Logout</button>
                 </li>
@@ -2158,6 +2159,9 @@
                 if (tab === 'reports' || tab === 'emails') {
                     switchTab(tab);
                 }
+                if (urlParams.get('openChangePassword') === '1') {
+                    openChangePasswordModal();
+                }
 
             } catch (error) {
                 console.error('Initialization error:', error);
@@ -3218,6 +3222,110 @@
             </form>
         </div>
     </div>
+
+    <!-- Change Password Modal -->
+    <div id="changePasswordModal" class="modal">
+        <div class="modal-content" style="max-width: 450px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Change Password</h3>
+                <span class="close-modal" onclick="closeChangePasswordModal()">&times;</span>
+            </div>
+            <div id="changePasswordMessage" class="message" style="display: none; margin-bottom: 1rem; padding: 0.75rem; border-radius: 0.5rem;"></div>
+            <form id="changePasswordForm" onsubmit="handleChangePasswordSubmit(event)">
+                <div class="form-group">
+                    <label class="form-label" for="currentPassword">Current Password</label>
+                    <input type="password" id="currentPassword" class="form-input" required placeholder="Enter current password">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="newPassword">New Password</label>
+                    <input type="password" id="newPassword" class="form-input" required placeholder="Enter new password">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="confirmPassword">Confirm New Password</label>
+                    <input type="password" id="confirmPassword" class="form-input" required placeholder="Confirm new password">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeChangePasswordModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="changePasswordBtn">Update Password</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function openChangePasswordModal(event) {
+            if (event) event.preventDefault();
+            document.getElementById('changePasswordForm').reset();
+            const msgDiv = document.getElementById('changePasswordMessage');
+            if (msgDiv) msgDiv.style.display = 'none';
+            document.getElementById('changePasswordModal').style.display = 'block';
+        }
+
+        function closeChangePasswordModal() {
+            document.getElementById('changePasswordModal').style.display = 'none';
+        }
+
+        async function handleChangePasswordSubmit(event) {
+            event.preventDefault();
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const msgDiv = document.getElementById('changePasswordMessage');
+            const btn = document.getElementById('changePasswordBtn');
+
+            if (newPassword !== confirmPassword) {
+                msgDiv.textContent = 'New password and confirm password do not match.';
+                msgDiv.className = 'message error';
+                msgDiv.style.display = 'block';
+                return;
+            }
+
+            if (currentPassword === newPassword) {
+                msgDiv.textContent = 'New password cannot be the same as current password.';
+                msgDiv.className = 'message error';
+                msgDiv.style.display = 'block';
+                return;
+            }
+
+            msgDiv.style.display = 'none';
+            btn.disabled = true;
+            btn.textContent = 'Updating...';
+
+            try {
+                const response = await fetch('/api/change-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ currentPassword, newPassword, confirmPassword })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    msgDiv.textContent = data.message || 'Password changed successfully!';
+                    msgDiv.className = 'message success';
+                    msgDiv.style.display = 'block';
+                    if (typeof showToast === 'function') {
+                        showToast('Password updated successfully', 'success');
+                    }
+                    setTimeout(() => {
+                        closeChangePasswordModal();
+                    }, 1800);
+                } else {
+                    msgDiv.textContent = data.error || 'Failed to change password.';
+                    msgDiv.className = 'message error';
+                    msgDiv.style.display = 'block';
+                }
+            } catch (error) {
+                msgDiv.textContent = 'An error occurred while changing password.';
+                msgDiv.className = 'message error';
+                msgDiv.style.display = 'block';
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Update Password';
+            }
+        }
+    </script>
 
     <!-- Client-side Analytics Initialization -->
     <script src="/analytics.js"></script>
