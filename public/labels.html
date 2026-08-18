@@ -3336,10 +3336,11 @@
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
 
-            // Temporarily append element to document.body so html2canvas can measure layout styles
-            element.style.position = 'absolute';
-            element.style.left = '-9999px';
-            element.style.top = '-9999px';
+            // Temporarily append element to document.body so html2canvas can measure layout styles at 0,0
+            element.style.position = 'fixed';
+            element.style.left = '0';
+            element.style.top = '0';
+            element.style.zIndex = '-9999';
             document.body.appendChild(element);
 
             if (window.html2pdf) {
