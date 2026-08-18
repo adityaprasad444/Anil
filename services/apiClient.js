@@ -98,7 +98,7 @@ class ApiClient {
                     const headersObj = this.buildHeaders(headers);
                     this.dtdcTrackToken = headersObj['x-dtdc-track-token'] || headersObj['X-DTDC-Track-Token'] || null;
                 }
-                
+
                 if (!this.dtdcTrackToken) {
                     await this.refreshDtdcToken();
                 }
@@ -152,7 +152,7 @@ class ApiClient {
                     response = await executeDtdcFlow();
                 } catch (error) {
                     const isSecurityError = error.response && (
-                        error.response.status === 403 || 
+                        error.response.status === 403 ||
                         error.response.status === 500 ||
                         (error.response.data && error.response.data.success === false)
                     );
@@ -218,7 +218,7 @@ class ApiClient {
                     const sums = new Uint16Array(w * h);
                     for (let i = 0; i < w * h; i++) {
                         const idx = i << 2;
-                        sums[i] = data.data[idx] + data.data[idx+1] + data.data[idx+2];
+                        sums[i] = data.data[idx] + data.data[idx + 1] + data.data[idx + 2];
                     }
                     const sorted = Array.from(sums).sort((a, b) => a - b);
                     effectiveThreshold = sorted[Math.floor(sorted.length * thresholdPercentile)];
@@ -229,7 +229,7 @@ class ApiClient {
                 for (let y = 0; y < h; y++) {
                     for (let x = 0; x < w; x++) {
                         const idx = (w * y + x) << 2;
-                        const sum = data.data[idx] + data.data[idx+1] + data.data[idx+2];
+                        const sum = data.data[idx] + data.data[idx + 1] + data.data[idx + 2];
                         grid[w * y + x] = (sum <= effectiveThreshold) ? 1 : 0;
                     }
                 }
@@ -272,9 +272,9 @@ class ApiClient {
                                     const outY = pad + y * scale + sy;
                                     const outIdx = (newW * outY + outX) << 2;
                                     outPng.data[outIdx] = 0;
-                                    outPng.data[outIdx+1] = 0;
-                                    outPng.data[outIdx+2] = 0;
-                                    outPng.data[outIdx+3] = 255;
+                                    outPng.data[outIdx + 1] = 0;
+                                    outPng.data[outIdx + 2] = 0;
+                                    outPng.data[outIdx + 3] = 255;
                                 }
                             }
                         }
@@ -316,7 +316,7 @@ class ApiClient {
         console.log('🔄 Refreshing DTDC session and token via local OCR solver...');
         const worker = await this.getOcrWorker();
 
-        const maxSessionAttempts = 8;
+        const maxSessionAttempts = 10;
         let successfulToken = null;
 
         const strategies = [
@@ -335,7 +335,7 @@ class ApiClient {
                 await this.initDtdcClient(true);
 
                 console.log(`📡 Captcha session attempt ${sessionAttempt}/${maxSessionAttempts}...`);
-                
+
                 // 1. Fetch generate-captcha to get key, image and establish session cookies
                 const captchaUrl = `https://www.dtdc.com/wp-json/custom/v1/generate-captcha?t=${Date.now()}`;
                 const captchaRes = await this.dtdcClient.get(captchaUrl, {
@@ -410,10 +410,10 @@ class ApiClient {
             const Provider = require('../models/Provider');
             await Provider.findOneAndUpdate(
                 { name: 'DTDC' },
-                { 
-                    $set: { 
-                        'apiConfig.headers.x-dtdc-track-token': this.dtdcTrackToken 
-                    } 
+                {
+                    $set: {
+                        'apiConfig.headers.x-dtdc-track-token': this.dtdcTrackToken
+                    }
                 }
             );
             console.log('💾 Persisted fresh DTDC token to database.');
@@ -607,7 +607,7 @@ class ApiClient {
 
         // 1. Extract Current Status
         const statusMatch = html.match(/<div class="status-badge [^"]*"[^>]*>\s*<i[^>]*><\/i>\s*([^<]+)/i) ||
-                            html.match(/<span class="timeline-status">([^<]+)<\/span>/i);
+            html.match(/<span class="timeline-status">([^<]+)<\/span>/i);
         if (statusMatch && statusMatch[1]) {
             currentStatus = statusMatch[1].trim();
         }
@@ -668,8 +668,8 @@ class ApiClient {
      */
     parseDTDCResponse(apiResponse, trackingData) {
         // Handle HTML response from trackshipment form POST (string or object with .data)
-        const htmlStr = typeof apiResponse === 'string' 
-            ? apiResponse 
+        const htmlStr = typeof apiResponse === 'string'
+            ? apiResponse
             : (typeof apiResponse?.data === 'string' ? apiResponse.data : '');
 
         if (typeof htmlStr === 'string' && htmlStr.includes('<html')) {
@@ -700,8 +700,8 @@ class ApiClient {
             // Detect if shipment has reached Delivered state
             const isDeliveredInHeader = header.currentStatusDescription === 'Delivered' || header.currentStatusCode === 'DLV';
             const isDeliveredInMilestones = activeMilestones.some(m => (m.mileName || '').toLowerCase().includes('delivered'));
-            const isDeliveredInStatuses = statuses.some(s => 
-                (s.statusDescription || '').toLowerCase().includes('delivered') || 
+            const isDeliveredInStatuses = statuses.some(s =>
+                (s.statusDescription || '').toLowerCase().includes('delivered') ||
                 (s.remarks || '').toLowerCase().includes('delivered')
             );
             const hasDeliveredState = isDeliveredInHeader || isDeliveredInMilestones || isDeliveredInStatuses;
@@ -782,7 +782,7 @@ class ApiClient {
             let currentLocation = '';
 
             if (hasDeliveredState) {
-                const deliveredScan = statuses.find(s => 
+                const deliveredScan = statuses.find(s =>
                     (s.statusDescription || '').toLowerCase().includes('delivered') ||
                     (s.remarks || '').toLowerCase().includes('delivered')
                 );
@@ -937,7 +937,7 @@ class ApiClient {
     parseISTDate(dateStr, returnNullOnFailure = false) {
         try {
             if (!dateStr) return returnNullOnFailure ? null : new Date();
-            
+
             if (typeof dateStr !== 'string') {
                 const date = new Date(dateStr);
                 return isNaN(date.getTime()) ? (returnNullOnFailure ? null : new Date()) : date;
@@ -953,7 +953,7 @@ class ApiClient {
                     const d = day.trim().padStart(2, '0');
                     const m = month.trim().padStart(2, '0');
                     const y = year.trim();
-                    
+
                     const date = new Date(`${y}-${m}-${d}T00:00:00+05:30`);
                     if (!isNaN(date.getTime())) return date;
                 }
@@ -1053,7 +1053,7 @@ class ApiClient {
                     if (!isNaN(date.getTime())) return date;
                 }
             }
-            
+
             const date = new Date(dateStr);
             return isNaN(date.getTime()) ? null : date;
         } catch (e) {
@@ -1077,10 +1077,10 @@ class ApiClient {
 
         trackingData.status = this.normalizeStatus(this.extractField(apiResponse, fieldSets.status) || 'In Transit');
         trackingData.location = this.extractField(apiResponse, fieldSets.location) || 'Unknown';
-        
+
         const estDelivery = this.extractField(apiResponse, fieldSets.estimatedDelivery);
         trackingData.estimatedDelivery = this.parseISTDate(estDelivery, true);
-        
+
         trackingData.origin = this.extractField(apiResponse, fieldSets.origin);
         trackingData.destination = this.extractField(apiResponse, fieldSets.destination);
 
