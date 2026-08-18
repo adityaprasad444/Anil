@@ -1495,10 +1495,6 @@
             <div class="toast-container" id="toastContainer"></div>
 
             <div class="container">
-        <div class="page-header">
-            <h1 class="page-title">Shipping Labels</h1>
-            <p class="page-subtitle">Generate and manage official AK Logistics A4 shipping labels</p>
-        </div>
 
         <div class="tabs">
             <button class="tab active" onclick="switchTab('generator')">Generate Label</button>
@@ -1882,11 +1878,16 @@
         }
 
         function updateThemeIcon(theme) {
-            const icon = document.querySelector('#themeToggle svg');
-            if (theme === 'dark') {
-                icon.innerHTML = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>';
-            } else {
-                icon.innerHTML = '<circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>';
+            const sunIcon = document.getElementById('theme-icon-sun');
+            const moonIcon = document.getElementById('theme-icon-moon');
+            if (sunIcon && moonIcon) {
+                if (theme === 'dark') {
+                    sunIcon.style.display = 'none';
+                    moonIcon.style.display = 'block';
+                } else {
+                    sunIcon.style.display = 'block';
+                    moonIcon.style.display = 'none';
+                }
             }
         }
 
@@ -1928,70 +1929,22 @@
         }
 
         // Label Generation
-        document.getElementById('templateSelect').addEventListener('change', function () {
+        document.getElementById('templateSelect')?.addEventListener('change', function () {
             const templateId = this.value;
-            if (!templateId) {
-                document.getElementById('variableFields').innerHTML = '';
-                document.getElementById('variableFieldsSection').style.display = 'none';
-                // Clear validation summary
-                const summaryDiv = document.getElementById('validationSummary');
-                if (summaryDiv) summaryDiv.remove();
-                return;
+            const vf = document.getElementById('variableFields');
+            if (vf) vf.innerHTML = '';
+            const vfs = document.getElementById('variableFieldsSection');
+            if (vfs) vfs.style.display = templateId ? 'block' : 'none';
+
+            if (typeof renderStep3LivePreview === 'function') {
+                renderStep3LivePreview();
             }
+        });
 
-            const template = currentTemplates.find(t => t._id === templateId);
-            if (!template) return;
-
-            // Show the variable fields section
-            document.getElementById('variableFieldsSection').style.display = 'block';
-
-            const container = document.getElementById('variableFields');
-            container.innerHTML = '';
-
-            template.variables.forEach(variable => {
-                const fieldDiv = document.createElement('div');
-                fieldDiv.className = 'form-group';
-
-                const inputType = variable.type === 'number' ? 'number' :
-                    variable.type === 'date' ? 'date' : 'text';
-
-                const requiredAttr = variable.required ? 'required' : '';
-                const requiredLabel = variable.required ? ' *' : '';
-
-                // Set default value based on variable type
-                let defaultValue = variable.defaultValue || '';
-                if (variable.type === 'date' && !defaultValue) {
-                    // Set default to today's date in YYYY-MM-DD format
-                    const today = new Date();
-                    defaultValue = today.toISOString().split('T')[0];
-                } else if (variable.type === 'number' && !defaultValue) {
-                    // Set default to 1 for number fields (especially quantity)
-                    defaultValue = '1';
-                }
-
-                fieldDiv.innerHTML = `
-                    <label class="form-label" for="var_${variable.name}">
-                        ${variable.name}${requiredLabel}
-                        <span class="variable-type" style="font-size: 0.75em; color: #666; margin-left: 5px;">(${variable.type})</span>
-                    </label>
-                    <input type="${inputType}" 
-                           id="var_${variable.name}" 
-                           class="form-input" 
-                           placeholder="${defaultValue || `Enter ${variable.name}`}"
-                           value="${defaultValue}"
-                           ${requiredAttr}
-                           data-variable-type="${variable.type}"
-                           data-required="${variable.required}"
-                           onblur="validateVariable(this)"
-                           oninput="validateVariable(this)">
-                    <div class="validation-error" id="error_${variable.name}" style="color: #ef4444; font-size: 0.75rem; margin-top: 0.25rem; display: none;"></div>
-                `;
-
-                container.appendChild(fieldDiv);
-            });
-
-            // Update validation summary after template loads
-            setTimeout(updateValidationSummary, 100);
+        document.getElementById('courierProvider')?.addEventListener('change', function () {
+            if (typeof renderStep3LivePreview === 'function') {
+                renderStep3LivePreview();
+            }
         });
 
         // Client-side validation function
@@ -2481,7 +2434,7 @@
             }
         }
 
-        function calculateWeights() {
+        function calculateWeights(skipPreview = false) {
             const l = parseFloat(document.getElementById('itemLength')?.value) || 0;
             const w = parseFloat(document.getElementById('itemWidth')?.value) || 0;
             const h = parseFloat(document.getElementById('itemHeight')?.value) || 0;
@@ -2498,8 +2451,8 @@
             if (displayVolumetric) displayVolumetric.textContent = `${volumetricWeight.toFixed(2)} kg`;
             if (displayCharged) displayCharged.textContent = `${chargedWeight.toFixed(2)} kg`;
 
-            if (currentStep === 3) {
-                renderStep3LivePreview();
+            if (currentStep === 3 && !skipPreview) {
+                debouncedRenderStep3LivePreview();
             }
 
             return {
@@ -2551,7 +2504,7 @@
                 return;
             }
 
-            const weights = calculateWeights();
+            const weights = calculateWeights(true);
             const courierProvider = document.getElementById('courierProvider')?.value || '';
             const originalTrackingId = document.getElementById('originalTrackingId')?.value.trim() || '';
             const trackingMode = document.querySelector('input[name="trackingMode"]:checked')?.value || 'automated';
@@ -3200,8 +3153,10 @@
 
         function resetForm() {
             document.getElementById('generateForm').reset();
-            document.getElementById('variableFields').innerHTML = '';
-            document.getElementById('variableFieldsSection').style.display = 'none';
+            const vf = document.getElementById('variableFields');
+            if (vf) vf.innerHTML = '';
+            const vfs = document.getElementById('variableFieldsSection');
+            if (vfs) vfs.style.display = 'none';
 
             currentStep = 1;
             updateStepperUI();
@@ -3381,10 +3336,22 @@
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
 
+            // Temporarily append element to document.body so html2canvas can measure layout styles
+            element.style.position = 'absolute';
+            element.style.left = '-9999px';
+            element.style.top = '-9999px';
+            document.body.appendChild(element);
+
             if (window.html2pdf) {
-                html2pdf().set(opt).from(element).save();
+                html2pdf().set(opt).from(element.firstElementChild).save().then(() => {
+                    element.remove();
+                }).catch(err => {
+                    console.error('PDF Generation Error:', err);
+                    element.remove();
+                });
             } else {
                 printGeneratedLabel(label);
+                element.remove();
             }
         }
 
@@ -3448,13 +3415,15 @@
                 console.warn('Failed to load providers from API:', e);
             }
 
-            const defaultProviders = ['DTDC', 'Delhivery', 'Xpressbees', 'BlueDart', 'Speed Post', 'ICL International', 'Professional Couriers'];
             const providerNames = new Set();
 
             if (currentCouriers && currentCouriers.length > 0) {
-                currentCouriers.forEach(p => providerNames.add(p.name));
+                currentCouriers.forEach(p => {
+                    if (p.isActive !== false) {
+                        providerNames.add(p.name);
+                    }
+                });
             }
-            defaultProviders.forEach(p => providerNames.add(p));
 
             select.innerHTML = '<option value="">Select Courier...</option>';
             providerNames.forEach(name => {

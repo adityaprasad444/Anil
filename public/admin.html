@@ -2396,7 +2396,7 @@
 
         function switchTab(tab) {
             const managementCard = document.getElementById('trackingManagementCard');
-            const statsGrid = document.querySelector('div[style*="grid-template-columns"]');
+            const statsGrid = document.querySelector('.stats-grid');
             const filterControls = document.querySelector('.filter-pagination-controls');
             const reportsSection = document.getElementById('reportsSection');
             const emailsSection  = document.getElementById('emailsSection');
@@ -3599,10 +3599,22 @@
                         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
                     };
 
+                    // Temporarily append element to document.body so html2canvas can measure layout styles
+                    element.style.position = 'absolute';
+                    element.style.left = '-9999px';
+                    element.style.top = '-9999px';
+                    document.body.appendChild(element);
+
                     if (window.html2pdf) {
-                        html2pdf().set(opt).from(element).save();
+                        html2pdf().set(opt).from(element.firstElementChild).save().then(() => {
+                            element.remove();
+                        }).catch(err => {
+                            console.error('PDF Generation Error:', err);
+                            element.remove();
+                        });
                         showToast(`✓ Downloaded label for ${trackingId}`, 'success');
                     } else {
+                        element.remove();
                         showToast('PDF generator library loading... Please retry in a second', 'warning');
                     }
                 } else {

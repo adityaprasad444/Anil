@@ -2756,8 +2756,10 @@ app.get('/api/generated-labels/by-tracking/:trackingId', requireAuth, async (req
 
 app.get('/api/generated-labels/:id', requireAuth, async (req, res) => {
   try {
-    const userId = req.session.user.id; // Get userId from session.user.id
-    const label = await labelService.getGeneratedLabelById(req.params.id, userId);
+    const userId = req.session.user.id;
+    const userRole = req.session.user.role;
+    const targetUserId = userRole === 'admin' ? null : userId;
+    const label = await labelService.getGeneratedLabelById(req.params.id, targetUserId);
     res.json(label);
   } catch (error) {
     console.error('❌ Generated label fetch error:', error);
@@ -2779,8 +2781,10 @@ app.get('/api/generated-labels/:id', requireAuth, async (req, res) => {
  */
 app.put('/api/generated-labels/:id', requireAuth, async (req, res) => {
   try {
-    const userId = req.session.user.id; // Get userId from session.user.id
-    const label = await labelService.updateGeneratedLabel(req.params.id, req.body, userId);
+    const userId = req.session.user.id;
+    const userRole = req.session.user.role;
+    const targetUserId = userRole === 'admin' ? null : userId;
+    const label = await labelService.updateGeneratedLabel(req.params.id, req.body, targetUserId);
     res.json(label);
   } catch (error) {
     console.error('❌ Generated label update error:', error);
@@ -2802,8 +2806,10 @@ app.put('/api/generated-labels/:id', requireAuth, async (req, res) => {
  */
 app.delete('/api/generated-labels/:id', requireAuth, async (req, res) => {
   try {
-    const userId = req.session.user.id; // Get userId from session.user.id
-    const label = await labelService.deleteGeneratedLabel(req.params.id, userId);
+    const userId = req.session.user.id;
+    const userRole = req.session.user.role;
+    const targetUserId = userRole === 'admin' ? null : userId;
+    const label = await labelService.deleteGeneratedLabel(req.params.id, targetUserId);
     res.json(label);
   } catch (error) {
     console.error('❌ Generated label deletion error:', error);
