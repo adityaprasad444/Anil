@@ -401,6 +401,20 @@
             border-color: var(--text-secondary);
         }
 
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 1.25rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 1200px) {
+            .stats-grid {
+                grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
+            }
+        }
+
         /* Filter Controls */
         .filter-pagination-controls {
             display: flex;
@@ -418,22 +432,42 @@
             flex-wrap: wrap;
             gap: 0.75rem;
             align-items: center;
+            width: 100%;
         }
 
         .filter-controls .form-input {
             height: 42px;
-            padding: 0.5rem 0.75rem;
-            font-size: 0.9rem;
-            width: auto;
-            flex-grow: 1;
-            min-width: 150px;
+            padding: 0.4rem 0.75rem;
+            font-size: 0.88rem;
+            border-radius: 8px;
+        }
+
+        #filterTrackingId {
+            flex: 1 1 150px;
+            min-width: 130px;
+        }
+
+        #filterProvider,
+        #filterStatus,
+        #filterSort {
+            flex: 1 1 115px;
+            min-width: 105px;
+        }
+
+        #startDate,
+        #endDate {
+            flex: 0 1 130px;
+            min-width: 120px;
+            max-width: 140px;
         }
 
         #pageSize {
-            min-width: 120px !important;
+            min-width: 125px !important;
+            width: 125px !important;
             flex-grow: 0 !important;
             height: 38px;
             font-size: 0.85rem;
+            padding: 0 0.5rem;
         }
 
         .pagination-controls {
@@ -442,30 +476,45 @@
             justify-content: space-between;
             gap: 1rem;
             padding-top: 1rem;
-            border-top: 1px dashed #e2e8f0;
+            border-top: 1px dashed var(--border-color);
+            flex-wrap: wrap;
         }
 
         .pagination-info-group {
             display: flex;
             align-items: center;
-            gap: 1.5rem;
+            gap: 1rem;
+            flex-wrap: wrap;
         }
 
         .pagination-buttons {
             display: flex;
+            align-items: center;
             gap: 0.5rem;
+        }
+
+        .pagination-buttons .btn {
+            height: 38px;
+            width: 38px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
         }
 
         .select-all-container {
             display: flex;
             align-items: center;
             gap: 0.5rem;
-            margin-right: 0.5rem;
-            background: var(--border-color);
+            margin-right: 0.25rem;
+            background: var(--bg-body);
+            border: 1px solid var(--border-color);
             padding: 0.4rem 0.8rem;
-            border-radius: 0.4rem;
+            border-radius: 8px;
             height: 42px;
             user-select: none;
+            flex-shrink: 0;
         }
 
         .select-all-container input {
@@ -1029,8 +1078,7 @@
                 <div class="message" id="message"></div>
 
         <!-- Stats Grid -->
-        <div
-            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+        <div class="stats-grid">
             <button class="card stat-card" onclick="filterByStatus('')"
                 aria-label="Show all shipments"
                 style="margin-bottom: 0; padding: 1.5rem; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; cursor: pointer; transition: all 0.2s; border: 1px solid var(--border-color); background: var(--bg-card); width: 100%;">
@@ -1070,8 +1118,6 @@
                 border-color: var(--primary-color);
             }
         </style>
-
-
 
         <div class="card" id="trackingManagementCard">
             <div class="card-header" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem;">
@@ -1136,8 +1182,15 @@
                             <option value="delivered">Delivered</option>
                             <option value="exception">Exception</option>
                         </select>
-                        <input type="date" id="startDate" class="form-input" style="width: auto;" title="Start Date">
-                        <input type="date" id="endDate" class="form-input" style="width: auto;" title="End Date">
+                        <select id="filterSort" class="form-input" title="Sort By">
+                            <option value="newest">Sort: Newest First</option>
+                            <option value="oldest">Sort: Oldest First</option>
+                            <option value="status">Sort: Status (A-Z)</option>
+                            <option value="provider">Sort: Provider (A-Z)</option>
+                            <option value="updated">Sort: Recently Updated</option>
+                        </select>
+                        <input type="date" id="startDate" class="form-input" title="Start Date">
+                        <input type="date" id="endDate" class="form-input" title="End Date">
                     </div>
                     <div class="pagination-controls">
                         <div class="pagination-info-group">
@@ -1549,6 +1602,7 @@
         let filterTrackingId = '';
         let filterProvider = '';
         let filterStatus = '';
+        let filterSort = 'newest';
         let startDate = '';
         let endDate = '';
         let supportedProviders = [];
@@ -1887,7 +1941,8 @@
                     provider: filterProvider,
                     status: filterStatus,
                     startDate: startDate,
-                    endDate: endDate
+                    endDate: endDate,
+                    sort: filterSort
                 });
 
                 const response = await fetch(`/api/tracking/list?${queryParams.toString()}`, { credentials: 'include' });
@@ -3021,6 +3076,12 @@
             loadTrackingList();
         });
 
+        document.getElementById('filterSort').addEventListener('change', (event) => {
+            filterSort = event.target.value;
+            currentPage = 1;
+            loadTrackingList();
+        });
+
         document.getElementById('prevPage').addEventListener('click', () => {
             if (currentPage > 1) {
                 currentPage--;
@@ -3079,6 +3140,7 @@
             filterTrackingId = '';
             filterProvider = '';
             filterStatus = '';
+            filterSort = 'newest';
             startDate = '';
             endDate = '';
             currentPage = 1;
@@ -3087,6 +3149,7 @@
             document.getElementById('filterTrackingId').value = '';
             document.getElementById('filterProvider').value = '';
             document.getElementById('filterStatus').value = '';
+            document.getElementById('filterSort').value = 'newest';
             document.getElementById('startDate').value = '';
             document.getElementById('endDate').value = '';
 

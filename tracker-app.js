@@ -485,8 +485,24 @@ app.get('/api/tracking/list', requireAuth, async (req, res) => {
       }
     }
 
+    let sortOption = { createdAt: -1 };
+    if (req.query.sort) {
+      const sortVal = req.query.sort.toLowerCase();
+      if (sortVal === 'oldest') {
+        sortOption = { createdAt: 1 };
+      } else if (sortVal === 'status') {
+        sortOption = { status: 1, createdAt: -1 };
+      } else if (sortVal === 'provider') {
+        sortOption = { provider: 1, createdAt: -1 };
+      } else if (sortVal === 'updated') {
+        sortOption = { updatedAt: -1 };
+      } else if (sortVal === 'newest') {
+        sortOption = { createdAt: -1 };
+      }
+    }
+
     const trackingList = await TrackingData.find(filter)
-      .sort({ createdAt: -1 })
+      .sort(sortOption)
       .skip(skip)
       .limit(limit);
 
