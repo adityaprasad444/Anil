@@ -61,8 +61,7 @@ const AK_LOGISTICS_A4_TEMPLATE_HTML = `<div style="font-family: Arial, Helvetica
             CONTACT INFORMATION:
         </div>
         <div style="font-size: 11px; color: #334155; margin-top: 4px; line-height: 1.5;">
-            Support Tel: <strong>{{supportPhone}}</strong> | Email: <strong>{{supportEmail}}</strong><br>
-            <span style="font-size: 10px; color: #64748b;">Address: {{supportAddress}}</span>
+            Support Tel: <strong>{{supportPhone}}</strong> | Email: <strong>{{supportEmail}}</strong>
         </div>
     </div>
 </div>`;
@@ -112,11 +111,12 @@ class LabelService {
         const correctDimensions = { width: 210, height: 297, unit: 'mm' };
         const correctStyle = { fontSize: 12, fontFamily: 'Arial, Helvetica, sans-serif', alignment: 'left', backgroundColor: '#ffffff', textColor: '#0f172a', borderWidth: 2, borderColor: '#0f172a' };
         for (let t of templates) {
-          // Always force-update if template doesn't match the latest A4 design
+          // Always force-update if template doesn't match the latest A4 design or contains legacy address field
           const hasLatestTemplate = t.template && t.template.includes('ak-label-header-v2') && t.template.includes('SHIPMENT DETAILS');
           const hasCorrectDimensions = t.dimensions?.width === 210 && t.dimensions?.height === 297;
           const hasCorrectStyle = t.style?.fontSize === 12;
-          if (!hasLatestTemplate || !hasCorrectDimensions || !hasCorrectStyle) {
+          const hasAddressInTemplate = t.template && t.template.includes('Address:');
+          if (!hasLatestTemplate || !hasCorrectDimensions || !hasCorrectStyle || hasAddressInTemplate) {
             t.template = AK_LOGISTICS_A4_TEMPLATE_HTML;
             t.dimensions = correctDimensions;
             t.style = correctStyle;

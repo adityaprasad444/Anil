@@ -2724,6 +2724,20 @@ app.post('/api/generated-labels', requireAuth, async (req, res) => {
  *       200:
  *         description: Generated label details
  */
+app.get('/api/generated-labels/by-tracking/:trackingId', requireAuth, async (req, res) => {
+  try {
+    const { trackingId } = req.params;
+    const label = await GeneratedLabel.findOne({ trackingId }).sort({ generatedAt: -1 });
+    if (!label) {
+      return res.status(404).json({ error: 'No generated label found for this tracking ID' });
+    }
+    res.json(label);
+  } catch (error) {
+    console.error('❌ Generated label by tracking ID fetch error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.get('/api/generated-labels/:id', requireAuth, async (req, res) => {
   try {
     const userId = req.session.user.id; // Get userId from session.user.id

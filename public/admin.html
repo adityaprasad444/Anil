@@ -8,6 +8,7 @@
     <link rel="icon" type="image/jpeg" href="/Logos/logo.jpeg">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
         rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         :root {
             --primary-color: #4f46e5;
@@ -61,75 +62,224 @@
             transition: background-color 0.3s ease, color 0.3s ease;
         }
 
-        .header {
-            background-color: var(--bg-card);
-            box-shadow: var(--shadow-sm);
-            padding: 0 2rem;
+        .admin-wrapper {
+            display: flex;
+            min-height: 100vh;
+            width: 100%;
+        }
+
+        .sidebar {
+            width: 250px;
+            background: var(--bg-card);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
             position: fixed;
             top: 0;
+            bottom: 0;
             left: 0;
-            right: 0;
             z-index: 1000;
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: var(--shadow-sm);
+            overflow: hidden;
+        }
+
+        .sidebar.collapsed {
+            width: 72px;
+        }
+
+        .sidebar-header {
             height: 70px;
             display: flex;
             align-items: center;
-        }
-
-        .nav-container {
-            display: flex;
             justify-content: space-between;
-            align-items: center;
-            width: 100%;
-            max-width: 1200px;
-            margin: 0 auto;
+            padding: 0 1rem;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
         }
 
-        .logo-container {
+        .sidebar-logo {
             display: flex;
             align-items: center;
             gap: 0.75rem;
             text-decoration: none;
             color: var(--text-primary);
-            font-weight: 600;
-            font-size: 1rem;
+            font-weight: 700;
+            font-size: 1.05rem;
+            white-space: nowrap;
+            overflow: hidden;
         }
 
-        .logo-small {
-            height: 32px;
+        .sidebar-toggle-btn {
+            background: var(--bg-body);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            border-radius: 6px;
             width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .sidebar-toggle-btn:hover {
+            background: var(--primary-light);
+            color: var(--primary-color);
+        }
+
+        .sidebar-toggle-btn .toggle-icon {
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar.collapsed .sidebar-toggle-btn .toggle-icon {
+            transform: rotate(180deg);
+        }
+
+        .sidebar.collapsed .logo-text,
+        .sidebar.collapsed .link-text {
+            display: none;
+        }
+
+        .sidebar.collapsed .sidebar-header {
+            padding: 0 10px;
+            justify-content: space-between;
+            gap: 0;
+        }
+
+        .sidebar.collapsed .sidebar-logo {
+            gap: 0;
+            flex-shrink: 0;
+            width: auto;
+        }
+
+        .sidebar.collapsed .sidebar-logo img.logo-small {
+            width: 24px;
+            height: 24px;
+            min-width: 24px;
             border-radius: 6px;
         }
 
-        .nav-menu {
-            display: flex;
-            gap: 1rem;
+        .sidebar.collapsed .sidebar-toggle-btn {
+            width: 24px;
+            height: 24px;
+            min-width: 24px;
+            padding: 0;
+        }
+
+        .sidebar-action-btn.theme-toggle {
+            width: 100%;
+            height: auto;
+            margin-left: 0;
+            border: none;
+            padding: 0.75rem 0.9rem;
+            border-radius: 8px;
+            justify-content: flex-start;
+        }
+
+        .sidebar.collapsed .sidebar-link,
+        .sidebar.collapsed .sidebar-action-btn {
+            justify-content: center;
+            padding: 0.75rem 0;
+            gap: 0;
+            width: 100%;
+        }
+
+        .sidebar.collapsed .sidebar-link svg,
+        .sidebar.collapsed .sidebar-action-btn svg {
+            margin: 0 auto;
+            flex-shrink: 0;
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            padding: 1rem 0.6rem;
+            overflow-y: auto;
+        }
+
+        .sidebar-menu {
             list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
         }
 
-        .nav-link {
-            text-decoration: none;
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+            padding: 0.75rem 0.9rem;
             color: var(--text-secondary);
+            text-decoration: none;
             font-weight: 500;
-            padding: 0.5rem 1rem;
-            border-radius: 0.5rem;
-            transition: all 0.2s;
-            font-size: 0.9rem;
+            font-size: 0.92rem;
+            border-radius: 8px;
+            white-space: nowrap;
+            transition: all 0.2s ease;
         }
 
-        .nav-link:hover {
-            color: var(--primary-color);
+        .sidebar-link:hover,
+        .sidebar-link.active {
             background-color: var(--primary-light);
+            color: var(--primary-color);
+            font-weight: 600;
         }
 
-        .nav-link.active {
-            background-color: var(--primary-color);
-            color: white;
+        .sidebar-footer {
+            padding: 1rem 0.6rem;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+            flex-shrink: 0;
+        }
+
+        .sidebar-action-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+            padding: 0.75rem 0.9rem;
+            color: var(--text-secondary);
+            background: none;
+            border: none;
+            font-weight: 500;
+            font-size: 0.92rem;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            text-align: left;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+        }
+
+        .sidebar-action-btn:hover {
+            background-color: var(--bg-body);
+            color: var(--text-primary);
+        }
+
+        .sidebar-action-btn.logout-btn:hover {
+            background-color: #fee2e2;
+            color: var(--danger-color);
+        }
+
+        .main-content {
+            flex: 1;
+            margin-left: 250px;
+            padding: 2rem;
+            transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            min-width: 0;
+        }
+
+        .sidebar.collapsed + .main-content {
+            margin-left: 72px;
         }
 
         .container {
-            max-width: 1200px;
-            margin: 6rem auto 2rem;
-            padding: 0 1.5rem;
+            max-width: 1300px;
+            margin: 0 auto;
+            padding: 0;
         }
 
         .card {
@@ -801,56 +951,82 @@
 </head>
 
 <body>
-    <header class="header">
-        <nav class="nav-container">
-            <a href="/admin" class="logo-container">
-                <img src="/Logos/logo.jpeg" alt="Logo" class="logo-small">
-                <span>Admin Dashboard</span>
-            </a>
-            <ul class="nav-menu">
-                <li><a href="/admin" class="nav-link active" id="nav-dashboard" onclick="switchTab('dashboard')">Dashboard</a></li>
-                <li><a href="/tools" class="nav-link">Manage</a></li>
-                <li><a href="/labels" class="nav-link">Labels</a></li>
-                <li><a href="/config" class="nav-link">Configuration</a></li>
-                <li><a href="#" class="nav-link" id="nav-reports" onclick="switchTab('reports')">Reports</a></li>
-                <li><a href="#" class="nav-link" id="nav-emails" onclick="switchTab('emails')">Emails</a></li>
-                <li><a href="#" class="nav-link" id="nav-change-password" onclick="openChangePasswordModal(event)">Change Password</a></li>
-                <li><button class="nav-link" onclick="handleLogout()"
-                        style="background: none; border: none; cursor: pointer; display: block; width: 100%; text-align: left;">Logout</button>
-                </li>
-            </ul>
-            <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme" title="Toggle dark/light mode">
-                <svg id="theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="5"></circle>
-                    <line x1="12" y1="1" x2="12" y2="3"></line>
-                    <line x1="12" y1="21" x2="12" y2="23"></line>
-                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-                    <line x1="1" y1="12" x2="3" y2="12"></line>
-                    <line x1="21" y1="12" x2="23" y2="12"></line>
-                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
-                </svg>
-                <svg id="theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
-                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
-                </svg>
-            </button>
-            <button class="mobile-menu-btn" aria-label="Toggle menu">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="3" y1="12" x2="21" y2="12"></line>
-                    <line x1="3" y1="6" x2="21" y2="6"></line>
-                    <line x1="3" y1="18" x2="21" y2="18"></line>
-                </svg>
-            </button>
-        </nav>
-    </header>
+    <div class="admin-wrapper">
+        <!-- Left Sidebar Navigation -->
+        <aside class="sidebar" id="adminSidebar">
+            <div class="sidebar-header">
+                <a href="/admin" class="sidebar-logo">
+                    <img src="/Logos/logo.jpeg" alt="Logo" class="logo-small" style="height: 34px; width: 34px; border-radius: 6px;">
+                    <span class="logo-text">AK Logistics</span>
+                </a>
+                <button class="sidebar-toggle-btn" onclick="toggleSidebar()" title="Toggle Sidebar" aria-label="Toggle Sidebar">
+                    <svg class="toggle-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                </button>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <ul class="sidebar-menu">
+                    <li>
+                        <a href="/admin" class="sidebar-link active" id="nav-dashboard" onclick="switchTab('dashboard')" title="Dashboard">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                            <span class="link-text">Dashboard</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/labels" class="sidebar-link" id="nav-create-label" title="Create Label">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
+                            <span class="link-text">Create Label</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/config" class="sidebar-link" title="Configuration">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                            <span class="link-text">Configuration</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="sidebar-link" id="nav-reports" onclick="switchTab('reports')" title="Reports">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                            <span class="link-text">Reports</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="sidebar-link" id="nav-emails" onclick="switchTab('emails')" title="Emails">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                            <span class="link-text">Emails</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="sidebar-link" id="nav-change-password" onclick="openChangePasswordModal(event)" title="Change Password">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                            <span class="link-text">Change Password</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <button class="sidebar-action-btn theme-toggle" onclick="toggleTheme()" title="Toggle Dark/Light Theme">
+                    <svg id="theme-icon-sun" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                    <svg id="theme-icon-moon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                    <span class="link-text">Toggle Theme</span>
+                </button>
+                <button class="sidebar-action-btn logout-btn" onclick="handleLogout()" title="Logout">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                    <span class="link-text">Logout</span>
+                </button>
+            </div>
+        </aside>
 
-    <!-- Toast Notification Container -->
-    <div class="toast-container" id="toastContainer"></div>
+        <!-- Main Body Content -->
+        <main class="main-content">
+            <!-- Toast Notification Container -->
+            <div class="toast-container" id="toastContainer"></div>
 
-    <div class="container">
-        <div class="message" id="message"></div>
+            <div class="container">
+                <div class="message" id="message"></div>
 
         <!-- Stats Grid -->
         <div
@@ -898,31 +1074,31 @@
 
 
         <div class="card" id="trackingManagementCard">
-            <div class="card-header">
-                <h2 class="card-title">Tracking Management</h2>
-                <button onclick="syncAllTrackingData()" class="btn btn-primary" id="syncBtn">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.5rem;">
-                        <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.3" />
-                    </svg>
-                    Sync All
-                </button>
-                <!-- <button onclick="syncAllTrackingDataForce()" class="btn btn-danger" id="syncForceBtn" style="margin-left: 0.5rem;">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.5rem;">
-                        <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.3" />
-                    </svg>
-                    Full Re-sync
-                </button> -->
-                <button onclick="exportToCsv()" class="btn btn-success" id="exportBtn" style="margin-left: 0.5rem;">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.5rem;">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                        <polyline points="7 10 12 15 17 10"></polyline>
-                        <line x1="12" y1="15" x2="12" y2="3"></line>
-                    </svg>
-                    Export
-                </button>
+            <div class="card-header" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem;">
+                <h2 class="card-title" style="margin: 0;">Tracking Management</h2>
+                <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-left: auto;">
+                    <a href="/labels" class="btn btn-primary" id="btnDashboardCreateLabel" style="text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem; background: #2563eb; color: #ffffff; font-weight: 700; padding: 0.55rem 1.1rem; border-radius: 8px; box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3); transition: all 0.2s ease;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        <span>Create Label</span>
+                    </a>
+                    <button onclick="syncAllTrackingData()" class="btn btn-secondary" id="syncBtn">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.3rem;">
+                            <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.3" />
+                        </svg>
+                        Sync All
+                    </button>
+                    <button onclick="exportToCsv()" class="btn btn-success" id="exportBtn">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.3rem;">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                        Export
+                    </button>
+                </div>
             </div>
             <div class="card-body">
                 <!-- Bulk Actions Toolbar (Hidden by default) -->
@@ -1353,28 +1529,19 @@
 
         // Keep existing JS logic
 
-        // Mobile menu functionality
-        const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
-        const navMenu = document.querySelector('.nav-menu');
-
-        mobileMenuBtn.addEventListener('click', () => {
-            navMenu.classList.toggle('active');
-            const isExpanded = navMenu.classList.contains('active');
-            mobileMenuBtn.setAttribute('aria-expanded', isExpanded);
-        });
-
-        document.addEventListener('click', (event) => {
-            if (!navMenu.contains(event.target) && !mobileMenuBtn.contains(event.target)) {
-                navMenu.classList.remove('active');
-                mobileMenuBtn.setAttribute('aria-expanded', 'false');
+        // Check URL parameters for active tab or modal on load
+        document.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            const tabParam = params.get('tab');
+            const changePasswordParam = params.get('openChangePassword');
+            
+            if (tabParam === 'reports') {
+                switchTab('reports');
+            } else if (tabParam === 'emails') {
+                switchTab('emails');
+            } else if (changePasswordParam === '1') {
+                openChangePasswordModal();
             }
-        });
-
-        navMenu.querySelectorAll('a').forEach(link => {
-            link.addEventListener('click', () => {
-                navMenu.classList.remove('active');
-                mobileMenuBtn.setAttribute('aria-expanded', 'false');
-            });
         });
 
         let currentPage = 1;
@@ -1784,7 +1951,11 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="tracking-actions">
+                        <div class="tracking-actions" style="display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;">
+                            <button class="btn btn-primary" onclick="downloadExistingLabelForTracking('${item.trackingId}', '${item.originalTrackingId}', '${item.provider}')" title="Download Shipping Label" style="display: inline-flex; align-items: center; gap: 5px; padding: 6px 12px; font-size: 0.8rem; font-weight: 700; background: #0f172a; color: #ffffff; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s;">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                                Download Label
+                            </button>
                             <button class="btn btn-secondary" onclick="viewOnProviderWebsite('${item.trackingId}')" title="View Public Page">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
                             </button>
@@ -3325,12 +3496,71 @@
                 btn.textContent = 'Update Password';
             }
         }
+        function toggleSidebar() {
+            const sidebar = document.getElementById('adminSidebar');
+            if (!sidebar) return;
+            sidebar.classList.toggle('collapsed');
+            const isCollapsed = sidebar.classList.contains('collapsed');
+            localStorage.setItem('admin_sidebar_collapsed', isCollapsed ? 'true' : 'false');
+        }
+
+        // Restore sidebar state on load
+        if (localStorage.getItem('admin_sidebar_collapsed') === 'true') {
+            document.addEventListener('DOMContentLoaded', () => {
+                const sidebar = document.getElementById('adminSidebar');
+                if (sidebar) sidebar.classList.add('collapsed');
+            });
+        }
+
+        async function downloadExistingLabelForTracking(trackingId, originalTrackingId, provider) {
+            try {
+                showToast(`Fetching label for ${trackingId}...`, 'info');
+                const response = await fetch(`/api/generated-labels/by-tracking/${encodeURIComponent(trackingId)}`, { credentials: 'include' });
+                
+                if (response.ok) {
+                    const label = await response.json();
+                    const labelHtml = label.generatedHtml || label.template || '';
+                    
+                    const element = document.createElement('div');
+                    element.innerHTML = `
+                        <div style="width: 190mm; min-height: 245mm; margin: 0 auto; box-sizing: border-box; background: #ffffff; padding: 6mm 2mm; page-break-inside: avoid; break-inside: avoid;">
+                            ${labelHtml}
+                        </div>
+                    `;
+
+                    const opt = {
+                        margin: [6, 6, 6, 6],
+                        filename: `AK_Logistics_Shipping_Label_${trackingId}.pdf`,
+                        image: { type: 'jpeg', quality: 0.98 },
+                        html2canvas: { scale: 2, useCORS: true, logging: false },
+                        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                    };
+
+                    if (window.html2pdf) {
+                        html2pdf().set(opt).from(element).save();
+                        showToast(`✓ Downloaded label for ${trackingId}`, 'success');
+                    } else {
+                        showToast('PDF generator library loading... Please retry in a second', 'warning');
+                    }
+                } else {
+                    showToast(`No existing label found for ${trackingId}. Opening Create Label page...`, 'warning');
+                    setTimeout(() => {
+                        window.location.href = `/labels?trackingId=${encodeURIComponent(trackingId)}&provider=${encodeURIComponent(provider || '')}&originalTrackingId=${encodeURIComponent(originalTrackingId || '')}`;
+                    }, 1000);
+                }
+            } catch (err) {
+                console.error('Error downloading label:', err);
+                showToast(`Failed to fetch label: ${err.message}`, 'error');
+            }
+        }
     </script>
 
     <!-- Client-side Analytics Initialization -->
     <script src="/analytics.js"></script>
     <!-- Vercel Web Analytics -->
     <script defer src="/_vercel/insights/script.js"></script>
+        </main>
+    </div>
 </body>
 
 </html>

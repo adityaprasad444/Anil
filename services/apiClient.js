@@ -115,24 +115,50 @@ class ApiClient {
                 config.jar = this.dtdcJar;
                 config.withCredentials = true;
                 delete config.httpsAgent;
-                try {
-                    response = await this.dtdcClient(config);
-                    if (response.data && response.data.success === false) {
-                        console.log('🔄 Response returned success: false. Refreshing DTDC token and retrying...');
-                        await this.refreshDtdcToken();
-                        config.headers['x-dtdc-track-token'] = this.dtdcTrackToken;
-                        response = await this.dtdcClient(config);
+
+                const executeDtdcFlow = async () => {
+                    // 1. Post to pull-details endpoint
+                    const pullUrl = 'https://www.dtdc.com/wp-json/custom/v1/tracking/pull-details';
+                    const pullRes = await this.dtdcClient.post(pullUrl, {
+                        trackNumbers: [trackingId]
+                    }, {
+                        headers: {
+                            'content-type': 'application/json',
+                            'x-dtdc-track-token': this.dtdcTrackToken,
+                            'referer': 'https://www.dtdc.com/track-your-shipment/',
+                            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                        }
+                    });
+
+                    if (pullRes.data && pullRes.data.payload) {
+                        // 2. Post payload to trackshipment HTML page
+                        const formRes = await this.dtdcClient.post('https://www.dtdc.com/trackshipment', new URLSearchParams({ d: pullRes.data.payload }).toString(), {
+                            headers: {
+                                'content-type': 'application/x-www-form-urlencoded',
+                                'referer': 'https://www.dtdc.com/track-your-shipment/',
+                                'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                            }
+                        });
+                        return formRes;
+                    } else {
+                        // Fallback to legacy endpoint if payload not present
+                        return await this.dtdcClient(config);
                     }
+                };
+
+                try {
+                    response = await executeDtdcFlow();
                 } catch (error) {
                     const isSecurityError = error.response && (
                         error.response.status === 403 || 
+                        error.response.status === 500 ||
                         (error.response.data && error.response.data.success === false)
                     );
                     if (isSecurityError) {
                         console.log('🔄 Security verification failed or token expired. Refreshing DTDC token and retrying...');
                         await this.refreshDtdcToken();
                         config.headers['x-dtdc-track-token'] = this.dtdcTrackToken;
-                        response = await this.dtdcClient(config);
+                        response = await executeDtdcFlow();
                     } else {
                         throw error;
                     }
@@ -541,10 +567,102 @@ class ApiClient {
         }
     }
 
+    parseDtdcDateStr(dateStr) {
+        if (!dateStr) return new Date();
+        const cleaned = dateStr.trim().replace(/(\d{1,2}:\d{2})(AM|PM)/i, '$1 $2');
+        const parsed = new Date(cleaned);
+        return isNaN(parsed.getTime()) ? new Date() : parsed;
+    }
+
+    parseDTDCHtml(html) {
+        const history = [];
+        let currentStatus = 'In Transit';
+        let origin = '';
+        let destination = '';
+
+        // 1. Extract Current Status
+        const statusMatch = html.match(/<div class="status-badge [^"]*"[^>]*>\s*<i[^>]*><\/i>\s*([^<]+)/i) ||
+                            html.match(/<span class="timeline-status">([^<]+)<\/span>/i);
+        if (statusMatch && statusMatch[1]) {
+            currentStatus = statusMatch[1].trim();
+        }
+
+        // 2. Extract Origin and Destination
+        const originMatch = html.match(/<span class="location-label">Origin:<\/span>\s*<span class="location-value">\s*([^<]+)/i);
+        if (originMatch && originMatch[1]) {
+            origin = originMatch[1].trim();
+        }
+
+        const destMatch = html.match(/<span class="location-label">Destination:<\/span>\s*<span class="location-value">\s*([^<]+)/i);
+        if (destMatch && destMatch[1]) {
+            destination = destMatch[1].trim();
+        }
+
+        // 3. Extract Timeline Events
+        const timelineRegex = /<span class="timeline-status(?:-middle)?">\s*([^<]+)\s*<\/span>\s*<span class="timeline-date(?:-middle)?">\s*([^<]+)\s*<\/span>.*?<div class="timeline-description(?:-middle)?">\s*([^<]*)\s*<\/div>/gs;
+
+        let match;
+        const seenKeys = new Set();
+
+        while ((match = timelineRegex.exec(html)) !== null) {
+            const statusText = match[1].trim();
+            const dateText = match[2].trim();
+            const descText = match[3].trim();
+
+            const timestamp = this.parseDtdcDateStr(dateText);
+            const key = `${statusText}_${dateText}_${descText}`;
+
+            if (seenKeys.has(key)) continue;
+            seenKeys.add(key);
+
+            let location = '';
+            if (statusText.toLowerCase().includes('from ')) {
+                location = statusText.split(/from /i)[1]?.trim() || '';
+            } else if (statusText.toLowerCase().includes('at ')) {
+                location = statusText.split(/at /i)[1]?.trim() || '';
+            }
+
+            history.push({
+                status: statusText,
+                timestamp: timestamp,
+                location: location,
+                description: descText
+            });
+        }
+
+        return {
+            status: currentStatus,
+            origin,
+            destination,
+            history
+        };
+    }
+
     /**
      * DTDC-specific parser
      */
     parseDTDCResponse(apiResponse, trackingData) {
+        // Handle HTML response from trackshipment form POST (string or object with .data)
+        const htmlStr = typeof apiResponse === 'string' 
+            ? apiResponse 
+            : (typeof apiResponse?.data === 'string' ? apiResponse.data : '');
+
+        if (typeof htmlStr === 'string' && htmlStr.includes('<html')) {
+            const parsed = this.parseDTDCHtml(htmlStr);
+            trackingData.status = this.normalizeStatus(parsed.status);
+            trackingData.origin = parsed.origin;
+            trackingData.destination = parsed.destination;
+            trackingData.history = parsed.history;
+
+            if (trackingData.status.toLowerCase().includes('delivered') && !trackingData.status.toLowerCase().includes('out for')) {
+                trackingData.location = parsed.destination || (parsed.history.find(h => h.location && h.location.trim().length > 0)?.location) || parsed.origin || 'Unknown';
+            } else {
+                const locEvent = parsed.history.find(h => h.location && h.location.trim().length > 0);
+                trackingData.location = locEvent ? locEvent.location : (parsed.origin || 'Unknown');
+            }
+            return trackingData;
+        }
+
         const payload = apiResponse?.response || apiResponse || {};
 
         // Support the new schema (header, milestones, and statuses)

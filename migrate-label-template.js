@@ -66,8 +66,7 @@ const AK_LOGISTICS_A4_TEMPLATE_HTML = `<div style="font-family: Arial, Helvetica
             CONTACT INFORMATION:
         </div>
         <div style="font-size: 11px; color: #334155; margin-top: 4px; line-height: 1.5;">
-            Support Tel: <strong>{{supportPhone}}</strong> | Email: <strong>{{supportEmail}}</strong><br>
-            <span style="font-size: 10px; color: #64748b;">Address: {{supportAddress}}</span>
+            Support Tel: <strong>{{supportPhone}}</strong> | Email: <strong>{{supportEmail}}</strong>
         </div>
     </div>
 </div>`;

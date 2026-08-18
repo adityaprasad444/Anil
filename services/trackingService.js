@@ -189,10 +189,22 @@ class TrackingService {
         }
       }
 
+      // If status is Delivered, ensure location points to destination
+      const finalStatus = parsedData.status || trackingEntry.status || '';
+      const finalDestination = parsedData.destination || trackingEntry.destination || '';
+      let finalLocation = parsedData.location || trackingEntry.location;
+
+      if (finalStatus.toLowerCase().includes('delivered') && !finalStatus.toLowerCase().includes('out for')) {
+          if (finalDestination && finalDestination.trim().length > 0) {
+              finalLocation = finalDestination;
+              parsedData.location = finalDestination;
+          }
+      }
+
       // Update tracking data in database
       const updateData = {
         status: parsedData.status || trackingEntry.status,
-        location: parsedData.location || trackingEntry.location,
+        location: finalLocation,
         estimatedDelivery: parsedData.estimatedDelivery || trackingEntry.estimatedDelivery,
         origin: parsedData.origin || trackingEntry.origin,
         destination: parsedData.destination || trackingEntry.destination,
