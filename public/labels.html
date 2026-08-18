@@ -2844,13 +2844,13 @@
                     if (saveResponse.ok) {
                         const savedLabel = await saveResponse.json();
 
-                        // Trigger download PDF immediately for the newly generated label
-                        if (savedLabel) {
-                            downloadGeneratedLabelPdf(savedLabel);
-                        }
-
-                        // Show Done message
+                        // Show status message
                         showToast('Done! Label generated successfully. PDF downloading...', 'success');
+
+                        // Trigger and await download PDF immediately for the newly generated label
+                        if (savedLabel) {
+                            await downloadGeneratedLabelPdf(savedLabel);
+                        }
 
                         // Reset form
                         resetForm();
@@ -2858,7 +2858,7 @@
                         // Redirect to dashboard (/admin) after brief delay
                         setTimeout(() => {
                             window.location.href = '/admin';
-                        }, 1200);
+                        }, 800);
                     } else {
                         showToast('Label generated but could not be saved', 'warning');
                     }
@@ -3318,7 +3318,7 @@
             const label = (typeof labelOrId === 'object' && labelOrId !== null) 
                 ? labelOrId 
                 : (currentGeneratedLabels.find(l => l._id === labelOrId) || null);
-            if (!label) return;
+            if (!label) return Promise.resolve();
 
             const labelHtml = label.generatedHtml || label.template || '';
             const element = document.createElement('div');
@@ -3332,7 +3332,7 @@
                 margin: [6, 6, 6, 6],
                 filename: `AK_Logistics_Shipping_Label_${label.trackingId || label._id || 'label'}.pdf`,
                 image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true, logging: false },
+                html2canvas: { scale: 2, useCORS: true, logging: false, scrollY: 0, scrollX: 0 },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
 
@@ -3344,7 +3344,7 @@
             document.body.appendChild(element);
 
             if (window.html2pdf) {
-                html2pdf().set(opt).from(element.firstElementChild).save().then(() => {
+                return html2pdf().set(opt).from(element.firstElementChild).save().then(() => {
                     element.remove();
                 }).catch(err => {
                     console.error('PDF Generation Error:', err);
@@ -3353,6 +3353,7 @@
             } else {
                 printGeneratedLabel(label);
                 element.remove();
+                return Promise.resolve();
             }
         }
 
