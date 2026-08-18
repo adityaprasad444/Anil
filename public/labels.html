@@ -2524,20 +2524,22 @@
             const toPincode = document.getElementById('toPincode')?.value.trim() || '';
             const toState = document.getElementById('toState')?.value.trim() || '';
 
-            // Format multiline addresses
+            // Format multiline addresses (each component on a new line)
             const fromAddressParts = [];
             if (fromName) fromAddressParts.push(fromName);
             if (fromMobile) fromAddressParts.push('Ph: ' + fromMobile);
-            const fromLoc = [fromCity, fromState].filter(Boolean).join(', ') + (fromPincode ? ' - ' + fromPincode : '');
-            if (fromLoc.trim()) fromAddressParts.push(fromLoc);
+            if (fromCity) fromAddressParts.push(fromCity);
+            if (fromState) fromAddressParts.push(fromState);
+            if (fromPincode) fromAddressParts.push('Pin Code: ' + fromPincode);
             const fromAddressFormatted = fromAddressParts.join('\n');
 
             const toAddressParts = [];
             if (toName) toAddressParts.push(toName);
             if (toMobile) toAddressParts.push('Ph: ' + toMobile);
             if (toAddressLine) toAddressParts.push(toAddressLine);
-            const toLoc = [toCity, toState].filter(Boolean).join(', ') + (toPincode ? ' - ' + toPincode : '');
-            if (toLoc.trim()) toAddressParts.push(toLoc);
+            if (toCity) toAddressParts.push(toCity);
+            if (toState) toAddressParts.push(toState);
+            if (toPincode) toAddressParts.push('Pin Code: ' + toPincode);
             const toAddressFormatted = toAddressParts.join('\n');
 
             const cWeight = weights.chargedWeight > 0 ? weights.chargedWeight.toFixed(2) + ' kg' : '0.00 kg';
@@ -2726,20 +2728,22 @@
             const toPincode = document.getElementById('toPincode').value.trim();
             const toState = document.getElementById('toState').value.trim();
 
-            // Format multiline addresses for template placeholder replacement
+            // Format multiline addresses for template placeholder replacement (each component on a new line)
             const fromAddressParts = [];
             if (fromName) fromAddressParts.push(fromName);
             if (fromMobile) fromAddressParts.push('Ph: ' + fromMobile);
-            const fromLoc = [fromCity, fromState].filter(Boolean).join(', ') + (fromPincode ? ' - ' + fromPincode : '');
-            if (fromLoc.trim()) fromAddressParts.push(fromLoc);
+            if (fromCity) fromAddressParts.push(fromCity);
+            if (fromState) fromAddressParts.push(fromState);
+            if (fromPincode) fromAddressParts.push('Pin Code: ' + fromPincode);
             const fromAddressFormatted = fromAddressParts.join('\n');
 
             const toAddressParts = [];
             if (toName) toAddressParts.push(toName);
             if (toMobile) toAddressParts.push('Ph: ' + toMobile);
             if (toAddressLine) toAddressParts.push(toAddressLine);
-            const toLoc = [toCity, toState].filter(Boolean).join(', ') + (toPincode ? ' - ' + toPincode : '');
-            if (toLoc.trim()) toAddressParts.push(toLoc);
+            if (toCity) toAddressParts.push(toCity);
+            if (toState) toAddressParts.push(toState);
+            if (toPincode) toAddressParts.push('Pin Code: ' + toPincode);
             const toAddressFormatted = toAddressParts.join('\n');
 
             const cWeight = weights.chargedWeight > 0 ? weights.chargedWeight.toFixed(2) + ' kg' : '0.00 kg';
