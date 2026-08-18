@@ -11,6 +11,7 @@ class ApiClient {
         this.dtdcClient = null;
         this.dtdcTrackToken = null;
         this.ocrWorker = null;
+        this._dtdcTokenRefreshPromise = null; // Mutex lock for concurrent token refreshes
     }
 
     /**
@@ -47,9 +48,10 @@ class ApiClient {
 
     /**
      * Lazily initializes the cookie-jar and wrapped axios client for DTDC
+     * @param {boolean} forceReset - If true, forces a fresh client/cookie jar even if one exists
      */
-    async initDtdcClient() {
-        if (this.dtdcClient) return;
+    async initDtdcClient(forceReset = false) {
+        if (this.dtdcClient && !forceReset) return;
         const { CookieJar } = require('tough-cookie');
         const { wrapper } = await import('axios-cookiejar-support');
         this.dtdcJar = new CookieJar();
@@ -289,14 +291,32 @@ class ApiClient {
     }
 
     /**
-     * Fetches captcha, solves it using multi-strategy OCR solver, and validates to obtain fresh DTDC token
+     * Fetches captcha, solves it using multi-strategy OCR solver, and validates to obtain fresh DTDC token.
+     * Uses a mutex lock so concurrent callers share one refresh attempt instead of stampeding.
      */
     async refreshDtdcToken() {
+        // Mutex: if a refresh is already in-flight, piggyback on it
+        if (this._dtdcTokenRefreshPromise) {
+            console.log('⏳ DTDC token refresh already in progress, waiting...');
+            return this._dtdcTokenRefreshPromise;
+        }
+
+        this._dtdcTokenRefreshPromise = this._doRefreshDtdcToken();
+        try {
+            await this._dtdcTokenRefreshPromise;
+        } finally {
+            this._dtdcTokenRefreshPromise = null;
+        }
+    }
+
+    /**
+     * Internal implementation for DTDC token refresh (called via mutex wrapper above)
+     */
+    async _doRefreshDtdcToken() {
         console.log('🔄 Refreshing DTDC session and token via local OCR solver...');
-        await this.initDtdcClient();
         const worker = await this.getOcrWorker();
 
-        const maxSessionAttempts = 5;
+        const maxSessionAttempts = 8;
         let successfulToken = null;
 
         const strategies = [
@@ -304,11 +324,16 @@ class ApiClient {
             { scale: 3, pad: 20, thresholdPercentile: 0.16, erodeMinCount: 4 },
             { scale: 3, pad: 20, threshold: 360, erodeMinCount: 4 },
             { scale: 3, pad: 25, thresholdPercentile: 0.18, erodeMinCount: 3 },
-            { scale: 4, pad: 20, threshold: 380, erodeMinCount: 4 }
+            { scale: 4, pad: 20, threshold: 380, erodeMinCount: 4 },
+            { scale: 3, pad: 15, thresholdPercentile: 0.12, erodeMinCount: 3 },
+            { scale: 4, pad: 25, thresholdPercentile: 0.15, erodeMinCount: 4 }
         ];
 
         for (let sessionAttempt = 1; sessionAttempt <= maxSessionAttempts; sessionAttempt++) {
             try {
+                // Reset client + cookies each session to avoid stale session issues
+                await this.initDtdcClient(true);
+
                 console.log(`📡 Captcha session attempt ${sessionAttempt}/${maxSessionAttempts}...`);
                 
                 // 1. Fetch generate-captcha to get key, image and establish session cookies
@@ -370,8 +395,8 @@ class ApiClient {
                 console.warn(`⚠️ Captcha session attempt ${sessionAttempt} failed: ${attemptErr.message}`);
             }
 
-            // Delay between session attempts
-            await new Promise(r => setTimeout(r, 500));
+            // Progressive backoff delay between session attempts (500ms, 1s, 1.5s, ...)
+            await new Promise(r => setTimeout(r, 500 * sessionAttempt));
         }
 
         if (!successfulToken) {
