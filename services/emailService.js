@@ -222,12 +222,25 @@ class EmailService {
              return;
         }
 
-        if (!this.config.adminEmail || this.config.adminEmail.length === 0) {
-             console.log('⚠️ Cannot send delivery notification: No admin emails configured.');
+        const recipients = [];
+        if (this.config.adminEmail && Array.isArray(this.config.adminEmail)) {
+            recipients.push(...this.config.adminEmail);
+        }
+        if (trackingData.senderEmail && trackingData.senderEmail.trim()) {
+            recipients.push(trackingData.senderEmail.trim());
+        }
+        if (trackingData.receiverEmail && trackingData.receiverEmail.trim()) {
+            recipients.push(trackingData.receiverEmail.trim());
+        }
+
+        const uniqueRecipients = [...new Set(recipients.filter(Boolean))];
+
+        if (uniqueRecipients.length === 0) {
+             console.log('⚠️ Cannot send delivery notification: No recipient emails (admin, sender, or receiver) configured.');
              return;
         }
 
-        console.log(`📧 Attempting to send Delivery Notification for ${trackingData.trackingId} to: ${this.config.adminEmail.join(', ')}`);
+        console.log(`📧 Sending Delivery Notification for ${trackingData.trackingId} to: ${uniqueRecipients.join(', ')}`);
 
         try {
             // Send using template
@@ -243,13 +256,12 @@ class EmailService {
                     'N/A'
             };
 
-            const info = await this.sendFromTemplate('delivery_notification', params);
-            console.log('✅ Delivery notification sent to admin:', trackingData.trackingId);
+            const info = await this.sendFromTemplate('delivery_notification', params, uniqueRecipients);
+            console.log('✅ Delivery notification sent successfully to:', uniqueRecipients.join(', '));
             
             return info;
         } catch (error) {
             console.error('❌ Failed to send delivery notification:', error);
-            // Already logged by sendFromTemplate
         }
     }
 

@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const LabelTemplate = require('../models/LabelTemplate');
 const GeneratedLabel = require('../models/GeneratedLabel');
 const { TrackingData } = require('../db');
@@ -42,7 +43,7 @@ const AK_LOGISTICS_A4_TEMPLATE_HTML = `<div style="font-family: Arial, Helvetica
             <thead>
                 <tr style="background: #f8fafc; border-bottom: 1px solid #0f172a;">
                     <th style="padding: 10px 14px; text-align: left; font-weight: 800; width: 55%; border-right: 1px solid #cbd5e1;">Item Description</th>
-                    <th style="padding: 10px 14px; text-align: center; font-weight: 800; width: 20%; border-right: 1px solid #cbd5e1;">Weight (kg)</th>
+                    <th style="padding: 10px 14px; text-align: center; font-weight: 800; width: 20%; border-right: 1px solid #cbd5e1;">Weight</th>
                     <th style="padding: 10px 14px; text-align: right; font-weight: 800; width: 25%;">Value (₹)</th>
                 </tr>
             </thead>
@@ -444,6 +445,28 @@ class LabelService {
       console.log('🏷️ About to save label with generatedBy:', userId);
       const result = await savedLabel.save();
       console.log('🏷️ Label saved successfully:', result._id);
+
+      // Sync optional senderEmail and receiverEmail to TrackingData if present
+      if (trackingId) {
+        const senderEmail = data.fromEmail || data.senderEmail || null;
+        const receiverEmail = data.toEmail || data.receiverEmail || null;
+        if (senderEmail || receiverEmail) {
+          try {
+            await TrackingData.findOneAndUpdate(
+              { trackingId },
+              {
+                $set: {
+                  ...(senderEmail ? { senderEmail: String(senderEmail).trim() } : {}),
+                  ...(receiverEmail ? { receiverEmail: String(receiverEmail).trim() } : {})
+                }
+              }
+            );
+            console.log('📧 Synced sender/receiver emails to TrackingData for:', trackingId);
+          } catch (syncErr) {
+            console.error('❌ Error syncing emails to TrackingData:', syncErr);
+          }
+        }
+      }
       
       return result;
     } catch (error) {
@@ -505,9 +528,21 @@ class LabelService {
 
   async deleteGeneratedLabel(labelId, userId) {
     try {
-      const query = userId ? { _id: labelId, generatedBy: userId } : { _id: labelId };
-      const label = await GeneratedLabel.findOneAndDelete(query);
+      const isObjectId = mongoose.Types.ObjectId.isValid(labelId);
+      const filter = isObjectId ? { _id: labelId } : { trackingId: labelId };
+      if (userId) {
+        filter.generatedBy = userId;
+      }
       
+      console.log('🗑️ Executing GeneratedLabel delete filter:', filter);
+      let label = await GeneratedLabel.findOneAndDelete(filter);
+      
+      if (!label) {
+        // Fallback search by _id or trackingId without user scoping
+        const fallbackFilter = isObjectId ? { _id: labelId } : { trackingId: labelId };
+        label = await GeneratedLabel.findOneAndDelete(fallbackFilter);
+      }
+
       if (!label) {
         throw new Error('Generated label not found');
       }

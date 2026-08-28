@@ -147,7 +147,7 @@ Anil/
 *   📍 **Address**: Near BIG C, Beside Madhuri Readymades, Ring Road, Ravulapalem-533238
 *   📞 **Phone**: [+91 9182228692](tel:+919182228692)
 *   💬 **WhatsApp**: [+91 9182228692](https://wa.me/919182228692)
-*   📧 **Support Email**: [Aklogisticsravulapalem@gmail.com](mailto:Aklogisticsravulapalem@gmail.com)
+*   📧 **Support Email**: [aklogisticsravulapalem@gmail.com](mailto:aklogisticsravulapalem@gmail.com)
 *   🌐 **Website**: [aklogistics.org](https://aklogistics.org)
 
 ---

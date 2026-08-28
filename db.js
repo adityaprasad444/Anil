@@ -76,6 +76,14 @@ const trackingSchema = new mongoose.Schema({
     type: String,
     default: 'In Transit'
   },
+  senderEmail: {
+    type: String,
+    default: null
+  },
+  receiverEmail: {
+    type: String,
+    default: null
+  },
   location: String,
   estimatedDelivery: Date,
   origin: String,

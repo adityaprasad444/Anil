@@ -51,30 +51,101 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
         rel="stylesheet">
 
-    <!-- Structured Data -->
+    <!-- Structured Data (JSON-LD) -->
     <script type="application/ld+json">
     {
-        "@context": "https://schema.org",
-        "@type": "LocalBusiness",
-        "name": "AK Logistics",
-        "image": "https://aklogistics.org/Logos/logo.jpeg",
-        "url": "https://aklogistics.org",
-        "telephone": "+919182228692",
-        "priceRange": "$$",
-        "address": {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": ["LocalBusiness", "DeliveryBusiness"],
+          "@id": "https://aklogistics.org/#organization",
+          "name": "AK Logistics",
+          "alternateName": "AK Logistics Courier Services Ravulapalem",
+          "image": "https://aklogistics.org/Logos/logo.jpeg",
+          "logo": "https://aklogistics.org/Logos/logo.jpeg",
+          "url": "https://aklogistics.org",
+          "telephone": "+919182228692",
+          "email": "aklogisticsravulapalem@gmail.com",
+          "priceRange": "₹₹",
+          "description": "AK Logistics provides fast, reliable package tracking, domestic and international courier services in Ravulapalem, Andhra Pradesh.",
+          "address": {
             "@type": "PostalAddress",
-            "streetAddress": "Near BIG C,Beside Madhuri Readymades, Ring Road",
+            "streetAddress": "Near BIG C, Beside Madhuri Readymades, Ring Road",
             "addressLocality": "Ravulapalem",
             "addressRegion": "Andhra Pradesh",
             "postalCode": "533238",
             "addressCountry": "IN"
-        },
-        "geo": {
+          },
+          "geo": {
             "@type": "GeoCoordinates",
             "latitude": 16.762806,
             "longitude": 81.841667
+          },
+          "openingHoursSpecification": [
+            {
+              "@type": "OpeningHoursSpecification",
+              "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+              "opens": "09:00",
+              "closes": "21:00"
+            }
+          ],
+          "areaServed": [
+            {
+              "@type": "AdministrativeArea",
+              "name": "Ravulapalem"
+            },
+            {
+              "@type": "AdministrativeArea",
+              "name": "Andhra Pradesh"
+            }
+          ],
+          "hasOfferCatalog": {
+            "@type": "OfferCatalog",
+            "name": "Courier & Logistics Services",
+            "itemListElement": [
+              {
+                "@type": "Offer",
+                "itemOffered": {
+                  "@type": "Service",
+                  "name": "Domestic Shipping",
+                  "description": "Fast and reliable parcel courier services across India."
+                }
+              },
+              {
+                "@type": "Offer",
+                "itemOffered": {
+                  "@type": "Service",
+                  "name": "International Shipping",
+                  "description": "Global freight and parcel courier delivery handling custom clearances to over 200 countries."
+                }
+              },
+              {
+                "@type": "Offer",
+                "itemOffered": {
+                  "@type": "Service",
+                  "name": "Real-time Package Tracking",
+                  "description": "Instant shipment location and status tracking updates."
+                }
+              }
+            ]
+          }
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://aklogistics.org/#website",
+          "url": "https://aklogistics.org",
+          "name": "AK Logistics",
+          "publisher": {
+            "@id": "https://aklogistics.org/#organization"
+          },
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": "https://aklogistics.org/tracking.html?id={search_term_string}",
+            "query-input": "required name=search_term_string"
+          }
         }
-  }
+      ]
+    }
     </script>
     <style>
         :root {
@@ -665,7 +736,7 @@
                             <span style="color: #166534;">WhatsApp (+91 9182228692)</span>
                         </a>
 
-                        <a href="mailto:Aklogisticsravulapalem@gmail.com" class="contact-link"
+                        <a href="mailto:aklogisticsravulapalem@gmail.com" class="contact-link"
                             style="background: #eff6ff; border: 1px solid #dbeafe;"
                             onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background='#eff6ff'">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -675,7 +746,7 @@
                                 </path>
                                 <polyline points="22,6 12,13 2,6"></polyline>
                             </svg>
-                            <span>Aklogisticsravulapalem@gmail.com</span>
+                            <span>aklogisticsravulapalem@gmail.com</span>
                         </a>
                     </div>
                 </div>

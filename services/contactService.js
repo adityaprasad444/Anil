@@ -5,7 +5,7 @@ function getHomePageContactInfo() {
   const defaultContact = {
     phone: '+91 9182228692',
     whatsapp: '+91 9182228692',
-    email: 'Aklogisticsravulapalem@gmail.com',
+    email: 'aklogisticsravulapalem@gmail.com',
     address: 'Near BIG C, Beside Madhuri Readymades, Ring Road, Ravulapalem-533238',
     website: 'www.aklogistics.org'
   };

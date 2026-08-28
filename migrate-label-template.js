@@ -47,7 +47,7 @@ const AK_LOGISTICS_A4_TEMPLATE_HTML = `<div style="font-family: Arial, Helvetica
             <thead>
                 <tr style="background: #f8fafc; border-bottom: 1px solid #0f172a;">
                     <th style="padding: 10px 14px; text-align: left; font-weight: 800; width: 55%; border-right: 1px solid #cbd5e1;">Item Description</th>
-                    <th style="padding: 10px 14px; text-align: center; font-weight: 800; width: 20%; border-right: 1px solid #cbd5e1;">Weight (kg)</th>
+                    <th style="padding: 10px 14px; text-align: center; font-weight: 800; width: 20%; border-right: 1px solid #cbd5e1;">Weight</th>
                     <th style="padding: 10px 14px; text-align: right; font-weight: 800; width: 25%;">Value (₹)</th>
                 </tr>
             </thead>

@@ -486,7 +486,7 @@
                         </div>
                         <div class="form-group" style="margin-bottom: 0;">
                             <label class="form-label" for="originalTrackingId">Original Tracking ID</label>
-                            <input type="text" id="originalTrackingId" class="form-input" placeholder="e.g. UPS123456789" required>
+                            <input type="text" id="originalTrackingId" class="form-input" placeholder="1Z9999999999999999" required>
                         </div>
                         <div class="form-group" style="margin-bottom: 0;">
                             <label class="form-label" for="provider">Provider</label>
@@ -587,7 +587,32 @@
                     select.appendChild(opt);
                 });
                 supportedProviders = providers.map(p => p.name);
+                updateAutoGeneratePreview();
             } catch (error) { showMessage('Error loading providers', 'error'); }
+        }
+
+        async function updateAutoGeneratePreview() {
+            try {
+                const response = await fetch('/api/config/system', { credentials: 'include' });
+                if (!response.ok) return;
+                const data = await response.json();
+
+                let exampleText = 'ak123456lg';
+                if (data.trackingIdFormat === 'custom') {
+                    const prefix = data.customPrefix !== undefined ? data.customPrefix : 'AK';
+                    const suffix = data.customSuffix !== undefined ? data.customSuffix : '';
+                    const len = data.randomLength || 6;
+                    const dummyDigits = '123456789012'.substring(0, Math.min(Math.max(len, 4), 12));
+                    exampleText = `${prefix}${dummyDigits}${suffix}`;
+                }
+
+                const toolsManualInput = document.getElementById('manualTrackingId');
+                if (toolsManualInput) {
+                    toolsManualInput.placeholder = exampleText;
+                }
+            } catch (err) {
+                console.warn('Could not fetch auto generate format preview:', err);
+            }
         }
 
         function toggleManualInput() {

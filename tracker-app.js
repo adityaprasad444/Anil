@@ -14,6 +14,7 @@ const User = require('./models/User');
 const Provider = require('./models/Provider');
 const BulkUpload = require('./models/BulkUpload');
 const EmailConfig = require('./models/EmailConfig');
+const SystemConfig = require('./models/SystemConfig');
 const EmailLog = require('./models/EmailLog');
 const Report = require('./models/Report');
 const EmailTemplate = require('./models/EmailTemplate');
@@ -97,6 +98,13 @@ app.use(session({
 // Serve static files
 const publicPath = path.join(process.cwd(), 'public');
 app.use(express.static(publicPath));
+
+// Clean Admin Route Aliases under /admin/*
+app.get('/admin/labels', (req, res) => res.sendFile(path.join(publicPath, 'labels.html')));
+app.get('/admin/config', (req, res) => res.sendFile(path.join(publicPath, 'config.html')));
+app.get('/admin/reports', (req, res) => res.redirect('/admin?tab=reports'));
+app.get('/admin/emails', (req, res) => res.redirect('/admin?tab=emails'));
+app.get('/admin/dashboard', (req, res) => res.redirect('/admin'));
 
 // Swagger Setup
 const swaggerSpec = swaggerJsdoc(swaggerOptions);
@@ -632,8 +640,9 @@ app.delete('/api/tracking/bulk-delete', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'trackingIds array is required' });
     }
 
-    console.log(`🗑️ Bulk deleting ${trackingIds.length} tracking IDs`);
+    console.log(`🗑️ Bulk deleting ${trackingIds.length} tracking IDs and associated generated labels`);
     const result = await TrackingData.deleteMany({ trackingId: { $in: trackingIds } });
+    await GeneratedLabel.deleteMany({ trackingId: { $in: trackingIds } });
 
     console.log(`✅ Successfully deleted ${result.deletedCount} items`);
     res.json({ message: `Successfully deleted ${result.deletedCount} items`, count: result.deletedCount });
@@ -646,19 +655,26 @@ app.delete('/api/tracking/bulk-delete', requireAuth, async (req, res) => {
 app.delete('/api/tracking/:trackingId', requireAuth, async (req, res) => {
   try {
     const { trackingId } = req.params;
-    console.log('🗑️ Deleting tracking ID:', trackingId);
+    console.log('🗑️ Deleting tracking ID and associated generated label:', trackingId);
 
     const escapedId = trackingId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(`^${escapedId}$`, 'i');
+
     const trackingData = await TrackingData.findOneAndDelete({
-      trackingId: { $regex: new RegExp(`^${escapedId}$`, 'i') }
+      trackingId: { $regex: regex }
+    });
+
+    // Cascade delete any matching GeneratedLabel
+    await GeneratedLabel.deleteMany({
+      trackingId: { $regex: regex }
     });
 
     if (!trackingData) {
-      console.log('❌ Tracking ID not found:', trackingId);
+      console.log('❌ Tracking ID not found in TrackingData:', trackingId);
       return res.status(404).json({ error: 'Tracking ID not found' });
     }
 
-    console.log('✅ Tracking ID deleted successfully:', trackingId);
+    console.log('✅ Tracking ID and associated label deleted successfully:', trackingId);
     res.json({ message: 'Tracking ID deleted successfully' });
   } catch (error) {
     console.error('❌ Error deleting tracking ID:', error);
@@ -742,6 +758,13 @@ app.put('/api/tracking/:trackingId/status', requireAuth, async (req, res) => {
     }
 
     console.log('✅ Tracking status updated successfully:', { trackingId, status });
+
+    if (status && status.toLowerCase().includes('delivered')) {
+      emailService.sendDeliveryNotification(trackingData).catch(err => {
+        console.error('❌ Delivery notification error on manual status update:', err);
+      });
+    }
+
     res.json({ message: 'Tracking status updated successfully', trackingData });
   } catch (error) {
     console.error('❌ Error updating tracking status:', error);
@@ -1752,8 +1775,7 @@ app.post('/api/tracking/bulk', requireAuth, async (req, res) => {
           continue;
         }
       } else {
-        const randomNumber = Math.floor(100000 + Math.random() * 900000);
-        trackingId = `ak${randomNumber}lg`;
+        trackingId = await generateAutoTrackingId();
       }
 
       try {
@@ -1806,8 +1828,8 @@ app.post('/api/tracking/bulk', requireAuth, async (req, res) => {
 
 app.post('/api/tracking/generate', requireAuth, async (req, res) => {
   try {
-    const { provider, originalTrackingId, manualTrackingId } = req.body;
-    console.log('📦 Tracking ID generation request:', { provider, originalTrackingId, manualTrackingId });
+    const { provider, originalTrackingId, manualTrackingId, senderEmail, receiverEmail } = req.body;
+    console.log('📦 Tracking ID generation request:', { provider, originalTrackingId, manualTrackingId, senderEmail, receiverEmail });
 
     if (!provider || !originalTrackingId) {
       return res.status(400).json({ error: 'Provider and original tracking ID are required' });
@@ -1825,19 +1847,19 @@ app.post('/api/tracking/generate', requireAuth, async (req, res) => {
         return res.status(400).json({ error: 'Tracking ID already exists' });
       }
     } else {
-      // Generate a 6-digit random number
-      const randomNumber = Math.floor(100000 + Math.random() * 900000);
-      trackingId = `ak${randomNumber}lg`;
+      trackingId = await generateAutoTrackingId();
     }
 
     const trackingData = new TrackingData({
       trackingId,
       originalTrackingId,
-      provider
+      provider,
+      senderEmail: senderEmail ? senderEmail.trim() : null,
+      receiverEmail: receiverEmail ? receiverEmail.trim() : null
     });
 
     await trackingData.save();
-    console.log('✅ Tracking ID generated:', { trackingId });
+    console.log('✅ Tracking ID generated with emails:', { trackingId, senderEmail, receiverEmail });
     res.json({ success: true, trackingId });
   } catch (error) {
     console.error('❌ Tracking ID generation error:', error);
@@ -2186,6 +2208,69 @@ app.put('/api/config/email', requireAuth, async (req, res) => {
     res.json(result);
   } catch (error) {
     console.error('❌ Error updating email config:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Helper function to generate tracking ID based on system config
+async function generateAutoTrackingId() {
+  try {
+    const configDoc = await SystemConfig.findOne();
+    if (configDoc && configDoc.trackingIdFormat === 'custom') {
+      const prefix = configDoc.customPrefix !== undefined ? configDoc.customPrefix : 'AK';
+      const suffix = configDoc.customSuffix !== undefined ? configDoc.customSuffix : '';
+      const len = configDoc.randomLength || 6;
+      const min = Math.pow(10, len - 1);
+      const max = Math.pow(10, len) - 1;
+      const randomNumber = Math.floor(min + Math.random() * (max - min + 1));
+      return `${prefix}${randomNumber}${suffix}`;
+    }
+  } catch (err) {
+    console.warn('SystemConfig fetch error, using legacy format:', err.message);
+  }
+  const randomNumber = Math.floor(100000 + Math.random() * 900000);
+  return `ak${randomNumber}lg`;
+}
+
+// System Configuration API
+app.get('/api/config/system', requireAuth, async (req, res) => {
+  try {
+    let sysConfig = await SystemConfig.findOne();
+    if (!sysConfig) {
+      sysConfig = await SystemConfig.create({
+        trackingIdFormat: 'legacy',
+        customPrefix: 'AK',
+        customSuffix: '',
+        randomLength: 6
+      });
+    }
+    res.json(sysConfig);
+  } catch (error) {
+    console.error('❌ Error fetching system config:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.put('/api/config/system', requireAuth, async (req, res) => {
+  try {
+    const { trackingIdFormat, customPrefix, customSuffix, randomLength } = req.body;
+    let sysConfig = await SystemConfig.findOne();
+    const updateData = {
+      trackingIdFormat: trackingIdFormat || 'legacy',
+      customPrefix: customPrefix !== undefined ? String(customPrefix).trim() : 'AK',
+      customSuffix: customSuffix !== undefined ? String(customSuffix).trim() : '',
+      randomLength: parseInt(randomLength) || 6
+    };
+
+    if (sysConfig) {
+      sysConfig = await SystemConfig.findByIdAndUpdate(sysConfig._id, { $set: updateData }, { new: true });
+    } else {
+      sysConfig = await SystemConfig.create(updateData);
+    }
+    console.log('✅ System configuration updated successfully');
+    res.json({ success: true, config: sysConfig });
+  } catch (error) {
+    console.error('❌ Error updating system config:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -2806,14 +2891,23 @@ app.put('/api/generated-labels/:id', requireAuth, async (req, res) => {
  */
 app.delete('/api/generated-labels/:id', requireAuth, async (req, res) => {
   try {
-    const userId = req.session.user.id;
-    const userRole = req.session.user.role;
-    const targetUserId = userRole === 'admin' ? null : userId;
+    const sUser = req.session.user || {};
+    const isAdmin = sUser.role === 'admin' || sUser.username === 'admin';
+    const userId = await resolveUserId(req);
+    const targetUserId = isAdmin ? null : userId;
+    console.log(`🗑️ Deleting generated label ${req.params.id} for user ${targetUserId || 'admin'}`);
     const label = await labelService.deleteGeneratedLabel(req.params.id, targetUserId);
-    res.json(label);
+
+    if (label && label.trackingId) {
+      const escapedId = label.trackingId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      await TrackingData.deleteMany({ trackingId: { $regex: new RegExp(`^${escapedId}$`, 'i') } });
+      console.log(`🗑️ Also cleaned up TrackingData for trackingId: ${label.trackingId}`);
+    }
+
+    res.json({ success: true, message: 'Label deleted successfully', label });
   } catch (error) {
     console.error('❌ Generated label deletion error:', error);
-    res.status(404).json({ error: error.message });
+    res.status(500).json({ error: error.message });
   }
 });
 
