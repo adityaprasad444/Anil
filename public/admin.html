@@ -2530,10 +2530,10 @@
 
                     if (confirmBtn) {
                         confirmBtn.onclick = async function() {
+                            const callback = activeDeleteCallback;
                             closeDeleteWarningModal();
-                            if (activeDeleteCallback) {
-                                await activeDeleteCallback();
-                                activeDeleteCallback = null;
+                            if (callback) {
+                                await callback();
                             }
                         };
                     }
